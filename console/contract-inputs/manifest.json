@@ -1,0 +1,14 @@
+{
+  "format": 1,
+  "source": "github.com/carvebloom/authova/contracts",
+  "api_version": "0.1.0-rc.1",
+  "selection": "generated from api/authova/v1 Proto authority; content hashes pin consumer inputs",
+  "generators": {
+    "go_sdk": "package rename v1",
+    "typescript": "openapi-typescript@7.10.1"
+  },
+  "sha256": {
+    "management.yaml": "92957f878d1b581ac1d595f58d12c6017fa98d148fd5b2fa2a1d2e2c7522b40e",
+    "sdk-client.go.txt": "1cc8406fd1f2c7332c837df0fc212b9687f1a41be9d7cb7dd70adf6d43d5a63b"
+  }
+}

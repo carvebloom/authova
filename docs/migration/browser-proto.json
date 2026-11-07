@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-06",
+  "instance": "isolated authova-migration PostgreSQL + Valkey + new keys",
+  "core": "http://127.0.0.1:38080",
+  "console": "http://127.0.0.1:38090",
+  "checks": {
+    "prior_sensitive_write_requires_fresh_login": 401,
+    "password_totp_login": 200,
+    "create_app_via_bff_generated_proto_ent": 201,
+    "app_listing_after_commit": 200,
+    "app_configuration_clients_keys_pages": 200,
+    "document_cookie": "",
+    "all_management_generated_password_totp_login": 200,
+    "owner_missing_csrf": 403,
+    "auditor_password_totp_login": 200,
+    "auditor_app_read": 200,
+    "auditor_write_with_valid_csrf": 403,
+    "auditor_create_button_present": false,
+    "logout_after_fix": 204,
+    "logout_body": "",
+    "principal_after_logout": 401
+  },
+  "created_test_app": {
+    "id": "01a1acc5-ac0d-7ce8-a47e-53e1a246b8bc",
+    "name": "Proto Ent Browser Verification",
+    "slug": "proto-ent-browser"
+  },
+  "not_verified": [
+    "virtual browser authenticator",
+    "live external vendors"
+  ],
+  "tab_closed": true,
+  "agent_demo": {
+    "origin": "http://localhost:38288",
+    "core": "http://localhost:38280",
+    "real_postgres": true,
+    "worker_to_mailpit_otp": true,
+    "email_registration_and_password_setup": true,
+    "pkce_delegation_consent": true,
+    "resource_before_revocation": 200,
+    "user_account_grant_revocation": "revoked",
+    "resource_after_revocation": 401,
+    "password_login": true,
+    "totp_first_enrollment_and_confirmation": true,
+    "rp_document_cookie": ""
+  },
+  "baseline_context": "Historical pre-consolidation verification; current v1 initialization and runtime results are in v1-validation.json."
+}

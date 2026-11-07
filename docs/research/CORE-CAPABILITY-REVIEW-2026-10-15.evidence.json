@@ -1,0 +1,387 @@
+{
+  "schema_version": 1,
+  "review_date": "2026-10-15",
+  "captured_at_utc": "2026-10-15T00:49:15.114664+00:00",
+  "scope": "Current working trees; static capability review and official documentation research",
+  "verification_boundary": "No product changes, new functional tests, load tests, full competitor deployment, external security audit, or remote CI in this research turn. Historical test results are cited as historical results.",
+  "recommendations_are_implemented": false,
+  "repositories": [
+    {
+      "path": "authova",
+      "head": "5075b289fdb9926d642968cd5ddefe7428b6fa98",
+      "status_at_capture": [
+        " M docs/implementation/STATUS.md",
+        " M playwright.config.ts",
+        " M tests/e2e/product.spec.ts",
+        "?? docs/implementation/CONSOLE-REDESIGN-2026-10-15.md",
+        "?? docs/implementation/evidence/console-redesign-2026-10-15/",
+        "?? docs/research/",
+        "?? internal/domain/client_json.go",
+        "?? internal/domain/client_json_test.go",
+        "?? tests/e2e/console-redesign.spec.ts"
+      ]
+    },
+    {
+      "path": "authova-contracts",
+      "head": "33425f3aadfd5da737701e1ed5c5d83b5a143aa9",
+      "status_at_capture": [
+        " M sdk/client.go",
+        " M sdk/client_test.go"
+      ]
+    },
+    {
+      "path": "authova-console",
+      "head": "348fa7fbdb83ea89ce9b976fd04d8d2e4e11daca",
+      "status_at_capture": [
+        " M .github/workflows/ci.yml",
+        " M Makefile",
+        " M README.md",
+        " M cmd/authova-console/main.go",
+        " M internal/coreapi/client.go",
+        " M release/sbom-web.cdx.json",
+        " M web/README.md",
+        " M web/package-lock.json",
+        " M web/package.json",
+        " D web/src/App.tsx",
+        " M web/src/api/client.test.ts",
+        " M web/src/api/client.ts",
+        " M web/src/api/endpoints.ts",
+        " M web/src/api/types.ts",
+        " D web/src/components/Button.tsx",
+        " D web/src/components/CopyButton.tsx",
+        " D web/src/components/Dialog.tsx",
+        " D web/src/components/ErrorNotice.tsx",
+        " D web/src/components/Field.tsx",
+        " D web/src/components/LoadMore.tsx",
+        " D web/src/components/OutcomeUnknownNotice.tsx",
+        " D web/src/components/ReasonDialog.test.tsx",
+        " D web/src/components/ReasonDialog.tsx",
+        " D web/src/components/States.tsx",
+        " D web/src/components/StatusBadge.tsx",
+        " D web/src/hooks/useAsync.ts",
+        " D web/src/hooks/usePagedList.ts",
+        " M web/src/main.tsx",
+        " D web/src/pages/AppLayout.tsx",
+        " D web/src/pages/AppScoped.test.tsx",
+        " D web/src/pages/AppsPage.test.tsx",
+        " D web/src/pages/AppsPage.tsx",
+        " D web/src/pages/AuditTab.tsx",
+        " D web/src/pages/ClientsTab.test.tsx",
+        " D web/src/pages/ClientsTab.tsx",
+        " D web/src/pages/ConnectionsTab.test.tsx",
+        " D web/src/pages/ConnectionsTab.tsx",
+        " D web/src/pages/ConsoleShell.test.tsx",
+        " D web/src/pages/ConsoleShell.tsx",
+        " D web/src/pages/LoginPage.test.tsx",
+        " D web/src/pages/LoginPage.tsx",
+        " D web/src/pages/OverviewTab.tsx",
+        " D web/src/pages/PlatformOperatorsPage.test.tsx",
+        " D web/src/pages/PlatformOperatorsPage.tsx",
+        " D web/src/pages/UserDetailPage.test.tsx",
+        " D web/src/pages/UserDetailPage.tsx",
+        " D web/src/pages/UsersTab.tsx",
+        " D web/src/pages/appContext.ts",
+        " D web/src/session/SessionContext.test.tsx",
+        " D web/src/session/SessionContext.tsx",
+        " D web/src/session/capabilities.test.ts",
+        " D web/src/session/capabilities.ts",
+        " D web/src/session/context.ts",
+        " D web/src/session/useSession.ts",
+        " D web/src/styles.css",
+        " M web/src/test/utils.tsx",
+        " D web/src/utils/format.test.ts",
+        " D web/src/utils/format.ts",
+        " D web/src/utils/idempotency.test.ts",
+        " D web/src/utils/idempotency.ts",
+        " D web/src/utils/navigate.ts",
+        "?? cmd/authova-console/proxy.go",
+        "?? cmd/authova-console/proxy_test.go",
+        "?? cmd/authova-console/security.go",
+        "?? cmd/authova-console/session_rejection.go",
+        "?? cmd/authova-console/session_rejection_test.go",
+        "?? docs/",
+        "?? web/.prettierignore",
+        "?? web/.prettierrc.json",
+        "?? web/src/app/",
+        "?? web/src/features/",
+        "?? web/src/layout/",
+        "?? web/src/shared/",
+        "?? web/src/styles/"
+      ]
+    }
+  ],
+  "inspected_files": [
+    {
+      "path": "authova/docs/technical-design/13-v1-scope.md",
+      "sha256": "d6f64f30601372b3ec9bf78e5fc8d923b8f481bce902e223eebe4c940fa2687c",
+      "bytes": 3939
+    },
+    {
+      "path": "authova/internal/domain/model.go",
+      "sha256": "3058b6fe328a237d01b0dc3a8b5c37df595cb73f313127e835c994bb27ce9ddb",
+      "bytes": 6989
+    },
+    {
+      "path": "authova/internal/ports/storage.go",
+      "sha256": "9a1c49af484164a86d551648bcee5575f2514765ff73fda26508cfc4f265fea3",
+      "bytes": 4085
+    },
+    {
+      "path": "authova/internal/application/service.go",
+      "sha256": "efdab5c2a642b041de573d443ab5ab323bd5d9586d98b650d923815562942e94",
+      "bytes": 13895
+    },
+    {
+      "path": "authova/internal/application/authentication.go",
+      "sha256": "262a6c913bf8e7e31f7d063ddb84aa9e7855492db3390d0865422426204326d7",
+      "bytes": 14340
+    },
+    {
+      "path": "authova/internal/application/mfa_recovery.go",
+      "sha256": "6641817af8a5229d3ecb8aedca0a0064b25110e0dc07e766953a9d987ab9237a",
+      "bytes": 1715
+    },
+    {
+      "path": "authova/internal/application/recovery.go",
+      "sha256": "e7a82e1973501e8d991bba939cfba3f5aeb870cc1c2f39a1827806acc9cc23a6",
+      "bytes": 1095
+    },
+    {
+      "path": "authova/internal/application/selfcare.go",
+      "sha256": "d5c48613dbda35361fc874b1e90b6363e43b58454b6f27d9c8d620dbf95cdd6a",
+      "bytes": 6179
+    },
+    {
+      "path": "authova/internal/transport/management.go",
+      "sha256": "34efd7cd041de974028340dd40a421784826c0ab00d86b46e436643073c8bfdc",
+      "bytes": 18869
+    },
+    {
+      "path": "authova/internal/transport/account.go",
+      "sha256": "c9e624ee34f9b925b2353e4b071598ffe44003dc4f185c63f52ce061ebbae5e5",
+      "bytes": 6665
+    },
+    {
+      "path": "authova/internal/transport/login.go",
+      "sha256": "a0be13ec8149d990d832ee576cc61b046be90a2c29ec5c6d868647d459001b0f",
+      "bytes": 10075
+    },
+    {
+      "path": "authova/internal/transport/http.go",
+      "sha256": "b9f546163e9eab867692355f25ec79970bafa534279c3c2db9512609a5658274",
+      "bytes": 7658
+    },
+    {
+      "path": "authova/internal/transport/limiter.go",
+      "sha256": "de4723267eccae4630bf2a034a729e0c9a37a80e240984a2709bc46a3ab668e7",
+      "bytes": 1747
+    },
+    {
+      "path": "authova/internal/transport/metrics.go",
+      "sha256": "29b5acb8a73fb0e79c88a2c1db7a2dac028101ad60591cf02c02f9136d65c276",
+      "bytes": 1835
+    },
+    {
+      "path": "authova/internal/protocol/provider.go",
+      "sha256": "252ff5bc159a7b4b9b56a46fac239f24ed5e93562cedbd7f360cf1752054779f",
+      "bytes": 13775
+    },
+    {
+      "path": "authova/internal/protocol/storage.go",
+      "sha256": "3536ba2e164a745457d5326df057c09b533d5c303d824c96b18313a9769f4e83",
+      "bytes": 15502
+    },
+    {
+      "path": "authova/internal/protocol/keycache.go",
+      "sha256": "0107a80d504728448091a8538c914d42d15cd39e37437a9ce729e2106d31f4a8",
+      "bytes": 2709
+    },
+    {
+      "path": "authova/internal/delivery/worker.go",
+      "sha256": "b452fd62a3af01413f4f69524d97165994d98f4df134db3edb8f858ac60905ff",
+      "bytes": 5109
+    },
+    {
+      "path": "authova/internal/secure/crypto.go",
+      "sha256": "826c8ba3860f586bd0b983aa5b31fb0891d05a4983229da46d25aa1db42b01c9",
+      "bytes": 5480
+    },
+    {
+      "path": "authova/cmd/authova/main.go",
+      "sha256": "1ed743cf89ae6c3dbb0ebdccf445a764f9bb13cb9e46005d79fa8ddf89b8c745",
+      "bytes": 4197
+    },
+    {
+      "path": "authova/internal/integration/security_review_test.go",
+      "sha256": "2ea9cbe7cce468112ed3e0e912d9f854f7b3fd3d451bed5392c2732132f94c48",
+      "bytes": 7517
+    },
+    {
+      "path": "authova/docs/implementation/OPERATIONS.md",
+      "sha256": "5d2660c5de5b901a08e262a6d4182e84e6d11737b1c2071e555392fe39e74737",
+      "bytes": 10100
+    },
+    {
+      "path": "authova/docs/implementation/PERFORMANCE.md",
+      "sha256": "a919852751954d7caafa4dd65db35c318b94b333797a6fcd6658109116d27918",
+      "bytes": 5637
+    },
+    {
+      "path": "authova/docs/implementation/STATUS.md",
+      "sha256": "83e737d4d395fe20d095ec897ab4027fb055c2850a632cafbff9d45191c92d9b",
+      "bytes": 6684
+    },
+    {
+      "path": "authova/docs/implementation/SOCIAL-PROVIDERS.md",
+      "sha256": "d405e12075e3383c46445fc55cb5e46ec462326b1a03b3564228bc73c2b6aca4",
+      "bytes": 6636
+    },
+    {
+      "path": "authova-contracts/openapi/v1/management.yaml",
+      "sha256": "7bb16e2971d01976259194189789d4fe2318f88f6d87b2240ad4f467a8533d86",
+      "bytes": 122588
+    },
+    {
+      "path": "authova-contracts/README.md",
+      "sha256": "b3bd2ef63e3499ce396d409310e5faa74986559a1c1f5440018dd852b9941210",
+      "bytes": 2704
+    },
+    {
+      "path": "authova-console/web/src/features/apps/OverviewTab.tsx",
+      "sha256": "deb2996d5c3aac38d82daae87581998363ab1559ddba1d287ff8ad7c225a7688",
+      "bytes": 11764
+    },
+    {
+      "path": "authova-console/web/src/features/users/UserDetailPage.tsx",
+      "sha256": "da56ab860967d9ba1c6635453487c7869e8d3e5a50177e7bd66373d7377d2a02",
+      "bytes": 13261
+    },
+    {
+      "path": "authova-console/web/src/features/users/UsersTab.tsx",
+      "sha256": "ad2caa5dac0cfb804ef1e9cc3b036703a7d298d222fbde71824cdfaf17a53af4",
+      "bytes": 5251
+    },
+    {
+      "path": "authova/docs/research/CORE-CAPABILITY-REVIEW-2026-10-15.md",
+      "sha256": "f06fd55fdddaab6a2f813c4787e4d75701f7608490d321781da4d5c9670cec8c",
+      "bytes": 24817
+    },
+    {
+      "path": "authova/internal/transport/federation.go",
+      "sha256": "be5cf9ce5e1877bb51269da59a359579492d4cd373e91bd0b333320f0e140c2e",
+      "bytes": 7611
+    }
+  ],
+  "primary_web_sources": [
+    {
+      "url": "https://casdoor.ai/docs/basic/core-concepts/",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://dexidp.io/docs/connectors/",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://dexidp.io/docs/connectors/local/",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://docs.goauthentik.io/add-secure-apps/providers/",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://docs.goauthentik.io/add-secure-apps/providers/proxy/forward_auth",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://docs.logto.io/developers/actions",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://docs.logto.io/developers/webhooks",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://docs.logto.io/developers/webhooks/webhooks-events",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://docs.logto.io/end-user-flows/account-settings/by-account-api",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://docs.logto.io/end-user-flows/sign-up-and-sign-in/disable-user-registration",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://docs.logto.io/introduction/plan-your-architecture",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://docs.logto.io/introduction/set-up-logto-cloud",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://docs.logto.io/user-management/manage-users",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://github.com/ory/hydra",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://github.com/ory/kratos",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://supertokens.com/docs/authentication/enterprise/manage-apps",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://www.keycloak.org/docs/latest/server_admin/index.html",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://zitadel.com/docs/guides/integrate/external-audit-log",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://zitadel.com/docs/guides/integrate/zitadel-apis/event-api",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://zitadel.com/docs/guides/manage/console/organizations-overview",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://zitadel.com/docs/guides/manage/console/projects-overview",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    },
+    {
+      "url": "https://zitadel.com/docs/guides/migrate/users",
+      "consulted_date": "2026-10-15",
+      "evidence_type": "Official documentation or official repository; selected sections, not whole-project audit"
+    }
+  ]
+}

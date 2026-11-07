@@ -1,0 +1,51 @@
+[
+  {
+    "package": "cookie",
+    "version": "1.1.1",
+    "license": "MIT",
+    "file": "release/notices/web/cookie@1.1.1/LICENSE",
+    "sha256": "c02110eedc16c7114f1a9bdc026c65626ce1d9c7e27fd51a8e0feee8a48a6858"
+  },
+  {
+    "package": "react",
+    "version": "19.3.0",
+    "license": "MIT",
+    "file": "release/notices/web/react@19.3.0/LICENSE",
+    "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+  },
+  {
+    "package": "react-dom",
+    "version": "19.3.0",
+    "license": "MIT",
+    "file": "release/notices/web/react-dom@19.3.0/LICENSE",
+    "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+  },
+  {
+    "package": "react-router",
+    "version": "7.18.4",
+    "license": "MIT",
+    "file": "release/notices/web/react-router@7.18.4/LICENSE.md",
+    "sha256": "77c9ee6a9c5d5782fb0c50b50d101189116314c14f7df0a1b0d385fc96a7ba49"
+  },
+  {
+    "package": "react-router-dom",
+    "version": "7.18.4",
+    "license": "MIT",
+    "file": "release/notices/web/react-router-dom@7.18.4/LICENSE.md",
+    "sha256": "77c9ee6a9c5d5782fb0c50b50d101189116314c14f7df0a1b0d385fc96a7ba49"
+  },
+  {
+    "package": "scheduler",
+    "version": "0.28.0",
+    "license": "MIT",
+    "file": "release/notices/web/scheduler@0.28.0/LICENSE",
+    "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+  },
+  {
+    "package": "set-cookie-parser",
+    "version": "2.7.2",
+    "license": "MIT",
+    "file": "release/notices/web/set-cookie-parser@2.7.2/LICENSE",
+    "sha256": "c5c6c5183a789d122f267c405f685037efb87e27fcde28ab1dd7378a2d2f5962"
+  }
+]

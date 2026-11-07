@@ -1,0 +1,51 @@
+name: authova-dev
+services:
+  postgres:
+    image: postgres:17-alpine
+    command: ["postgres", "-c", "shared_buffers=512MB", "-c", "max_connections=160"]
+    environment:
+      POSTGRES_USER: authova_migrator
+      POSTGRES_PASSWORD: authova-local-database-only
+      POSTGRES_DB: authova
+    ports: ["127.0.0.1:55432:5432"]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-dev.sql:/docker-entrypoint-initdb.d/roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authova_migrator -d authova"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  mysql:
+    image: mysql:8.4.6
+    mem_limit: 3g
+    command: ["mysqld", "--innodb-buffer-pool-size=536870912"]
+    profiles: ["mysql"]
+    environment:
+      MYSQL_ROOT_PASSWORD: authova-local-database-only
+      MYSQL_DATABASE: authova
+      MYSQL_USER: authova_runtime
+      MYSQL_PASSWORD: authova-local-runtime-only
+    ports: ["127.0.0.1:53306:3306"]
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-dev.sql:/docker-entrypoint-initdb.d/roles.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 2s
+      timeout: 2s
+      retries: 60
+  valkey:
+    image: valkey/valkey:9.1-alpine
+    ports: ["127.0.0.1:56379:6379"]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  mailpit:
+    image: axllent/mailpit:v1.28
+    ports: ["127.0.0.1:58025:8025", "127.0.0.1:51025:1025"]
+volumes:
+  postgres-data:
+  mysql-data:

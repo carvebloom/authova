@@ -1,0 +1,971 @@
+// Copyright Authova contributors. SPDX-License-Identifier: Apache-2.0
+// Public contract authority. Generated OpenAPI must not be edited.
+syntax = "proto3";
+package authova.management.v1;
+option go_package = "github.com/carvebloom/authova/api/authova/v1;v1";
+import "api/authova/wire/options.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+option (authova.wire.document) = "{\"components\":{\"securitySchemes\":{\"managementBearer\":{\"description\":\"Opaque platform management session or valid App management access token; never a generic business access token.\",\"scheme\":\"bearer\",\"type\":\"http\"}}},\"info\":{\"description\":\"Implemented API candidate. App is the identity isolation boundary. No organizations or business authorization API. Platform opaque management sessions and scoped App OIDC access tokens both require current server-side role checks.\",\"license\":{\"identifier\":\"Apache-2.0\",\"name\":\"Apache 2.0\"},\"title\":\"Authova Management API\",\"version\":\"0.1.0-rc.1\"},\"openapi\":\"3.1.2\",\"servers\":[{\"url\":\"https://authova.example.invalid\"}],\"tags\":[{\"description\":\"Authova identity administration\",\"name\":\"Management\"}]}";
+message AdminGrant {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"role\",\"reason\"]}";
+  optional string reason = 1 [json_name = "reason", (authova.wire.property) = "{\"minLength\":1}"];
+  optional string role = 2 [json_name = "role", (authova.wire.property) = "{\"enum\":[\"\",\"owner\",\"admin\",\"auditor\"]}"];
+}
+message Agent {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"app_id\",\"client_id\",\"name\",\"description\",\"kind\",\"status\",\"allowed_modes\",\"allowed_scopes\",\"allowed_resources\",\"token_ttl_seconds\",\"grant_ttl_seconds\",\"config_version\",\"created_at\"]}";
+  AgentAllowedModesList allowed_modes = 1 [json_name = "allowed_modes", (authova.wire.property) = "{\"maxItems\":2,\"minItems\":1,\"uniqueItems\":true}", (authova.wire.item) = "{\"enum\":[\"delegated\",\"autonomous\"]}"];
+  AgentAllowedResourcesList allowed_resources = 2 [json_name = "allowed_resources", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  AgentAllowedScopesList allowed_scopes = 3 [json_name = "allowed_scopes", (authova.wire.property) = "{\"maxItems\":27,\"minItems\":1,\"uniqueItems\":true}", (authova.wire.item) = "{\"maxLength\":128,\"minLength\":1}"];
+  optional string app_id = 4 [json_name = "app_id", (authova.wire.property) = "{}"];
+  optional string client_id = 5 [json_name = "client_id", (authova.wire.property) = "{}"];
+  optional int64 config_version = 6 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  optional string created_at = 7 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  optional string description = 8 [json_name = "description", (authova.wire.property) = "{}"];
+  optional int64 grant_ttl_seconds = 9 [json_name = "grant_ttl_seconds", (authova.wire.property) = "{\"maximum\":2592000,\"minimum\":300}"];
+  optional string id = 10 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string kind = 11 [json_name = "kind", (authova.wire.property) = "{}"];
+  optional string name = 12 [json_name = "name", (authova.wire.property) = "{}"];
+  optional string status = 13 [json_name = "status", (authova.wire.property) = "{}"];
+  optional int64 token_ttl_seconds = 14 [json_name = "token_ttl_seconds", (authova.wire.property) = "{\"maximum\":300,\"minimum\":30}"];
+}
+message AgentCreate {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"name\",\"description\",\"kind\",\"allowed_modes\",\"allowed_scopes\",\"allowed_resources\",\"token_ttl_seconds\",\"grant_ttl_seconds\",\"redirect_uris\"]}";
+  AgentCreateAllowedModesList allowed_modes = 1 [json_name = "allowed_modes", (authova.wire.property) = "{\"maxItems\":2,\"minItems\":1,\"uniqueItems\":true}", (authova.wire.item) = "{\"enum\":[\"delegated\",\"autonomous\"]}"];
+  AgentCreateAllowedResourcesList allowed_resources = 2 [json_name = "allowed_resources", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  AgentCreateAllowedScopesList allowed_scopes = 3 [json_name = "allowed_scopes", (authova.wire.property) = "{\"maxItems\":27,\"minItems\":1,\"uniqueItems\":true}", (authova.wire.item) = "{\"maxLength\":128,\"minLength\":1}"];
+  optional string description = 4 [json_name = "description", (authova.wire.property) = "{}"];
+  optional int64 grant_ttl_seconds = 5 [json_name = "grant_ttl_seconds", (authova.wire.property) = "{\"maximum\":2592000,\"minimum\":300}"];
+  optional string kind = 6 [json_name = "kind", (authova.wire.property) = "{\"enum\":[\"public\",\"confidential\"]}"];
+  optional string name = 7 [json_name = "name", (authova.wire.property) = "{}"];
+  AgentCreateRedirectUrisList redirect_uris = 8 [json_name = "redirect_uris", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional int64 token_ttl_seconds = 9 [json_name = "token_ttl_seconds", (authova.wire.property) = "{\"maximum\":300,\"minimum\":30}"];
+}
+message AgentGrant {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"app_id\",\"agent_id\",\"installation_id\",\"client_id\",\"user_id\",\"tenant_id\",\"mode\",\"resource\",\"status\",\"scopes\",\"config_version\",\"created_at\",\"expires_at\",\"revoked_at\"]}";
+  optional string agent_id = 1 [json_name = "agent_id", (authova.wire.property) = "{}"];
+  optional string app_id = 2 [json_name = "app_id", (authova.wire.property) = "{}"];
+  optional string client_id = 3 [json_name = "client_id", (authova.wire.property) = "{}"];
+  optional int64 config_version = 4 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  optional string created_at = 5 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  optional int64 expires_at = 6 [json_name = "expires_at", (authova.wire.property) = "{}"];
+  optional string id = 7 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string installation_id = 8 [json_name = "installation_id", (authova.wire.property) = "{}"];
+  optional string mode = 9 [json_name = "mode", (authova.wire.property) = "{}"];
+  optional string resource = 10 [json_name = "resource", (authova.wire.property) = "{}"];
+  optional int64 revoked_at = 11 [json_name = "revoked_at", (authova.wire.property) = "{}"];
+  AgentGrantScopesList scopes = 12 [json_name = "scopes", (authova.wire.property) = "{\"maxItems\":27,\"minItems\":1,\"uniqueItems\":true}", (authova.wire.item) = "{\"maxLength\":128,\"minLength\":1}"];
+  optional string status = 13 [json_name = "status", (authova.wire.property) = "{}"];
+  optional string tenant_id = 14 [json_name = "tenant_id", (authova.wire.property) = "{}"];
+  optional string user_id = 15 [json_name = "user_id", (authova.wire.property) = "{}"];
+}
+message AgentGrantPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}";
+  AgentGrantPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  authova.wire.NullableString next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{\"x-authova-nullable\":true}"];
+}
+message AgentInstallation {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"app_id\",\"agent_id\",\"tenant_id\",\"user_id\",\"responsible_party\",\"resource\",\"status\",\"autonomous_grant_id\",\"allowed_scopes\",\"allowed_modes\",\"config_version\",\"created_at\",\"expires_at\"]}";
+  optional string agent_id = 1 [json_name = "agent_id", (authova.wire.property) = "{}"];
+  AgentInstallationAllowedModesList allowed_modes = 2 [json_name = "allowed_modes", (authova.wire.property) = "{\"maxItems\":2,\"minItems\":1,\"uniqueItems\":true}", (authova.wire.item) = "{\"enum\":[\"delegated\",\"autonomous\"]}"];
+  AgentInstallationAllowedScopesList allowed_scopes = 3 [json_name = "allowed_scopes", (authova.wire.property) = "{\"maxItems\":27,\"minItems\":1,\"uniqueItems\":true}", (authova.wire.item) = "{\"maxLength\":128,\"minLength\":1}"];
+  optional string app_id = 4 [json_name = "app_id", (authova.wire.property) = "{}"];
+  optional string autonomous_grant_id = 5 [json_name = "autonomous_grant_id", (authova.wire.property) = "{}"];
+  optional int64 config_version = 6 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  optional string created_at = 7 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  optional int64 expires_at = 8 [json_name = "expires_at", (authova.wire.property) = "{}"];
+  optional string id = 9 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string resource = 10 [json_name = "resource", (authova.wire.property) = "{}"];
+  optional string responsible_party = 11 [json_name = "responsible_party", (authova.wire.property) = "{}"];
+  optional string status = 12 [json_name = "status", (authova.wire.property) = "{}"];
+  optional string tenant_id = 13 [json_name = "tenant_id", (authova.wire.property) = "{}"];
+  optional string user_id = 14 [json_name = "user_id", (authova.wire.property) = "{}"];
+}
+message AgentInstallationCreate {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"agent_id\",\"tenant_id\",\"user_id\",\"responsible_party\",\"resource\",\"allowed_scopes\",\"allowed_modes\",\"expires_at\",\"reason\"]}";
+  optional string agent_id = 1 [json_name = "agent_id", (authova.wire.property) = "{}"];
+  AgentInstallationCreateAllowedModesList allowed_modes = 2 [json_name = "allowed_modes", (authova.wire.property) = "{\"maxItems\":2,\"minItems\":1,\"uniqueItems\":true}", (authova.wire.item) = "{\"enum\":[\"delegated\",\"autonomous\"]}"];
+  AgentInstallationCreateAllowedScopesList allowed_scopes = 3 [json_name = "allowed_scopes", (authova.wire.property) = "{\"maxItems\":27,\"minItems\":1,\"uniqueItems\":true}", (authova.wire.item) = "{\"maxLength\":128,\"minLength\":1}"];
+  optional int64 expires_at = 4 [json_name = "expires_at", (authova.wire.property) = "{}"];
+  optional string reason = 5 [json_name = "reason", (authova.wire.property) = "{\"maxLength\":500,\"minLength\":1}"];
+  optional string resource = 6 [json_name = "resource", (authova.wire.property) = "{}"];
+  optional string responsible_party = 7 [json_name = "responsible_party", (authova.wire.property) = "{}"];
+  optional string tenant_id = 8 [json_name = "tenant_id", (authova.wire.property) = "{}"];
+  optional string user_id = 9 [json_name = "user_id", (authova.wire.property) = "{}"];
+}
+message AgentInstallationPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}";
+  AgentInstallationPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  authova.wire.NullableString next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{\"x-authova-nullable\":true}"];
+}
+message AgentInstallationPatch {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"status\",\"config_version\",\"reason\"]}";
+  optional int64 config_version = 1 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  optional string reason = 2 [json_name = "reason", (authova.wire.property) = "{\"maxLength\":500,\"minLength\":1}"];
+  optional string status = 3 [json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"disabled\"]}"];
+}
+message AgentOperation {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"kind\",\"resource_id\"]}";
+  optional string kind = 1 [json_name = "kind", (authova.wire.property) = "{\"enum\":[\"agent\",\"installation\"]}"];
+  optional string resource_id = 2 [json_name = "resource_id", (authova.wire.property) = "{}"];
+}
+message AgentPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}";
+  AgentPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  authova.wire.NullableString next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{\"x-authova-nullable\":true}"];
+}
+message AgentPatch {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"config_version\",\"reason\"]}";
+  optional int64 config_version = 1 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  optional string description = 2 [(authova.wire.null_clears) = true, json_name = "description", (authova.wire.property) = "{}"];
+  optional string name = 3 [(authova.wire.null_clears) = true, json_name = "name", (authova.wire.property) = "{}"];
+  optional string reason = 4 [json_name = "reason", (authova.wire.property) = "{\"maxLength\":500,\"minLength\":1}"];
+  optional string status = 5 [(authova.wire.null_clears) = true, json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"disabled\"]}"];
+}
+message AlipayCredentials {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"private_key\",\"alipay_public_key\"]}";
+  optional string alipay_public_key = 1 [json_name = "alipay_public_key", (authova.wire.property) = "{\"description\":\"Alipay RSA public key in SubjectPublicKeyInfo PEM or base64 DER; 2048-4096 bits. Public-key mode only, not certificates. Never returned.\",\"maxLength\":2048,\"minLength\":1,\"writeOnly\":true}"];
+  optional string private_key = 2 [json_name = "private_key", (authova.wire.property) = "{\"description\":\"Application RSA private key, PKCS#1 or PKCS#8 PEM or base64 DER; 2048-4096 bits. Never returned.\",\"maxLength\":8192,\"minLength\":1,\"writeOnly\":true}"];
+}
+message App {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"app_key\",\"name\",\"slug\",\"status\",\"issuer\",\"config_version\",\"created_at\",\"require_mfa\"]}";
+  optional string app_key = 1 [json_name = "app_key", (authova.wire.property) = "{}"];
+  optional int64 config_version = 2 [json_name = "config_version", (authova.wire.property) = "{}"];
+  optional string created_at = 3 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  optional string id = 4 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string issuer = 5 [json_name = "issuer", (authova.wire.property) = "{\"format\":\"uri\"}"];
+  optional string name = 6 [json_name = "name", (authova.wire.property) = "{}"];
+  optional bool require_mfa = 7 [json_name = "require_mfa", (authova.wire.property) = "{}"];
+  optional string slug = 8 [json_name = "slug", (authova.wire.property) = "{}"];
+  optional string status = 9 [json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"suspended\",\"quarantined\"]}"];
+}
+message AppCreate {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"name\",\"slug\"]}";
+  optional string name = 1 [json_name = "name", (authova.wire.property) = "{\"maxLength\":200,\"minLength\":1}"];
+  optional string slug = 2 [json_name = "slug", (authova.wire.property) = "{\"pattern\":\"^[a-z][a-z0-9-]{1,62}$\"}"];
+}
+message AppPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}";
+  AppPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  authova.wire.NullableString next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{\"x-authova-nullable\":true}"];
+}
+message AppPatch {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"config_version\"]}";
+  optional int64 config_version = 1 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  optional string name = 2 [(authova.wire.null_clears) = true, json_name = "name", (authova.wire.property) = "{}"];
+  optional bool require_mfa = 3 [(authova.wire.null_clears) = true, json_name = "require_mfa", (authova.wire.property) = "{}"];
+  // Legacy decoder compatibility only; server-owned fields are not public inputs.
+  optional string slug = 100 [(authova.wire.null_clears) = true, json_name = "slug", (authova.wire.property) = "{\"x-authova-undocumented\":true}"];
+
+}
+message Audit {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"app_id\",\"actor_id\",\"action\",\"subject_id\",\"created_at\"]}";
+  optional string action = 1 [json_name = "action", (authova.wire.property) = "{}"];
+  optional string actor_id = 2 [json_name = "actor_id", (authova.wire.property) = "{}"];
+  optional string app_id = 3 [json_name = "app_id", (authova.wire.property) = "{}"];
+  optional string created_at = 4 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  optional string id = 5 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string reason = 6 [json_name = "reason", (authova.wire.property) = "{}"];
+  optional string subject_id = 7 [json_name = "subject_id", (authova.wire.property) = "{}"];
+}
+message AuditPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}";
+  AuditPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  authova.wire.NullableString next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{\"x-authova-nullable\":true}"];
+}
+message AuthenticationConfig {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"passkey_available\",\"password_login\",\"email_otp_configured\",\"phone_otp_configured\",\"policy\",\"config_version\",\"provider_types\",\"federation_callback_url\"]}";
+  optional int64 config_version = 1 [json_name = "config_version", (authova.wire.property) = "{}"];
+  optional bool email_otp_configured = 2 [json_name = "email_otp_configured", (authova.wire.property) = "{}"];
+  optional string federation_callback_url = 3 [json_name = "federation_callback_url", (authova.wire.property) = "{\"format\":\"uri\"}"];
+  optional bool passkey_available = 4 [json_name = "passkey_available", (authova.wire.property) = "{}"];
+  optional bool password_login = 5 [json_name = "password_login", (authova.wire.property) = "{}"];
+  optional bool phone_otp_configured = 6 [json_name = "phone_otp_configured", (authova.wire.property) = "{}"];
+  AuthenticationPolicy policy = 7 [json_name = "policy", (authova.wire.property) = "{}"];
+  AuthenticationConfigProviderTypesList provider_types = 8 [json_name = "provider_types", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+}
+message AuthenticationPolicy {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"registration_enabled\",\"password_login_enabled\",\"email_otp_enabled\",\"phone_otp_enabled\",\"federation_enabled\",\"external_registration_enabled\",\"passkey_enabled\"]}";
+  optional bool email_otp_enabled = 1 [json_name = "email_otp_enabled", (authova.wire.property) = "{}"];
+  optional bool external_registration_enabled = 2 [json_name = "external_registration_enabled", (authova.wire.property) = "{}"];
+  optional bool federation_enabled = 3 [json_name = "federation_enabled", (authova.wire.property) = "{}"];
+  optional bool passkey_enabled = 4 [json_name = "passkey_enabled", (authova.wire.property) = "{}"];
+  optional bool password_login_enabled = 5 [json_name = "password_login_enabled", (authova.wire.property) = "{}"];
+  optional bool phone_otp_enabled = 6 [json_name = "phone_otp_enabled", (authova.wire.property) = "{}"];
+  optional bool registration_enabled = 7 [json_name = "registration_enabled", (authova.wire.property) = "{}"];
+}
+message AuthenticationPolicyPatch {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"policy\",\"config_version\",\"reason\"]}";
+  optional int64 config_version = 1 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  AuthenticationPolicy policy = 2 [json_name = "policy", (authova.wire.property) = "{}"];
+  optional string reason = 3 [json_name = "reason", (authova.wire.property) = "{\"maxLength\":500,\"minLength\":1}"];
+}
+message Client {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"app_id\",\"client_id\",\"name\",\"kind\",\"status\",\"system\",\"config_version\",\"previous_secret_expires_at\",\"created_at\",\"redirect_uris\",\"allowed_scopes\",\"allowed_audiences\",\"allowed_introspection_audiences\",\"grant_types\"]}";
+  ClientAllowedAudiencesList allowed_audiences = 1 [json_name = "allowed_audiences", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  ClientAllowedIntrospectionAudiencesList allowed_introspection_audiences = 2 [json_name = "allowed_introspection_audiences", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  ClientAllowedScopesList allowed_scopes = 3 [json_name = "allowed_scopes", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional string app_id = 4 [json_name = "app_id", (authova.wire.property) = "{}"];
+  optional string client_id = 5 [json_name = "client_id", (authova.wire.property) = "{}"];
+  optional int64 config_version = 6 [json_name = "config_version", (authova.wire.property) = "{}"];
+  optional string created_at = 7 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  ClientGrantTypesList grant_types = 8 [json_name = "grant_types", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional string id = 9 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string kind = 10 [json_name = "kind", (authova.wire.property) = "{\"enum\":[\"public\",\"confidential\"]}"];
+  optional string name = 11 [json_name = "name", (authova.wire.property) = "{}"];
+  optional int64 previous_secret_expires_at = 12 [json_name = "previous_secret_expires_at", (authova.wire.property) = "{}"];
+  ClientRedirectUrisList redirect_uris = 13 [json_name = "redirect_uris", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional string status = 14 [json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"disabled\"]}"];
+  optional bool system = 15 [json_name = "system", (authova.wire.property) = "{}"];
+}
+message ClientCreate {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"name\",\"kind\",\"allowed_scopes\",\"allowed_audiences\",\"grant_types\"]}";
+  ClientCreateAllowedAudiencesList allowed_audiences = 1 [json_name = "allowed_audiences", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  ClientCreateAllowedIntrospectionAudiencesList allowed_introspection_audiences = 2 [json_name = "allowed_introspection_audiences", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  ClientCreateAllowedScopesList allowed_scopes = 3 [json_name = "allowed_scopes", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  ClientCreateGrantTypesList grant_types = 4 [json_name = "grant_types", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional string kind = 5 [json_name = "kind", (authova.wire.property) = "{\"enum\":[\"public\",\"confidential\"]}"];
+  optional string name = 6 [json_name = "name", (authova.wire.property) = "{}"];
+  ClientCreateRedirectUrisList redirect_uris = 7 [json_name = "redirect_uris", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  // Legacy decoder compatibility only; server-owned fields are not public inputs.
+  optional bool system = 100 [json_name = "system", (authova.wire.property) = "{\"x-authova-undocumented\":true}"];
+  optional string id = 101 [json_name = "id", (authova.wire.property) = "{\"x-authova-undocumented\":true}"];
+  optional string app_id = 102 [json_name = "app_id", (authova.wire.property) = "{\"x-authova-undocumented\":true}"];
+  optional string client_id = 103 [json_name = "client_id", (authova.wire.property) = "{\"x-authova-undocumented\":true}"];
+  optional string status = 104 [json_name = "status", (authova.wire.property) = "{\"x-authova-undocumented\":true}"];
+  optional int64 previous_secret_expires_at = 105 [json_name = "previous_secret_expires_at", (authova.wire.property) = "{\"x-authova-undocumented\":true}"];
+  optional int64 config_version = 106 [json_name = "config_version", (authova.wire.property) = "{\"x-authova-undocumented\":true}"];
+  optional string created_at = 107 [json_name = "created_at", (authova.wire.property) = "{\"x-authova-undocumented\":true}"];
+
+}
+message ClientPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}";
+  ClientPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  authova.wire.NullableString next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{\"x-authova-nullable\":true}"];
+}
+message ClientPatch {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"config_version\"]}";
+  ClientPatchAllowedAudiencesList allowed_audiences = 1 [json_name = "allowed_audiences", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  ClientPatchAllowedIntrospectionAudiencesList allowed_introspection_audiences = 2 [json_name = "allowed_introspection_audiences", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  ClientPatchAllowedScopesList allowed_scopes = 3 [json_name = "allowed_scopes", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional int64 config_version = 4 [json_name = "config_version", (authova.wire.property) = "{}"];
+  ClientPatchGrantTypesList grant_types = 5 [json_name = "grant_types", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional string name = 6 [(authova.wire.null_clears) = true, json_name = "name", (authova.wire.property) = "{}"];
+  ClientPatchRedirectUrisList redirect_uris = 7 [json_name = "redirect_uris", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional string status = 8 [(authova.wire.null_clears) = true, json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"disabled\"]}"];
+}
+message ClientSecretRotate {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"config_version\",\"reason\",\"grace_seconds\"]}";
+  optional int64 config_version = 1 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  optional int64 grace_seconds = 2 [(authova.wire.null_clears) = true, json_name = "grace_seconds", (authova.wire.property) = "{\"maximum\":86400,\"minimum\":0}"];
+  optional string reason = 3 [json_name = "reason", (authova.wire.property) = "{\"maxLength\":500,\"minLength\":1}"];
+}
+message ClientSecretRotated {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"client\",\"client_secret\",\"previous_secret_expires_at\"]}";
+  Client client = 1 [json_name = "client", (authova.wire.property) = "{}"];
+  optional string client_secret = 2 [json_name = "client_secret", (authova.wire.property) = "{\"description\":\"One-time response; never retrievable with GET. Unknown outcome requires readback, not blind replay.\"}"];
+  optional int64 previous_secret_expires_at = 3 [json_name = "previous_secret_expires_at", (authova.wire.property) = "{}"];
+}
+message Connection {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"name\",\"provider_type\",\"issuer\",\"client_id\",\"status\",\"config_version\"]}";
+  optional string client_id = 1 [json_name = "client_id", (authova.wire.property) = "{}"];
+  optional int64 config_version = 2 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  optional string created_at = 3 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  optional string id = 4 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string issuer = 5 [json_name = "issuer", (authova.wire.property) = "{\"format\":\"uri\"}"];
+  optional string name = 6 [json_name = "name", (authova.wire.property) = "{}"];
+  optional string provider_type = 7 [json_name = "provider_type", (authova.wire.property) = "{\"enum\":[\"oidc\",\"github\",\"wechat\",\"qq\",\"alipay\"]}"];
+  optional string status = 8 [json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"disabled\"]}"];
+}
+message ConnectionCreate {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"oneOf\":[{\"not\":{\"properties\":{\"client_secret\":{}},\"required\":[\"client_secret\"]},\"properties\":{\"provider_type\":{\"enum\":[\"alipay\"]}},\"required\":[\"provider_type\",\"alipay_credentials\"]},{\"not\":{\"properties\":{\"alipay_credentials\":{}},\"required\":[\"alipay_credentials\"]},\"properties\":{\"provider_type\":{\"enum\":[\"oidc\",\"github\",\"wechat\",\"qq\"]}},\"required\":[\"client_secret\"]}],\"required\":[\"name\",\"client_id\"]}";
+  AlipayCredentials alipay_credentials = 1 [json_name = "alipay_credentials", (authova.wire.property) = "{\"writeOnly\":true}"];
+  optional string client_id = 2 [json_name = "client_id", (authova.wire.property) = "{}"];
+  optional string client_secret = 3 [(authova.wire.null_clears) = true, json_name = "client_secret", (authova.wire.property) = "{\"maxLength\":4096,\"minLength\":1,\"writeOnly\":true}"];
+  optional string issuer = 4 [json_name = "issuer", (authova.wire.property) = "{\"description\":\"Required for OIDC. Fixed for GitHub, WeChat, QQ and Alipay; omit for social providers.\",\"format\":\"uri\"}"];
+  optional string name = 5 [json_name = "name", (authova.wire.property) = "{}"];
+  optional string provider_type = 6 [json_name = "provider_type", (authova.wire.property) = "{\"default\":\"oidc\",\"enum\":[\"oidc\",\"github\",\"wechat\",\"qq\",\"alipay\"]}"];
+}
+message ConnectionPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}";
+  ConnectionPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  authova.wire.NullableString next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{\"x-authova-nullable\":true}"];
+}
+message ConnectionPatch {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"not\":{\"properties\":{\"alipay_credentials\":{},\"client_secret\":{}},\"required\":[\"client_secret\",\"alipay_credentials\"]},\"required\":[\"config_version\",\"reason\"]}";
+  AlipayCredentials alipay_credentials = 1 [json_name = "alipay_credentials", (authova.wire.property) = "{\"description\":\"Alipay only: supply both keys for atomic rotation, or omit to retain the encrypted pair. Never returned.\",\"writeOnly\":true}"];
+  optional string client_secret = 2 [(authova.wire.null_clears) = true, json_name = "client_secret", (authova.wire.property) = "{\"description\":\"Omit to retain existing encrypted secret. Not accepted for Alipay. Provider type, issuer and client_id are immutable.\",\"maxLength\":4096,\"minLength\":1,\"writeOnly\":true}"];
+  optional int64 config_version = 3 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  optional string name = 4 [(authova.wire.null_clears) = true, json_name = "name", (authova.wire.property) = "{}"];
+  optional string reason = 5 [json_name = "reason", (authova.wire.property) = "{\"maxLength\":500,\"minLength\":1}"];
+  optional string status = 6 [(authova.wire.null_clears) = true, json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"disabled\"]}"];
+}
+message CreatedAgent {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"agent\"]}";
+  Agent agent = 1 [json_name = "agent", (authova.wire.property) = "{}"];
+  optional string client_secret = 2 [json_name = "client_secret", (authova.wire.property) = "{\"description\":\"Only in create response and creator-scoped idempotency replay for ten minutes.\"}"];
+}
+message CreatedClient {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"app_id\",\"client_id\",\"name\",\"kind\",\"status\",\"system\",\"config_version\",\"previous_secret_expires_at\",\"created_at\",\"redirect_uris\",\"allowed_scopes\",\"allowed_audiences\",\"allowed_introspection_audiences\",\"grant_types\"]}";
+  CreatedClientAllowedAudiencesList allowed_audiences = 1 [json_name = "allowed_audiences", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  CreatedClientAllowedIntrospectionAudiencesList allowed_introspection_audiences = 2 [json_name = "allowed_introspection_audiences", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  CreatedClientAllowedScopesList allowed_scopes = 3 [json_name = "allowed_scopes", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional string app_id = 4 [json_name = "app_id", (authova.wire.property) = "{}"];
+  optional string client_id = 5 [json_name = "client_id", (authova.wire.property) = "{}"];
+  optional string client_secret = 6 [json_name = "client_secret", (authova.wire.property) = "{\"description\":\"Shown only on creation or creator-scoped idempotency replay for at most ten minutes.\"}"];
+  optional int64 config_version = 7 [json_name = "config_version", (authova.wire.property) = "{}"];
+  optional string created_at = 8 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  CreatedClientGrantTypesList grant_types = 9 [json_name = "grant_types", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional string id = 10 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string kind = 11 [json_name = "kind", (authova.wire.property) = "{\"enum\":[\"public\",\"confidential\"]}"];
+  optional string name = 12 [json_name = "name", (authova.wire.property) = "{}"];
+  optional int64 previous_secret_expires_at = 13 [json_name = "previous_secret_expires_at", (authova.wire.property) = "{}"];
+  CreatedClientRedirectUrisList redirect_uris = 14 [json_name = "redirect_uris", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional string status = 15 [json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"disabled\"]}"];
+  optional bool system = 16 [json_name = "system", (authova.wire.property) = "{}"];
+}
+message CurrentOperator {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"operator\"]}";
+  Operator operator = 1 [json_name = "operator", (authova.wire.property) = "{}"];
+}
+message EnableUser {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"reason\",\"session_epoch\"]}";
+  optional string reason = 1 [json_name = "reason", (authova.wire.property) = "{\"maxLength\":500,\"minLength\":1}"];
+  optional int64 session_epoch = 2 [json_name = "session_epoch", (authova.wire.property) = "{\"minimum\":1}"];
+}
+message KeyRevoked {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"key_id\",\"new_key_id\",\"config_version\"]}";
+  optional int64 config_version = 1 [json_name = "config_version", (authova.wire.property) = "{}"];
+  optional string key_id = 2 [json_name = "key_id", (authova.wire.property) = "{}"];
+  optional string new_key_id = 3 [json_name = "new_key_id", (authova.wire.property) = "{}"];
+}
+message ManagementLogin {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"email\",\"password\",\"totp\"]}";
+  optional string email = 1 [json_name = "email", (authova.wire.property) = "{\"format\":\"email\"}"];
+  optional string password = 2 [json_name = "password", (authova.wire.property) = "{\"writeOnly\":true}"];
+  optional string totp = 3 [json_name = "totp", (authova.wire.property) = "{\"pattern\":\"^[0-9]{6}$\",\"writeOnly\":true}"];
+}
+message ManagementLoginResponse {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"token\",\"operator\",\"expires_at\"]}";
+  optional string expires_at = 1 [json_name = "expires_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  Operator operator = 2 [json_name = "operator", (authova.wire.property) = "{}"];
+  optional string token = 3 [json_name = "token", (authova.wire.property) = "{}"];
+}
+message Operator {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"email\",\"role\",\"status\"]}";
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}"];
+  optional string email = 2 [json_name = "email", (authova.wire.property) = "{}"];
+  optional string id = 3 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string role = 4 [json_name = "role", (authova.wire.property) = "{\"enum\":[\"owner\",\"admin\",\"auditor\"]}"];
+  optional string status = 5 [json_name = "status", (authova.wire.property) = "{}"];
+}
+message OperatorCreate {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"email\",\"password\",\"role\"]}";
+  optional string email = 1 [json_name = "email", (authova.wire.property) = "{\"format\":\"email\"}"];
+  optional string password = 2 [json_name = "password", (authova.wire.property) = "{\"writeOnly\":true}"];
+  optional string role = 3 [json_name = "role", (authova.wire.property) = "{\"enum\":[\"owner\",\"admin\",\"auditor\"]}"];
+}
+message OperatorCreated {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"operator\",\"totp_secret\"]}";
+  Operator operator = 1 [json_name = "operator", (authova.wire.property) = "{}"];
+  optional string totp_secret = 2 [json_name = "totp_secret", (authova.wire.property) = "{\"description\":\"Provisioning secret shown once; transfer securely to the operator.\"}"];
+}
+message OperatorPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}";
+  OperatorPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  authova.wire.NullableString next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{\"x-authova-nullable\":true}"];
+}
+message OperatorPatch {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"role\",\"status\",\"reason\"]}";
+  optional string reason = 1 [json_name = "reason", (authova.wire.property) = "{\"minLength\":1}"];
+  optional string role = 2 [json_name = "role", (authova.wire.property) = "{\"enum\":[\"owner\",\"admin\",\"auditor\"]}"];
+  optional string status = 3 [json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"disabled\"]}"];
+}
+message Problem {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"type\",\"title\",\"status\",\"code\"]}";
+  optional string code = 1 [json_name = "code", (authova.wire.property) = "{}"];
+  optional string detail = 2 [json_name = "detail", (authova.wire.property) = "{}"];
+  optional string request_id = 3 [json_name = "request_id", (authova.wire.property) = "{}"];
+  optional int64 status = 4 [json_name = "status", (authova.wire.property) = "{}"];
+  optional string title = 5 [json_name = "title", (authova.wire.property) = "{}"];
+  optional string type = 6 [json_name = "type", (authova.wire.property) = "{}"];
+}
+message Reason {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"reason\"]}";
+  optional string reason = 1 [json_name = "reason", (authova.wire.property) = "{\"maxLength\":500,\"minLength\":1}"];
+}
+message ResourceConfig {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"limits\",\"effective_limits\",\"config_version\",\"concurrency_scope\",\"counter_scope\",\"propagation_seconds\"]}";
+  optional string concurrency_scope = 1 [json_name = "concurrency_scope", (authova.wire.property) = "{\"enum\":[\"per_process\"]}"];
+  optional int64 config_version = 2 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  optional string counter_scope = 3 [json_name = "counter_scope", (authova.wire.property) = "{\"enum\":[\"shared_limiter\"]}"];
+  ResourceLimits effective_limits = 4 [json_name = "effective_limits", (authova.wire.property) = "{}"];
+  ResourceLimits limits = 5 [json_name = "limits", (authova.wire.property) = "{}"];
+  optional int64 propagation_seconds = 6 [json_name = "propagation_seconds", (authova.wire.property) = "{\"minimum\":0}"];
+}
+message ResourceLimits {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"http_concurrency\",\"kdf_concurrency\",\"db_concurrency\",\"requests_per_second\",\"email_challenges_per_hour\",\"sms_challenges_per_hour\"]}";
+  optional int64 db_concurrency = 1 [json_name = "db_concurrency", (authova.wire.property) = "{\"maximum\":4096,\"minimum\":1}"];
+  optional int64 email_challenges_per_hour = 2 [json_name = "email_challenges_per_hour", (authova.wire.property) = "{\"maximum\":10000000,\"minimum\":1}"];
+  optional int64 http_concurrency = 3 [json_name = "http_concurrency", (authova.wire.property) = "{\"maximum\":100000,\"minimum\":1}"];
+  optional int64 kdf_concurrency = 4 [json_name = "kdf_concurrency", (authova.wire.property) = "{\"maximum\":512,\"minimum\":1}"];
+  optional int64 requests_per_second = 5 [json_name = "requests_per_second", (authova.wire.property) = "{\"maximum\":1000000,\"minimum\":1}"];
+  optional int64 sms_challenges_per_hour = 6 [json_name = "sms_challenges_per_hour", (authova.wire.property) = "{\"maximum\":10000000,\"minimum\":1}"];
+}
+message ResourcePolicyPatch {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"limits\",\"config_version\",\"reason\"]}";
+  optional int64 config_version = 1 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  ResourceLimits limits = 2 [json_name = "limits", (authova.wire.property) = "{}"];
+  optional string reason = 3 [json_name = "reason", (authova.wire.property) = "{\"maxLength\":500,\"minLength\":1}"];
+}
+message Session {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"user_id\",\"status\",\"created_at\",\"expires_at\",\"amr\"]}";
+  SessionAmrList amr = 1 [json_name = "amr", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional string created_at = 2 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  optional string expires_at = 3 [json_name = "expires_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  optional string id = 4 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string status = 5 [json_name = "status", (authova.wire.property) = "{}"];
+  optional string user_id = 6 [json_name = "user_id", (authova.wire.property) = "{}"];
+}
+message SessionPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}";
+  SessionPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  authova.wire.NullableString next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{\"x-authova-nullable\":true}"];
+}
+message SigningKey {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"key_id\",\"current\",\"created_at\",\"retire_at\",\"revoked_at\"]}";
+  optional int64 created_at = 1 [json_name = "created_at", (authova.wire.property) = "{}"];
+  optional bool current = 2 [json_name = "current", (authova.wire.property) = "{}"];
+  optional string key_id = 3 [json_name = "key_id", (authova.wire.property) = "{}"];
+  optional int64 retire_at = 4 [json_name = "retire_at", (authova.wire.property) = "{}"];
+  optional int64 revoked_at = 5 [json_name = "revoked_at", (authova.wire.property) = "{}"];
+}
+message SigningKeyPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\",\"config_version\"]}";
+  optional int64 config_version = 1 [json_name = "config_version", (authova.wire.property) = "{}"];
+  SigningKeyPageItemsList items = 2 [json_name = "items", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+}
+message User {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"app_id\",\"display_name\",\"status\",\"session_epoch\",\"created_at\"]}";
+  optional string admin_role = 1 [json_name = "admin_role", (authova.wire.property) = "{\"enum\":[\"\",\"owner\",\"admin\",\"auditor\"]}"];
+  optional string app_id = 2 [json_name = "app_id", (authova.wire.property) = "{}"];
+  optional string created_at = 3 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  optional string display_name = 4 [json_name = "display_name", (authova.wire.property) = "{}"];
+  optional string email = 5 [json_name = "email", (authova.wire.property) = "{}"];
+  optional string id = 6 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string phone = 7 [json_name = "phone", (authova.wire.property) = "{}"];
+  optional int64 session_epoch = 8 [json_name = "session_epoch", (authova.wire.property) = "{}"];
+  optional string status = 9 [json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"disabled\",\"deleted\",\"quarantined\"]}"];
+}
+message UserPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}";
+  UserPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  authova.wire.NullableString next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{\"x-authova-nullable\":true}"];
+}
+message VersionedReason {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"config_version\",\"reason\"]}";
+  optional int64 config_version = 1 [json_name = "config_version", (authova.wire.property) = "{\"minimum\":1}"];
+  optional string reason = 2 [json_name = "reason", (authova.wire.property) = "{\"maxLength\":500,\"minLength\":1}"];
+}
+message ListAppsRequest {
+  optional string cursor = 1 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 2 [json_name = "limit", (authova.wire.property) = "{\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+}
+message CreateAppRequest {
+  optional string idempotency_key = 1 [json_name = "idempotency_key", (authova.wire.property) = "{\"maxLength\":128,\"minLength\":8}", (authova.wire.parameter) = "{\"in\":\"header\",\"name\":\"Idempotency-Key\",\"required\":true}"];
+  AppCreate body = 2;
+}
+message GetAppRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+}
+message UpdateAppRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  AppPatch body = 2;
+}
+message SetAppAdministratorRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string user_id = 2 [json_name = "user_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"user_id\",\"required\":true}"];
+  AdminGrant body = 3;
+}
+message ListAgentGrantsRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+  optional string agent_id = 4 [json_name = "agent_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"agent_id\"}"];
+  optional string installation_id = 5 [json_name = "installation_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"installation_id\"}"];
+  optional string tenant_id = 6 [json_name = "tenant_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"tenant_id\"}"];
+  optional string user_id = 7 [json_name = "user_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"user_id\"}"];
+}
+message GetAgentGrantRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string grant_id = 2 [json_name = "grant_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"grant_id\",\"required\":true}"];
+}
+message RevokeAgentGrantRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string grant_id = 2 [json_name = "grant_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"grant_id\",\"required\":true}"];
+  VersionedReason body = 3;
+}
+message ListAgentInstallationsRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+  optional string agent_id = 4 [json_name = "agent_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"agent_id\"}"];
+  optional string tenant_id = 5 [json_name = "tenant_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"tenant_id\"}"];
+  optional string user_id = 6 [json_name = "user_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"user_id\"}"];
+}
+message CreateAgentInstallationRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string idempotency_key = 2 [json_name = "idempotency_key", (authova.wire.property) = "{\"maxLength\":128,\"minLength\":8,\"pattern\":\"^[A-Za-z0-9._~-]{8,128}$\"}", (authova.wire.parameter) = "{\"in\":\"header\",\"name\":\"Idempotency-Key\",\"required\":true}"];
+  AgentInstallationCreate body = 3;
+}
+message GetAgentInstallationRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string installation_id = 2 [json_name = "installation_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"installation_id\",\"required\":true}"];
+}
+message UpdateAgentInstallationRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string installation_id = 2 [json_name = "installation_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"installation_id\",\"required\":true}"];
+  AgentInstallationPatch body = 3;
+}
+message RenewAutonomousAgentGrantRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string installation_id = 2 [json_name = "installation_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"installation_id\",\"required\":true}"];
+  VersionedReason body = 3;
+}
+message GetAgentOperationRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string operation_key = 2 [json_name = "operation_key", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"operation_key\",\"required\":true}"];
+}
+message ListAgentsRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+}
+message CreateAgentRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string idempotency_key = 2 [json_name = "idempotency_key", (authova.wire.property) = "{\"maxLength\":128,\"minLength\":8,\"pattern\":\"^[A-Za-z0-9._~-]{8,128}$\"}", (authova.wire.parameter) = "{\"in\":\"header\",\"name\":\"Idempotency-Key\",\"required\":true}"];
+  AgentCreate body = 3;
+}
+message GetAgentRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string agent_id = 2 [json_name = "agent_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"agent_id\",\"required\":true}"];
+}
+message UpdateAgentRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string agent_id = 2 [json_name = "agent_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"agent_id\",\"required\":true}"];
+  AgentPatch body = 3;
+}
+message ListAppAuditRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+}
+message GetAuthenticationConfigRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+}
+message UpdateAuthenticationPolicyRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  AuthenticationPolicyPatch body = 2;
+}
+message ListClientsRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+}
+message CreateClientRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string idempotency_key = 2 [json_name = "idempotency_key", (authova.wire.property) = "{\"maxLength\":128,\"minLength\":8}", (authova.wire.parameter) = "{\"in\":\"header\",\"name\":\"Idempotency-Key\",\"required\":true}"];
+  ClientCreate body = 3;
+}
+message GetClientRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string client_id = 2 [json_name = "client_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"client_id\",\"required\":true}"];
+}
+message UpdateClientRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string client_id = 2 [json_name = "client_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"client_id\",\"required\":true}"];
+  ClientPatch body = 3;
+}
+message RevokePreviousClientSecretRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string client_id = 2 [json_name = "client_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"client_id\",\"required\":true}"];
+  VersionedReason body = 3;
+}
+message RotateClientSecretRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string client_id = 2 [json_name = "client_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"client_id\",\"required\":true}"];
+  ClientSecretRotate body = 3;
+}
+message ListConnectionsRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+}
+message CreateConnectionRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  ConnectionCreate body = 2;
+}
+message GetConnectionRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string connection_id = 2 [json_name = "connection_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"connection_id\",\"required\":true}"];
+}
+message UpdateConnectionRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string connection_id = 2 [json_name = "connection_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"connection_id\",\"required\":true}"];
+  ConnectionPatch body = 3;
+}
+message ListSigningKeysRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+}
+message RotateAppSigningKeyRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  Reason body = 2;
+}
+message RevokeSigningKeyRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string key_id = 2 [json_name = "key_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"key_id\",\"required\":true}"];
+  VersionedReason body = 3;
+}
+message ProvisionSystemManagementClientRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+}
+message GetResourcePolicyRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+}
+message UpdateResourcePolicyRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  ResourcePolicyPatch body = 2;
+}
+message ResumeAppRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  Reason body = 2;
+}
+message SuspendAppRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  Reason body = 2;
+}
+message ListUsersRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+  optional string q = 4 [json_name = "q", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"description\":\"Exact normalized full email or E.164 phone lookup, not display-name search.\",\"in\":\"query\",\"name\":\"q\"}"];
+}
+message GetUserRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string user_id = 2 [json_name = "user_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"user_id\",\"required\":true}"];
+}
+message DisableUserRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string user_id = 2 [json_name = "user_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"user_id\",\"required\":true}"];
+  Reason body = 3;
+}
+message EnableUserRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string user_id = 2 [json_name = "user_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"user_id\",\"required\":true}"];
+  EnableUser body = 3;
+}
+message ListUserSessionsRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string user_id = 2 [json_name = "user_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"user_id\",\"required\":true}"];
+  optional string cursor = 3 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 4 [json_name = "limit", (authova.wire.property) = "{\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+}
+message RevokeUserSessionRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string user_id = 2 [json_name = "user_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"user_id\",\"required\":true}"];
+  optional string session_id = 3 [json_name = "session_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"session_id\",\"required\":true}"];
+  Reason body = 4;
+}
+message GetManagementPrincipalRequest {
+}
+message ListPlatformOperatorsRequest {
+  optional string cursor = 1 [(authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\",\"x-authova-undocumented\":true}"];
+  optional int64 limit = 2 [(authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\",\"x-authova-undocumented\":true}"];
+}
+message CreatePlatformOperatorRequest {
+  OperatorCreate body = 1;
+}
+message UpdatePlatformOperatorRequest {
+  optional string operator_id = 1 [json_name = "operator_id", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"operator_id\",\"required\":true}"];
+  OperatorPatch body = 2;
+}
+message RevokeManagementSessionRequest {
+}
+message CreateManagementSessionRequest {
+  ManagementLogin body = 1;
+}
+message AgentAllowedModesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message AgentAllowedResourcesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message AgentAllowedScopesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message AgentCreateAllowedModesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message AgentCreateAllowedResourcesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message AgentCreateAllowedScopesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message AgentCreateRedirectUrisList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message AgentGrantScopesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message AgentGrantPageItemsList { option (authova.wire.unwrapped_list) = true; repeated AgentGrant values = 1; bool is_null = 2; }
+message AgentInstallationAllowedModesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message AgentInstallationAllowedScopesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message AgentInstallationCreateAllowedModesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message AgentInstallationCreateAllowedScopesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message AgentInstallationPageItemsList { option (authova.wire.unwrapped_list) = true; repeated AgentInstallation values = 1; bool is_null = 2; }
+message AgentPageItemsList { option (authova.wire.unwrapped_list) = true; repeated Agent values = 1; bool is_null = 2; }
+message AppPageItemsList { option (authova.wire.unwrapped_list) = true; repeated App values = 1; bool is_null = 2; }
+message AuditPageItemsList { option (authova.wire.unwrapped_list) = true; repeated Audit values = 1; bool is_null = 2; }
+message AuthenticationConfigProviderTypesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientAllowedAudiencesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientAllowedIntrospectionAudiencesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientAllowedScopesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientGrantTypesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientRedirectUrisList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientCreateAllowedAudiencesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientCreateAllowedIntrospectionAudiencesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientCreateAllowedScopesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientCreateGrantTypesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientCreateRedirectUrisList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientPageItemsList { option (authova.wire.unwrapped_list) = true; repeated Client values = 1; bool is_null = 2; }
+message ClientPatchAllowedAudiencesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientPatchAllowedIntrospectionAudiencesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientPatchAllowedScopesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientPatchGrantTypesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ClientPatchRedirectUrisList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message ConnectionPageItemsList { option (authova.wire.unwrapped_list) = true; repeated Connection values = 1; bool is_null = 2; }
+message CreatedClientAllowedAudiencesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message CreatedClientAllowedIntrospectionAudiencesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message CreatedClientAllowedScopesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message CreatedClientGrantTypesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message CreatedClientRedirectUrisList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message OperatorPageItemsList { option (authova.wire.unwrapped_list) = true; repeated Operator values = 1; bool is_null = 2; }
+message SessionAmrList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message SessionPageItemsList { option (authova.wire.unwrapped_list) = true; repeated Session values = 1; bool is_null = 2; }
+message SigningKeyPageItemsList { option (authova.wire.unwrapped_list) = true; repeated SigningKey values = 1; bool is_null = 2; }
+message UserPageItemsList { option (authova.wire.unwrapped_list) = true; repeated User values = 1; bool is_null = 2; }
+message UserDisabled {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"disabled\"]}";
+  optional bool disabled = 1 [json_name = "disabled", (authova.wire.property) = "{}"];
+}
+message ManagementClientProvisioned {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"client_id\"]}";
+  optional string client_id = 1 [json_name = "client_id", (authova.wire.property) = "{}"];
+}
+message SigningKeyRotated {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"key_id\"]}";
+  optional string key_id = 1 [json_name = "key_id", (authova.wire.property) = "{}"];
+}
+message AdministratorAssigned {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"user_id\",\"role\"]}";
+  optional string user_id = 1 [json_name = "user_id", (authova.wire.property) = "{}"];
+  optional string role = 2 [json_name = "role", (authova.wire.property) = "{}"];
+}
+message OperatorUpdated {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"updated\"]}";
+  optional bool updated = 1 [json_name = "updated", (authova.wire.property) = "{}"];
+}
+
+service Management {
+
+
+  rpc GetApp(GetAppRequest) returns (App) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}" };
+    option (authova.wire.operation) = "{\"operationId\":\"get_app\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"get app\",\"tags\":[\"Management\"]}";
+  }
+  rpc UpdateApp(UpdateAppRequest) returns (App) {
+    option (google.api.http) = { patch: "/api/v1/apps/{app_id}" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"update_app\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"update app\",\"tags\":[\"Management\"]}";
+  }
+  rpc SetAppAdministrator(SetAppAdministratorRequest) returns (AdministratorAssigned) {
+    option (google.api.http) = { put: "/api/v1/apps/{app_id}/administrators/{user_id}" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"set_app_administrator\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"description\":\"Success\",\"content\":{\"application/json\":{}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"set app administrator\",\"tags\":[\"Management\"]}";
+  }
+  rpc ListAgentGrants(ListAgentGrantsRequest) returns (AgentGrantPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/agent-grants" };
+    option (authova.wire.operation) = "{\"operationId\":\"list_agent_grants\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"list agent grants\",\"tags\":[\"Management\"]}";
+  }
+  rpc GetAgentGrant(GetAgentGrantRequest) returns (AgentGrant) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/agent-grants/{grant_id}" };
+    option (authova.wire.operation) = "{\"operationId\":\"get_agent_grant\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"get agent grant\",\"tags\":[\"Management\"]}";
+  }
+  rpc RevokeAgentGrant(RevokeAgentGrantRequest) returns (AgentGrant) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/agent-grants/{grant_id}/revoke" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"revoke_agent_grant\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"revoke agent grant\",\"tags\":[\"Management\"]}";
+  }
+  rpc ListAgentInstallations(ListAgentInstallationsRequest) returns (AgentInstallationPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/agent-installations" };
+    option (authova.wire.operation) = "{\"operationId\":\"list_agent_installations\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"list agent installations\",\"tags\":[\"Management\"]}";
+  }
+  rpc CreateAgentInstallation(CreateAgentInstallationRequest) returns (AgentInstallation) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/agent-installations" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"create_agent_installation\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"201\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"create agent installation\",\"tags\":[\"Management\"]}";
+  }
+  rpc GetAgentInstallation(GetAgentInstallationRequest) returns (AgentInstallation) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/agent-installations/{installation_id}" };
+    option (authova.wire.operation) = "{\"operationId\":\"get_agent_installation\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"get agent installation\",\"tags\":[\"Management\"]}";
+  }
+  rpc UpdateAgentInstallation(UpdateAgentInstallationRequest) returns (AgentInstallation) {
+    option (google.api.http) = { patch: "/api/v1/apps/{app_id}/agent-installations/{installation_id}" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"update_agent_installation\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"update agent installation\",\"tags\":[\"Management\"]}";
+  }
+  rpc RenewAutonomousAgentGrant(RenewAutonomousAgentGrantRequest) returns (AgentInstallation) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/agent-installations/{installation_id}/renew" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"renew_autonomous_agent_grant\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"renew autonomous agent grant\",\"tags\":[\"Management\"]}";
+  }
+  rpc GetAgentOperation(GetAgentOperationRequest) returns (AgentOperation) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/agent-operations/{operation_key}" };
+    option (authova.wire.operation) = "{\"operationId\":\"get_agent_operation\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"get agent operation\",\"tags\":[\"Management\"]}";
+  }
+  rpc ListAgents(ListAgentsRequest) returns (AgentPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/agents" };
+    option (authova.wire.operation) = "{\"operationId\":\"list_agents\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"list agents\",\"tags\":[\"Management\"]}";
+  }
+  rpc CreateAgent(CreateAgentRequest) returns (CreatedAgent) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/agents" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"create_agent\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"201\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"create agent\",\"tags\":[\"Management\"]}";
+  }
+  rpc GetAgent(GetAgentRequest) returns (Agent) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/agents/{agent_id}" };
+    option (authova.wire.operation) = "{\"operationId\":\"get_agent\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"get agent\",\"tags\":[\"Management\"]}";
+  }
+  rpc UpdateAgent(UpdateAgentRequest) returns (Agent) {
+    option (google.api.http) = { patch: "/api/v1/apps/{app_id}/agents/{agent_id}" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"update_agent\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"update agent\",\"tags\":[\"Management\"]}";
+  }
+  rpc ListAppAudit(ListAppAuditRequest) returns (AuditPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/audit" };
+    option (authova.wire.operation) = "{\"operationId\":\"list_app_audit\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"list app audit\",\"tags\":[\"Management\"]}";
+  }
+  rpc GetAuthenticationConfig(GetAuthenticationConfigRequest) returns (AuthenticationConfig) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/authentication-config" };
+    option (authova.wire.operation) = "{\"operationId\":\"get_authentication_config\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"get authentication config\",\"tags\":[\"Management\"]}";
+  }
+  rpc UpdateAuthenticationPolicy(UpdateAuthenticationPolicyRequest) returns (AuthenticationConfig) {
+    option (google.api.http) = { patch: "/api/v1/apps/{app_id}/authentication-config" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"update_authentication_policy\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"update authentication policy\",\"tags\":[\"Management\"]}";
+  }
+  rpc ListClients(ListClientsRequest) returns (ClientPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/clients" };
+    option (authova.wire.operation) = "{\"operationId\":\"list_clients\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"list clients\",\"tags\":[\"Management\"]}";
+  }
+  rpc CreateClient(CreateClientRequest) returns (CreatedClient) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/clients" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"create_client\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"201\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"create client\",\"tags\":[\"Management\"]}";
+  }
+  rpc GetClient(GetClientRequest) returns (Client) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/clients/{client_id}" };
+    option (authova.wire.operation) = "{\"operationId\":\"get_client\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"get client\",\"tags\":[\"Management\"]}";
+  }
+  rpc UpdateClient(UpdateClientRequest) returns (Client) {
+    option (google.api.http) = { patch: "/api/v1/apps/{app_id}/clients/{client_id}" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"update_client\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"update client\",\"tags\":[\"Management\"]}";
+  }
+  rpc RevokePreviousClientSecret(RevokePreviousClientSecretRequest) returns (Client) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/clients/{client_id}/secret/revoke-previous" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"revoke_previous_client_secret\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"revoke previous client secret\",\"tags\":[\"Management\"]}";
+  }
+  rpc RotateClientSecret(RotateClientSecretRequest) returns (ClientSecretRotated) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/clients/{client_id}/secret/rotate" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"rotate_client_secret\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"rotate client secret\",\"tags\":[\"Management\"]}";
+  }
+  rpc ListConnections(ListConnectionsRequest) returns (ConnectionPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/connections" };
+    option (authova.wire.operation) = "{\"operationId\":\"list_connections\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"list connections\",\"tags\":[\"Management\"]}";
+  }
+  rpc CreateConnection(CreateConnectionRequest) returns (Connection) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/connections" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"create_connection\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"201\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"create connection\",\"tags\":[\"Management\"]}";
+  }
+  rpc GetConnection(GetConnectionRequest) returns (Connection) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/connections/{connection_id}" };
+    option (authova.wire.operation) = "{\"operationId\":\"get_connection\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"get connection\",\"tags\":[\"Management\"]}";
+  }
+  rpc UpdateConnection(UpdateConnectionRequest) returns (Connection) {
+    option (google.api.http) = { patch: "/api/v1/apps/{app_id}/connections/{connection_id}" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"update_connection\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"update connection\",\"tags\":[\"Management\"]}";
+  }
+  rpc ListSigningKeys(ListSigningKeysRequest) returns (SigningKeyPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/keys" };
+    option (authova.wire.operation) = "{\"operationId\":\"list_signing_keys\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"list signing keys\",\"tags\":[\"Management\"]}";
+  }
+  rpc RotateAppSigningKey(RotateAppSigningKeyRequest) returns (SigningKeyRotated) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/keys/rotate" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"rotate_app_signing_key\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"description\":\"Success\",\"content\":{\"application/json\":{}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"rotate app signing key\",\"tags\":[\"Management\"]}";
+  }
+  rpc RevokeSigningKey(RevokeSigningKeyRequest) returns (KeyRevoked) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/keys/{key_id}/revoke" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"revoke_signing_key\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"revoke signing key\",\"tags\":[\"Management\"]}";
+  }
+  rpc ProvisionSystemManagementClient(ProvisionSystemManagementClientRequest) returns (ManagementClientProvisioned) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/management-client" };
+    option (authova.wire.operation) = "{\"operationId\":\"provision_system_management_client\",\"responses\":{\"200\":{\"description\":\"Success\",\"content\":{\"application/json\":{}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"provision system management client\",\"tags\":[\"Management\"]}";
+  }
+  rpc GetResourcePolicy(GetResourcePolicyRequest) returns (ResourceConfig) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/resource-policy" };
+    option (authova.wire.operation) = "{\"operationId\":\"get_resource_policy\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"get resource policy\",\"tags\":[\"Management\"]}";
+  }
+  rpc UpdateResourcePolicy(UpdateResourcePolicyRequest) returns (ResourceConfig) {
+    option (google.api.http) = { patch: "/api/v1/apps/{app_id}/resource-policy" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"update_resource_policy\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"update resource policy\",\"tags\":[\"Management\"]}";
+  }
+  rpc ResumeApp(ResumeAppRequest) returns (App) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/resume" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"resume_app\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"resume app\",\"tags\":[\"Management\"]}";
+  }
+  rpc SuspendApp(SuspendAppRequest) returns (App) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/suspend" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"suspend_app\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"suspend app\",\"tags\":[\"Management\"]}";
+  }
+  rpc ListUsers(ListUsersRequest) returns (UserPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/users" };
+    option (authova.wire.operation) = "{\"operationId\":\"list_users\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"list users\",\"tags\":[\"Management\"]}";
+  }
+  rpc GetUser(GetUserRequest) returns (User) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/users/{user_id}" };
+    option (authova.wire.operation) = "{\"operationId\":\"get_user\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"get user\",\"tags\":[\"Management\"]}";
+  }
+  rpc DisableUser(DisableUserRequest) returns (UserDisabled) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/users/{user_id}/disable" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"disable_user\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"description\":\"Success\",\"content\":{\"application/json\":{}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"disable user\",\"tags\":[\"Management\"]}";
+  }
+  rpc EnableUser(EnableUserRequest) returns (User) {
+    option (google.api.http) = { post: "/api/v1/apps/{app_id}/users/{user_id}/enable" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"enable_user\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"enable user\",\"tags\":[\"Management\"]}";
+  }
+  rpc ListUserSessions(ListUserSessionsRequest) returns (SessionPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/users/{user_id}/sessions" };
+    option (authova.wire.operation) = "{\"operationId\":\"list_user_sessions\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"list user sessions\",\"tags\":[\"Management\"]}";
+  }
+  rpc RevokeUserSession(RevokeUserSessionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = { delete: "/api/v1/apps/{app_id}/users/{user_id}/sessions/{session_id}" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"revoke_user_session\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"204\":{\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"revoke user session\",\"tags\":[\"Management\"]}";
+  }
+  rpc GetManagementPrincipal(GetManagementPrincipalRequest) returns (CurrentOperator) {
+    option (google.api.http) = { get: "/api/v1/platform/me" };
+    option (authova.wire.operation) = "{\"operationId\":\"get_management_principal\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"get management principal\",\"tags\":[\"Management\"]}";
+  }
+  rpc ListPlatformOperators(ListPlatformOperatorsRequest) returns (OperatorPage) {
+    option (google.api.http) = { get: "/api/v1/platform/operators" };
+    option (authova.wire.operation) = "{\"operationId\":\"list_platform_operators\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"list platform operators\",\"tags\":[\"Management\"]}";
+  }
+  rpc CreatePlatformOperator(CreatePlatformOperatorRequest) returns (OperatorCreated) {
+    option (google.api.http) = { post: "/api/v1/platform/operators" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"create_platform_operator\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"201\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"create platform operator\",\"tags\":[\"Management\"]}";
+  }
+  rpc UpdatePlatformOperator(UpdatePlatformOperatorRequest) returns (OperatorUpdated) {
+    option (google.api.http) = { patch: "/api/v1/platform/operators/{operator_id}" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"update_platform_operator\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"200\":{\"description\":\"Success\",\"content\":{\"application/json\":{}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"update platform operator\",\"tags\":[\"Management\"]}";
+  }
+  rpc RevokeManagementSession(RevokeManagementSessionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = { delete: "/api/v1/platform/sessions" };
+    option (authova.wire.operation) = "{\"operationId\":\"revoke_management_session\",\"responses\":{\"204\":{\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"revoke management session\",\"tags\":[\"Management\"]}";
+  }
+  rpc CreateManagementSession(CreateManagementSessionRequest) returns (ManagementLoginResponse) {
+    option (google.api.http) = { post: "/api/v1/platform/sessions" body: "body" };
+    option (authova.wire.operation) = "{\"operationId\":\"create_management_session\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"201\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[],\"summary\":\"create management session\",\"tags\":[\"Management\"]}";
+  }
+}
+service AppInventory {
+  rpc ListApps(ListAppsRequest) returns (AppPage) {
+    option (google.api.http) = { get: "/api/v1/apps" additional_bindings { get: "/api/v1/apps/" } };
+    option (authova.wire.operation) = "{\"operationId\":\"list_apps\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"list apps\",\"tags\":[\"Management\"],\"x-authova-document-schemas\":[\"AdminGrant\",\"Agent\",\"AgentCreate\",\"AgentGrant\",\"AgentGrantPage\",\"AgentInstallation\",\"AgentInstallationCreate\",\"AgentInstallationPage\",\"AgentInstallationPatch\",\"AgentOperation\",\"AgentPage\",\"AgentPatch\",\"AlipayCredentials\",\"App\",\"AppCreate\",\"AppPage\",\"AppPatch\",\"Audit\",\"AuditPage\",\"AuthenticationConfig\",\"AuthenticationPolicy\",\"AuthenticationPolicyPatch\",\"Client\",\"ClientCreate\",\"ClientPage\",\"ClientPatch\",\"ClientSecretRotate\",\"ClientSecretRotated\",\"Connection\",\"ConnectionCreate\",\"ConnectionPage\",\"ConnectionPatch\",\"CreatedAgent\",\"CreatedClient\",\"CurrentOperator\",\"EnableUser\",\"KeyRevoked\",\"ManagementLogin\",\"ManagementLoginResponse\",\"Operator\",\"OperatorCreate\",\"OperatorCreated\",\"OperatorPage\",\"OperatorPatch\",\"Problem\",\"Reason\",\"ResourceConfig\",\"ResourceLimits\",\"ResourcePolicyPatch\",\"Session\",\"SessionPage\",\"SigningKey\",\"SigningKeyPage\",\"User\",\"UserPage\",\"VersionedReason\",\"UserDisabled\",\"ManagementClientProvisioned\",\"SigningKeyRotated\",\"AdministratorAssigned\",\"OperatorUpdated\"]}";
+  }
+  rpc CreateApp(CreateAppRequest) returns (App) {
+    option (google.api.http) = { post: "/api/v1/apps" body: "body" additional_bindings { post: "/api/v1/apps/" body: "body" } };
+    option (authova.wire.operation) = "{\"operationId\":\"create_app\",\"requestBody\":{\"content\":{\"application/json\":{}},\"required\":true},\"responses\":{\"201\":{\"content\":{\"application/json\":{}},\"description\":\"Success\"},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"409\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Explicit failure; no positive authorization on dependency errors.\"}},\"security\":[{\"managementBearer\":[]}],\"summary\":\"create app\",\"tags\":[\"Management\"]}";
+  }
+}

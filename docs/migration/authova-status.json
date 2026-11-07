@@ -1,0 +1,19 @@
+[
+  " M README.md",
+  " M docs/implementation/STATUS.md",
+  " M internal/integration/agents_test.go",
+  " M internal/ports/storage.go",
+  " M internal/protocol/provider.go",
+  " M internal/storage/sqlstore/app.go",
+  " M internal/transport/management.go",
+  " M internal/transport/metrics.go",
+  "?? docs/implementation/AGENT-QUERY-2026-10-21.md",
+  "?? evidence/query-mcp-2026-10-21/",
+  "?? internal/application/queries.go",
+  "?? internal/domain/query.go",
+  "?? internal/integration/agent_query_test.go",
+  "?? internal/integration/query_sdk_combo_test.go",
+  "?? internal/protocol/query.go",
+  "?? internal/transport/query.go",
+  ""
+]

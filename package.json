@@ -1,0 +1,7 @@
+{
+  "name": "authova-system-tests",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": { "test:e2e": "playwright test" },
+  "devDependencies": { "@playwright/test": "1.64.0" }
+}

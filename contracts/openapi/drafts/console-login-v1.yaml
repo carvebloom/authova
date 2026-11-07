@@ -1,0 +1,80 @@
+openapi: 3.1.2
+info:
+  title: Authova Console Login Discovery API
+  license:
+    name: Apache 2.0
+    identifier: Apache-2.0
+  version: 0.2.0-draft
+  description: Public, rate-limited discovery of built-in Console login Client IDs.
+servers:
+  - url: /
+security: []
+tags:
+  - name: ConsoleLogin
+    description: Public read-only login configuration, without credentials.
+paths:
+  /api/v1/public/console-login-config:
+    get:
+      tags: [ConsoleLogin]
+      operationId: getPlatformConsoleLoginConfig
+      summary: Read the platform operator Console login configuration
+      responses:
+        '200':
+          description: Platform issuer and built-in public Client ID.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConsoleLoginConfig' }
+        '429': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/public/apps/{slug}/console-login-config:
+    get:
+      tags: [ConsoleLogin]
+      operationId: getAppConsoleLoginConfig
+      summary: Read the App admin Console login configuration
+      description: Unknown and non-active Apps receive the same public response.
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 63
+      responses:
+        '200':
+          description: App issuer and built-in public Client ID.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConsoleLoginConfig' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+components:
+  responses:
+    Problem:
+      description: Problem Details error.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    ConsoleLoginConfig:
+      type: object
+      additionalProperties: false
+      required: [issuer, client_id]
+      properties:
+        issuer:
+          type: string
+          format: uri
+          description: Exact issuer to use for OIDC Discovery and token validation.
+        client_id:
+          type: string
+          description: Public Client ID registered for the Console BFF.
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        code: { type: string }
+        request_id: { type: string }

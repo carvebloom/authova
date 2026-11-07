@@ -1,0 +1,10 @@
+# Mount PKI and a private ACL file; expose only on a restricted network.
+port 0
+tls-port 6379
+tls-cert-file /run/valkey/server.crt
+tls-key-file /run/valkey/server.key
+tls-ca-cert-file /run/valkey/ca.crt
+tls-auth-clients yes
+tls-protocols "TLSv1.2 TLSv1.3"
+aclfile /run/valkey/users.acl
+# Provision persistence, HA and memory policy for your deployment separately.

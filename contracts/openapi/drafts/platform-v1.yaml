@@ -1,0 +1,350 @@
+openapi: 3.1.2
+info:
+  title: Authova Platform Management API
+  license:
+    name: Apache 2.0
+    identifier: Apache-2.0
+  version: 0.4.0-draft
+  description: >-
+    Review draft for platform administrators to create, read, update, suspend,
+    and resume Apps.
+    This is not a published API and is not implemented yet.
+servers:
+  - url: /
+security:
+  - bearerAuth: []
+tags:
+  - name: Apps
+    description: Platform-level App lifecycle operations.
+paths:
+  /api/v1/apps:
+    get:
+      tags: [Apps]
+      operationId: listApps
+      summary: List Apps visible to a platform administrator
+      parameters:
+        - name: cursor
+          in: query
+          description: Opaque cursor returned by the previous page.
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          description: Maximum number of Apps to return.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: One page of Apps.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppPage'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Apps]
+      operationId: createApp
+      summary: Create an isolated App
+      description: >-
+        Requires a platform administrator. Reusing an idempotency key with the
+        same principal and same request returns the original result. The
+        retention period is not frozen in this draft.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppRequest'
+      responses:
+        '201':
+          description: App created.
+          headers:
+            Location:
+              description: Relative URL of the created App.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/apps/{app_id}:
+    get:
+      tags: [Apps]
+      operationId: getApp
+      summary: Get one App
+      description: The path identifier alone never grants access.
+      parameters:
+        - $ref: '#/components/parameters/AppId'
+      responses:
+        '200':
+          description: App found.
+          headers:
+            ETag:
+              description: Strong ETag based on the App config version.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [Apps]
+      operationId: updateApp
+      summary: Update the App display name or slug
+      description: Issuer and immutable App key are not changed by slug updates.
+      parameters:
+        - $ref: '#/components/parameters/AppId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAppRequest'
+      responses:
+        '200':
+          description: Updated App.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '412': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/apps/{app_id}/suspend:
+    post:
+      tags: [Apps]
+      operationId: suspendApp
+      summary: Suspend business token issuance and mark resource tokens inactive
+      description: Existing offline JWTs can remain valid until expiry.
+      parameters:
+        - $ref: '#/components/parameters/AppId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AppStatusReason' }
+      responses:
+        '200':
+          description: Suspended App.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/App' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/apps/{app_id}/resume:
+    post:
+      tags: [Apps]
+      operationId: resumeApp
+      summary: Resume business token issuance and resource introspection
+      description: Does not reactivate previously revoked Sessions or refresh families.
+      parameters:
+        - $ref: '#/components/parameters/AppId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AppStatusReason' }
+      responses:
+        '200':
+          description: Active App.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/App' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: >-
+        Platform administrator credential. Issuance and scope are pending
+        security design and are not implied by possession of an App ID.
+  parameters:
+    AppId:
+      name: app_id
+      in: path
+      required: true
+      description: Stable, opaque App identifier.
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: >-
+        Unique retry key for this caller and operation. Reusing it with a
+        different request results in a conflict.
+      schema:
+        type: string
+        format: uuid
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Strong ETag from a previous App read.
+      schema:
+        type: string
+  responses:
+    Problem:
+      description: >-
+        Error response. Expected statuses include 400, 401, 403, 404, 409,
+        422 and 500; each response uses the matching HTTP status and body.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    CreateAppRequest:
+      type: object
+      additionalProperties: false
+      required: [slug, display_name]
+      properties:
+        slug:
+          type: string
+          minLength: 3
+          maxLength: 63
+          pattern: '^[a-z][a-z0-9-]*[a-z0-9]$'
+          description: Unique within one Authova deployment; not an authorization credential.
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 128
+    UpdateAppRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        slug:
+          type: string
+          minLength: 3
+          maxLength: 63
+          pattern: '^[a-z][a-z0-9-]*[a-z0-9]$'
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 128
+    AppStatusReason:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+    App:
+      type: object
+      additionalProperties: false
+      required: [id, slug, display_name, status, issuer, config_version, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        display_name:
+          type: string
+        status:
+          type: string
+          enum: [active, suspended]
+          description: Unknown values must be treated as non-active by clients.
+        issuer:
+          type: string
+          format: uri
+          description: App-specific OIDC issuer assigned by the service.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        config_version:
+          type: integer
+          format: int64
+          minimum: 1
+    AppPage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/App'
+        next_cursor:
+          type: string
+          description: Absent when there is no next page.
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          type: string
+          description: Stable Authova machine-readable error code.
+        request_id:
+          type: string

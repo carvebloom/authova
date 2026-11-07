@@ -1,0 +1,150 @@
+[
+  {
+    "package": "github.com/carvebloom/authova/console/internal/valkeyconfig",
+    "test": "TestValkeyTLSACL",
+    "diagnostics": [
+      "tls_test.go:18: isolated TLS fixture required; run scripts/valkey-tls-gates.py"
+    ],
+    "baseline": "current v1 full run",
+    "separate_verification": "Prior dedicated TLS/ACL/outage gates passed; current v1 OCI verified mTLS/ACL, not a repeat of all outage campaigns."
+  },
+  {
+    "package": "github.com/carvebloom/authova/console/cmd/authova-console",
+    "test": "TestConsoleValkeyTLSOutageRecovery",
+    "diagnostics": [
+      "valkey_outage_test.go:17: isolated TLS lifecycle runner required"
+    ],
+    "baseline": "current v1 full run",
+    "separate_verification": "Prior dedicated TLS/ACL/outage gates passed; current v1 OCI verified mTLS/ACL, not a repeat of all outage campaigns."
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/transport",
+    "test": "TestValkeyTLSOutageRecovery",
+    "diagnostics": [
+      "limiter_outage_test.go:17: isolated lifecycle runner required"
+    ],
+    "baseline": "current v1 full run",
+    "separate_verification": "Prior dedicated TLS/ACL/outage gates passed; current v1 OCI verified mTLS/ACL, not a repeat of all outage campaigns."
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/valkeyconfig",
+    "test": "TestValkeyTLSACL",
+    "diagnostics": [
+      "tls_test.go:18: isolated TLS fixture required; run scripts/valkey-tls-gates.py"
+    ],
+    "baseline": "current v1 full run",
+    "separate_verification": "Prior dedicated TLS/ACL/outage gates passed; current v1 OCI verified mTLS/ACL, not a repeat of all outage campaigns."
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestAgentCapacityResume",
+    "diagnostics": [
+      "agents_capacity_resume_test.go:26: requires explicit resume in an owned private capacity run"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestAgentCapacityHTTP",
+    "diagnostics": [
+      "agents_capacity_test.go:34: requires private capacity fixture, duration, QPS and one driver"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestAgentCapacityFixture",
+    "diagnostics": [
+      "agents_recovery_acceptance_test.go:92: requires private acceptance directory and explicit synthetic user count"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestAgentRecoveredAuthority",
+    "diagnostics": [
+      "agents_recovery_acceptance_test.go:321: requires private fixture and actual restored databases"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestAgentRevokeAfterBackup",
+    "diagnostics": [
+      "agents_recovery_acceptance_test.go:328: requires explicit post-backup revocation rehearsal"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestAgentRestoredQuarantineCLI",
+    "diagnostics": [
+      "agents_recovery_acceptance_test.go:361: requires actual restored databases and compiled Core CLI"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestAgentDelegationSoak",
+    "diagnostics": [
+      "agents_stress_test.go:318: opt in with AUTHOVA_AGENT_SOAK_DURATION>=1m; formal long gate requires >=1h"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestCapacityRestore",
+    "diagnostics": [
+      "capacity_restore_test.go:22: requires actual 12M restored databases and private plan"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestIdentityRecoverySnapshotFixture",
+    "diagnostics": [
+      "identity_recovery_roundtrip_test.go:26: explicit private disposable recovery campaign required"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestIdentityRecoverySnapshotMutation",
+    "diagnostics": [
+      "identity_recovery_roundtrip_test.go:26: explicit private disposable recovery campaign required"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestIdentityRecoverySnapshotRestored",
+    "diagnostics": [
+      "identity_recovery_roundtrip_test.go:26: explicit private disposable recovery campaign required"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestOTPBrowserFixture",
+    "diagnostics": [
+      "otp_browser_acceptance_test.go:24: explicit private browser acceptance directory required"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestProtocolSoak",
+    "diagnostics": [
+      "protocol_soak_test.go:16: opt in with AUTHOVA_PROTOCOL_SOAK_DURATION>=10m"
+    ],
+    "baseline": "current v1 full run"
+  },
+  {
+    "package": "github.com/carvebloom/authova/internal/integration",
+    "test": "TestRestoredEncryptedFacts",
+    "diagnostics": [
+      "restore_test.go:83: set AUTHOVA_RESTORE_POSTGRES_DSN and AUTHOVA_RESTORE_MYSQL_DSN to verify a real restored backup"
+    ],
+    "baseline": "current v1 full run"
+  }
+]

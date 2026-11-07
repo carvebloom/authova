@@ -1,0 +1,48 @@
+name: authova
+x-runtime: &runtime
+  image: authova/core:0.1.0-rc.1
+  env_file: ${AUTHOVA_DEPLOY_ENV:?absolute private deployment env file required}
+  environment:
+    AUTHOVA_MODE: production
+    AUTHOVA_LISTEN: :8080
+    AUTHOVA_MASTER_KEY_FILE: /run/authova/master.key
+  volumes:
+    - ${AUTHOVA_SECRET_DIR:?absolute private secrets directory required}/master.key:/run/authova/master.key:ro
+    - ${AUTHOVA_SECRET_DIR}/core-valkey.password:/run/authova/core-valkey.password:ro
+    - ${AUTHOVA_SECRET_DIR}/valkey-ca.crt:/run/authova/valkey-ca.crt:ro
+    - ${AUTHOVA_SECRET_DIR}/core-valkey.crt:/run/authova/core-valkey.crt:ro
+    - ${AUTHOVA_SECRET_DIR}/core-valkey.key:/run/authova/core-valkey.key:ro
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  restart: unless-stopped
+  stop_grace_period: 15s
+  pids_limit: 256
+services:
+  core:
+    <<: *runtime
+    command: [serve]
+    ports: ["127.0.0.1:18080:8080"]
+  worker:
+    <<: *runtime
+    command: [worker]
+  console:
+    image: authova/console:0.1.0-rc.1
+    env_file: ${AUTHOVA_CONSOLE_DEPLOY_ENV:?absolute private console deployment env file required}
+    environment:
+      AUTHOVA_MODE: production
+      AUTHOVA_CONSOLE_LISTEN: :8090
+      AUTHOVA_CONSOLE_KEY_FILE: /run/authova/console.key
+    volumes:
+      - ${AUTHOVA_SECRET_DIR:?absolute private secrets directory required}/console.key:/run/authova/console.key:ro
+      - ${AUTHOVA_SECRET_DIR}/console-valkey.password:/run/authova/console-valkey.password:ro
+      - ${AUTHOVA_SECRET_DIR}/valkey-ca.crt:/run/authova/valkey-ca.crt:ro
+      - ${AUTHOVA_SECRET_DIR}/console-valkey.crt:/run/authova/console-valkey.crt:ro
+      - ${AUTHOVA_SECRET_DIR}/console-valkey.key:/run/authova/console-valkey.key:ro
+    ports: ["127.0.0.1:18090:8090"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    stop_grace_period: 15s
+    pids_limit: 256

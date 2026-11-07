@@ -1,0 +1,388 @@
+{
+  "date": "2026-11-06T01:45:13Z",
+  "host": {
+    "os": "macOS-26.5.2-arm64-arm-64bit",
+    "cpu": "Apple M4 Pro",
+    "logical_cpus": 14,
+    "memory_bytes": 51539607552
+  },
+  "workload": {
+    "operation": "POST /a/{key}/oauth/introspect, online live synthetic user/session tokens",
+    "synthetic_users": 1000,
+    "active_user_samples": 100,
+    "target_qps": 100,
+    "duration_seconds_per_run": 5,
+    "http_workers": 8,
+    "server_gomaxprocs": 4,
+    "server_db_pool": 16,
+    "order": [
+      "old",
+      "new",
+      "new",
+      "old"
+    ],
+    "measurement": "scheduled arrival through response, includes generator queue; 0.1ms histogram bins",
+    "dataset": "identical synthetic facts copied by column name into independent old/new databases; histories never copied or renumbered"
+  },
+  "results": {
+    "postgres": [
+      {
+        "active_user_samples": 100,
+        "actual_users": 1000,
+        "completed": 500,
+        "database": "postgres",
+        "date": "2026-11-06T01:45:24Z",
+        "elapsed_seconds_including_drain": 4.993853833,
+        "failed": 0,
+        "fixture_kind": "synthetic valid user/session tokens with measurement-duration TTL; normal issuance/refresh tested separately",
+        "fixture_token_ttl_seconds": 605,
+        "go_version": "go1.27.3",
+        "gomaxprocs": 4,
+        "latency_basis": "scheduled arrival through response, includes generator queue delay",
+        "latency_histogram": "0.1ms bins through 1s, 1ms through 120s; explicit overflow",
+        "latency_ms": {
+          "max": 10.288,
+          "overflow_above_120s": 0,
+          "p50": 4,
+          "p95": 5.7,
+          "p99": 6.5
+        },
+        "limitations": [
+          "single local host/container database",
+          "load generator shares host with server",
+          "no HA/failover claim",
+          "deterministic pseudorandom requests across reported sample, not all active users"
+        ],
+        "measurement_seconds": 5,
+        "queue_capacity": 64,
+        "queue_dropped": 0,
+        "scheduled": 500,
+        "statuses": {
+          "200": 500
+        },
+        "success": 500,
+        "successful_qps": 100.12307462744275,
+        "target_qps": 100,
+        "workers": 8,
+        "version": "old",
+        "order": 0
+      },
+      {
+        "active_user_samples": 100,
+        "actual_users": 1000,
+        "completed": 500,
+        "database": "postgres",
+        "date": "2026-11-06T01:45:30Z",
+        "elapsed_seconds_including_drain": 4.995206792,
+        "failed": 0,
+        "fixture_kind": "synthetic valid user/session tokens with measurement-duration TTL; normal issuance/refresh tested separately",
+        "fixture_token_ttl_seconds": 605,
+        "go_version": "go1.27.3",
+        "gomaxprocs": 4,
+        "latency_basis": "scheduled arrival through response, includes generator queue delay",
+        "latency_histogram": "0.1ms bins through 1s, 1ms through 120s; explicit overflow",
+        "latency_ms": {
+          "max": 13.831,
+          "overflow_above_120s": 0,
+          "p50": 4.3,
+          "p95": 5.9,
+          "p99": 6.6
+        },
+        "limitations": [
+          "single local host/container database",
+          "load generator shares host with server",
+          "no HA/failover claim",
+          "deterministic pseudorandom requests across reported sample, not all active users"
+        ],
+        "measurement_seconds": 5,
+        "queue_capacity": 64,
+        "queue_dropped": 0,
+        "scheduled": 500,
+        "statuses": {
+          "200": 500
+        },
+        "success": 500,
+        "successful_qps": 100.09595614755482,
+        "target_qps": 100,
+        "workers": 8,
+        "version": "new",
+        "order": 1
+      },
+      {
+        "active_user_samples": 100,
+        "actual_users": 1000,
+        "completed": 500,
+        "database": "postgres",
+        "date": "2026-11-06T01:45:35Z",
+        "elapsed_seconds_including_drain": 4.992894125,
+        "failed": 0,
+        "fixture_kind": "synthetic valid user/session tokens with measurement-duration TTL; normal issuance/refresh tested separately",
+        "fixture_token_ttl_seconds": 605,
+        "go_version": "go1.27.3",
+        "gomaxprocs": 4,
+        "latency_basis": "scheduled arrival through response, includes generator queue delay",
+        "latency_histogram": "0.1ms bins through 1s, 1ms through 120s; explicit overflow",
+        "latency_ms": {
+          "max": 12.023,
+          "overflow_above_120s": 0,
+          "p50": 4.3,
+          "p95": 6.2,
+          "p99": 7.5
+        },
+        "limitations": [
+          "single local host/container database",
+          "load generator shares host with server",
+          "no HA/failover claim",
+          "deterministic pseudorandom requests across reported sample, not all active users"
+        ],
+        "measurement_seconds": 5,
+        "queue_capacity": 64,
+        "queue_dropped": 0,
+        "scheduled": 500,
+        "statuses": {
+          "200": 500
+        },
+        "success": 500,
+        "successful_qps": 100.14231976128674,
+        "target_qps": 100,
+        "workers": 8,
+        "version": "new",
+        "order": 2
+      },
+      {
+        "active_user_samples": 100,
+        "actual_users": 1000,
+        "completed": 500,
+        "database": "postgres",
+        "date": "2026-11-06T01:45:41Z",
+        "elapsed_seconds_including_drain": 4.994161833,
+        "failed": 0,
+        "fixture_kind": "synthetic valid user/session tokens with measurement-duration TTL; normal issuance/refresh tested separately",
+        "fixture_token_ttl_seconds": 605,
+        "go_version": "go1.27.3",
+        "gomaxprocs": 4,
+        "latency_basis": "scheduled arrival through response, includes generator queue delay",
+        "latency_histogram": "0.1ms bins through 1s, 1ms through 120s; explicit overflow",
+        "latency_ms": {
+          "max": 12.628,
+          "overflow_above_120s": 0,
+          "p50": 4.1,
+          "p95": 5.7,
+          "p99": 6.6
+        },
+        "limitations": [
+          "single local host/container database",
+          "load generator shares host with server",
+          "no HA/failover claim",
+          "deterministic pseudorandom requests across reported sample, not all active users"
+        ],
+        "measurement_seconds": 5,
+        "queue_capacity": 64,
+        "queue_dropped": 0,
+        "scheduled": 500,
+        "statuses": {
+          "200": 500
+        },
+        "success": 500,
+        "successful_qps": 100.11689983615315,
+        "target_qps": 100,
+        "workers": 8,
+        "version": "old",
+        "order": 3
+      }
+    ],
+    "mysql": [
+      {
+        "active_user_samples": 100,
+        "actual_users": 1000,
+        "completed": 500,
+        "database": "mysql",
+        "date": "2026-11-06T01:45:49Z",
+        "elapsed_seconds_including_drain": 4.994093083,
+        "failed": 0,
+        "fixture_kind": "synthetic valid user/session tokens with measurement-duration TTL; normal issuance/refresh tested separately",
+        "fixture_token_ttl_seconds": 605,
+        "go_version": "go1.27.3",
+        "gomaxprocs": 4,
+        "latency_basis": "scheduled arrival through response, includes generator queue delay",
+        "latency_histogram": "0.1ms bins through 1s, 1ms through 120s; explicit overflow",
+        "latency_ms": {
+          "max": 15.481,
+          "overflow_above_120s": 0,
+          "p50": 4.4,
+          "p95": 6,
+          "p99": 7
+        },
+        "limitations": [
+          "single local host/container database",
+          "load generator shares host with server",
+          "no HA/failover claim",
+          "deterministic pseudorandom requests across reported sample, not all active users"
+        ],
+        "measurement_seconds": 5,
+        "queue_capacity": 64,
+        "queue_dropped": 0,
+        "scheduled": 500,
+        "statuses": {
+          "200": 500
+        },
+        "success": 500,
+        "successful_qps": 100.11827807175055,
+        "target_qps": 100,
+        "workers": 8,
+        "version": "old",
+        "order": 0
+      },
+      {
+        "active_user_samples": 100,
+        "actual_users": 1000,
+        "completed": 500,
+        "database": "mysql",
+        "date": "2026-11-06T01:45:54Z",
+        "elapsed_seconds_including_drain": 4.993157375,
+        "failed": 0,
+        "fixture_kind": "synthetic valid user/session tokens with measurement-duration TTL; normal issuance/refresh tested separately",
+        "fixture_token_ttl_seconds": 605,
+        "go_version": "go1.27.3",
+        "gomaxprocs": 4,
+        "latency_basis": "scheduled arrival through response, includes generator queue delay",
+        "latency_histogram": "0.1ms bins through 1s, 1ms through 120s; explicit overflow",
+        "latency_ms": {
+          "max": 9.415,
+          "overflow_above_120s": 0,
+          "p50": 4.1,
+          "p95": 6.2,
+          "p99": 8.1
+        },
+        "limitations": [
+          "single local host/container database",
+          "load generator shares host with server",
+          "no HA/failover claim",
+          "deterministic pseudorandom requests across reported sample, not all active users"
+        ],
+        "measurement_seconds": 5,
+        "queue_capacity": 64,
+        "queue_dropped": 0,
+        "scheduled": 500,
+        "statuses": {
+          "200": 500
+        },
+        "success": 500,
+        "successful_qps": 100.13704004272446,
+        "target_qps": 100,
+        "workers": 8,
+        "version": "new",
+        "order": 1
+      },
+      {
+        "active_user_samples": 100,
+        "actual_users": 1000,
+        "completed": 500,
+        "database": "mysql",
+        "date": "2026-11-06T01:46:00Z",
+        "elapsed_seconds_including_drain": 4.997335417,
+        "failed": 0,
+        "fixture_kind": "synthetic valid user/session tokens with measurement-duration TTL; normal issuance/refresh tested separately",
+        "fixture_token_ttl_seconds": 605,
+        "go_version": "go1.27.3",
+        "gomaxprocs": 4,
+        "latency_basis": "scheduled arrival through response, includes generator queue delay",
+        "latency_histogram": "0.1ms bins through 1s, 1ms through 120s; explicit overflow",
+        "latency_ms": {
+          "max": 10.564,
+          "overflow_above_120s": 0,
+          "p50": 4.5,
+          "p95": 6.4,
+          "p99": 7.5
+        },
+        "limitations": [
+          "single local host/container database",
+          "load generator shares host with server",
+          "no HA/failover claim",
+          "deterministic pseudorandom requests across reported sample, not all active users"
+        ],
+        "measurement_seconds": 5,
+        "queue_capacity": 64,
+        "queue_dropped": 0,
+        "scheduled": 500,
+        "statuses": {
+          "200": 500
+        },
+        "success": 500,
+        "successful_qps": 100.05332007515315,
+        "target_qps": 100,
+        "workers": 8,
+        "version": "new",
+        "order": 2
+      },
+      {
+        "active_user_samples": 100,
+        "actual_users": 1000,
+        "completed": 500,
+        "database": "mysql",
+        "date": "2026-11-06T01:46:05Z",
+        "elapsed_seconds_including_drain": 4.995176,
+        "failed": 0,
+        "fixture_kind": "synthetic valid user/session tokens with measurement-duration TTL; normal issuance/refresh tested separately",
+        "fixture_token_ttl_seconds": 605,
+        "go_version": "go1.27.3",
+        "gomaxprocs": 4,
+        "latency_basis": "scheduled arrival through response, includes generator queue delay",
+        "latency_histogram": "0.1ms bins through 1s, 1ms through 120s; explicit overflow",
+        "latency_ms": {
+          "max": 12.08,
+          "overflow_above_120s": 0,
+          "p50": 4.3,
+          "p95": 6.3,
+          "p99": 7.6
+        },
+        "limitations": [
+          "single local host/container database",
+          "load generator shares host with server",
+          "no HA/failover claim",
+          "deterministic pseudorandom requests across reported sample, not all active users"
+        ],
+        "measurement_seconds": 5,
+        "queue_capacity": 64,
+        "queue_dropped": 0,
+        "scheduled": 500,
+        "statuses": {
+          "200": 500
+        },
+        "success": 500,
+        "successful_qps": 100.09657317379808,
+        "target_qps": 100,
+        "workers": 8,
+        "version": "old",
+        "order": 3
+      }
+    ]
+  },
+  "limitations": [
+    "bounded local key-path comparison, not capacity/endurance acceptance",
+    "load generator and databases share host",
+    "synthetic token preparation bypasses login/issuance; those use separate behavior tests",
+    "physical schema/ciphertext retained; isolated benchmark databases only",
+    "other host workloads are not controlled; ABBA order reduces but does not remove noise",
+    "no HA/failover or large-population claim",
+    "old/new use distinct databases with independent caches after unpublished baseline consolidation"
+  ],
+  "binary_sha256": {
+    "old": "f25f65231d54b29a6c19f315b5c767d435cc46501e3264494ca13b26b0d85869",
+    "new": "2da96182eebd42d906b901576066a0da35ff7172b836171512d48a5f8014b823"
+  },
+  "database_versions": {
+    "postgres": "17.11",
+    "mysql": "8.4.11"
+  },
+  "schema_versions": {
+    "postgres": {
+      "old": 8,
+      "new": 1
+    },
+    "mysql": {
+      "old": 8,
+      "new": 1
+    }
+  }
+}

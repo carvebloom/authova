@@ -1,0 +1,59 @@
+groups:
+  - name: authova-runtime
+    rules:
+      - alert: AuthovaTargetUnavailable
+        expr: up{job=~"authova-core|authova-worker"} == 0
+        for: 1m
+        labels: {severity: critical}
+        annotations:
+          summary: Authova scrape target unavailable
+          runbook: Check process, private scrape route and readiness before restarting.
+      - alert: AuthovaAuthenticationServerErrors
+        expr: sum by (deployment) (rate(authova_http_request_duration_seconds_count{route=~"oauth.*|authentication.*",status_class="5xx"}[5m])) / clamp_min(sum by (deployment) (rate(authova_http_request_duration_seconds_count{route=~"oauth.*|authentication.*"}[5m])), 1) > 0.01
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: Authentication server error ratio is elevated
+          runbook: Inspect readiness, DB and Valkey; use request and trace IDs. Do not weaken identity policy.
+      - alert: AuthovaTokenP95High
+        expr: histogram_quantile(0.95, sum by (deployment, le) (rate(authova_http_request_duration_seconds_bucket{route="oauth/oauth/token"}[5m]))) > 0.5
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: Token endpoint p95 exceeds the initial 500 ms budget
+          runbook: Compare KDF and DB latency, shared saturation and quota rejection. Tune this budget after real load acceptance.
+      - alert: AuthovaDBPoolSaturated
+        expr: authova_db_in_use_connections / clamp_min(authova_db_max_connections,1) > 0.9
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: Core DB pool sustained occupancy above 90 percent
+          runbook: Inspect DB transaction latency and waiting; do not increase pools before checking DB capacity.
+      - alert: AuthovaOutboxDelayed
+        expr: max by (deployment) (authova_outbox_oldest_due_seconds) > 60
+        for: 2m
+        labels: {severity: warning}
+        annotations:
+          summary: Due delivery has been delayed for over a minute
+          runbook: Inspect worker, provider rejection and queue snapshot freshness. Avoid logging verification code payloads.
+      - alert: AuthovaOutboxSnapshotStale
+        expr: authova_outbox_snapshot_valid == 0 or time() - authova_outbox_last_success_timestamp_seconds > 30
+        for: 1m
+        labels: {severity: warning}
+        annotations:
+          summary: Outbox metrics cannot be confirmed current
+          runbook: Check worker or Core database reachability; retained queue values may be stale.
+      - alert: AuthovaDeliveryFailures
+        expr: max by (deployment) (authova_outbox_failed) > 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: Delivery outbox contains failed messages
+          runbook: Inspect sanitized message IDs and provider status. Old expired messages may need a separate retention policy.
+      - alert: AuthovaResourceBudgetRejections
+        expr: sum by (deployment,resource,reason) (rate(authova_resource_rejections_total[5m])) > 1
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: Sustained resource admission rejection
+          runbook: Use App scoped security logs to identify the source; distinguish tenant quota from shared capacity.

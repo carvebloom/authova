@@ -1,0 +1,1059 @@
+{
+  "access_tokens": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "client_id"
+        ],
+        "name": "access_tokens_app_id_client_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "client_id"
+        ],
+        "table": "clients"
+      },
+      {
+        "columns": [
+          "app_id",
+          "family_id"
+        ],
+        "name": "access_tokens_app_id_family_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "refresh_families"
+      },
+      {
+        "columns": [
+          "app_id",
+          "session_id"
+        ],
+        "name": "access_tokens_app_id_session_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "sessions"
+      },
+      {
+        "columns": [
+          "app_id",
+          "user_id"
+        ],
+        "name": "access_tokens_app_id_user_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "users"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "access_tokens_expires_at_idx",
+        "ent_index": "access_tokens_expires_at_idx"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "admin_grants": {
+    "checks": {
+      "admin_grants_role_check": "((role)::text = ANY ((ARRAY['owner'::character varying, 'admin'::character varying, 'auditor'::character varying])::text[]))"
+    },
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "user_id"
+        ],
+        "name": "admin_grants_app_id_user_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "users"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "app_id",
+      "user_id"
+    ]
+  },
+  "agent_grants": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "agent_id"
+        ],
+        "name": "agent_grants_app_id_agent_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "agents"
+      },
+      {
+        "columns": [
+          "app_id",
+          "installation_id"
+        ],
+        "name": "agent_grants_app_id_installation_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "agent_installations"
+      },
+      {
+        "columns": [
+          "app_id",
+          "user_id"
+        ],
+        "name": "agent_grants_app_id_user_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "users"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "agent_grants_agent",
+        "ent_index": "agent_grants_agent"
+      },
+      {
+        "name": "agent_grants_expiry",
+        "ent_index": "agent_grants_expiry"
+      },
+      {
+        "name": "agent_grants_installation",
+        "ent_index": "agent_grants_installation"
+      },
+      {
+        "name": "agent_grants_user",
+        "ent_index": "agent_grants_user"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "agent_installations": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "agent_id"
+        ],
+        "name": "agent_installations_app_id_agent_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "agents"
+      },
+      {
+        "columns": [
+          "app_id",
+          "user_id"
+        ],
+        "name": "agent_installations_app_id_user_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "users"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "agent_installations_agent",
+        "ent_index": "agent_installations_agent"
+      },
+      {
+        "name": "agent_installations_tenant",
+        "ent_index": "agent_installations_tenant"
+      },
+      {
+        "name": "agent_installations_user",
+        "ent_index": "agent_installations_user"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "agent_tokens": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "agent_id"
+        ],
+        "name": "agent_tokens_app_id_agent_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "agents"
+      },
+      {
+        "columns": [
+          "app_id",
+          "grant_id"
+        ],
+        "name": "agent_tokens_app_id_grant_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "agent_grants"
+      },
+      {
+        "columns": [
+          "app_id",
+          "installation_id"
+        ],
+        "name": "agent_tokens_app_id_installation_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "agent_installations"
+      },
+      {
+        "columns": [
+          "app_id",
+          "token_id"
+        ],
+        "name": "agent_tokens_app_id_token_id_fkey",
+        "on_delete": "CASCADE",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "access_tokens"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "agent_tokens_grant",
+        "ent_index": "agent_tokens_grant"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "token_id"
+    ]
+  },
+  "agents": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "client_id"
+        ],
+        "name": "agents_app_id_client_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "client_id"
+        ],
+        "table": "clients"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "agents_app_id_client_id_key",
+        "ent_index": "agents_app_id_client_id_key"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "apps": {
+    "checks": {
+      "apps_status_recovery_check": "((status)::text = ANY ((ARRAY['active'::character varying, 'suspended'::character varying, 'quarantined'::character varying])::text[]))"
+    },
+    "columns": {},
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "name": "apps_app_key_key",
+        "ent_index": "apps_app_key_key"
+      },
+      {
+        "name": "apps_slug_key",
+        "ent_index": "apps_slug_key"
+      }
+    ],
+    "primary_key": [
+      "id"
+    ]
+  },
+  "audit_events": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "name": "audit_events_created_at_id_idx",
+        "ent_index": "audit_events_created_at_id_idx"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "challenges": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "flow_id"
+        ],
+        "name": "challenges_app_id_flow_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "flows"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "challenges_expires_at_idx",
+        "ent_index": "challenges_expires_at_idx"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "clients": {
+    "checks": {
+      "clients_introspection_kind": "(((kind)::text = 'confidential'::text) OR (introspection_count = 0))"
+    },
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id"
+        ],
+        "name": "clients_app_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "id"
+        ],
+        "table": "apps"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "clients_app_id_client_id_key",
+        "ent_index": "clients_app_id_client_id_key"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "codes": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "flow_id"
+        ],
+        "name": "codes_app_id_flow_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "flows"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "app_id",
+      "digest"
+    ]
+  },
+  "connections": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id"
+        ],
+        "name": "connections_app_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "id"
+        ],
+        "table": "apps"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "external_identities": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "connection_id"
+        ],
+        "name": "external_identities_app_id_connection_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "connections"
+      },
+      {
+        "columns": [
+          "app_id",
+          "user_id"
+        ],
+        "name": "external_identities_app_id_user_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "users"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "external_identities_user_lookup",
+        "ent_index": "external_identities_user_lookup"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "connection_id",
+      "subject_digest"
+    ]
+  },
+  "flows": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "client_id"
+        ],
+        "name": "flows_app_id_client_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "client_id"
+        ],
+        "table": "clients"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "flows_expires_at_idx",
+        "ent_index": "flows_expires_at_idx"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "idempotency": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id"
+        ],
+        "name": "idempotency_app_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "id"
+        ],
+        "table": "apps"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "app_id",
+      "idem_key"
+    ]
+  },
+  "identifiers": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "user_id"
+        ],
+        "name": "identifiers_app_id_user_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "users"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "app_id",
+      "kind",
+      "digest"
+    ]
+  },
+  "management_sessions": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "operator_id"
+        ],
+        "name": "management_sessions_operator_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "id"
+        ],
+        "table": "operators"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "digest"
+    ]
+  },
+  "oauth_consents": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "client_id"
+        ],
+        "name": "oauth_consents_app_id_client_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "client_id"
+        ],
+        "table": "clients"
+      },
+      {
+        "columns": [
+          "app_id",
+          "user_id"
+        ],
+        "name": "oauth_consents_app_id_user_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "users"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "app_id",
+      "user_id",
+      "client_id"
+    ]
+  },
+  "operators": {
+    "checks": {
+      "operators_role_check": "((role)::text = ANY ((ARRAY['owner'::character varying, 'admin'::character varying, 'auditor'::character varying])::text[]))"
+    },
+    "columns": {},
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "name": "operators_email_digest_key",
+        "ent_index": "operators_email_digest_key"
+      }
+    ],
+    "primary_key": [
+      "id"
+    ]
+  },
+  "outbox": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id"
+        ],
+        "name": "outbox_app_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "id"
+        ],
+        "table": "apps"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "outbox_app_ready",
+        "ent_index": "outbox_app_ready"
+      },
+      {
+        "name": "outbox_ready_idx",
+        "ent_index": "outbox_ready_idx"
+      }
+    ],
+    "primary_key": [
+      "id"
+    ]
+  },
+  "outbox_dispatch": {
+    "checks": {},
+    "columns": {
+      "app_id": {
+        "default": "",
+        "generated": "",
+        "null": false,
+        "type": "character varying(36)"
+      },
+      "last_dispatch_at": {
+        "default": "0",
+        "generated": "",
+        "null": false,
+        "type": "bigint"
+      },
+      "next_dispatch_at": {
+        "default": "",
+        "generated": "",
+        "null": true,
+        "type": "bigint"
+      }
+    },
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id"
+        ],
+        "name": "outbox_dispatch_app_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "id"
+        ],
+        "table": "apps"
+      }
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "next_dispatch_at",
+          "app_id"
+        ],
+        "descending": [
+          false,
+          false
+        ],
+        "name": "outbox_dispatch_due",
+        "predicate": "",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "app_id"
+    ]
+  },
+  "owner_locks": {
+    "checks": {},
+    "columns": {
+      "app_id": {
+        "default": "",
+        "generated": "",
+        "null": false,
+        "type": "character varying(36)"
+      }
+    },
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id"
+        ],
+        "name": "owner_locks_app_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "id"
+        ],
+        "table": "apps"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "app_id"
+    ]
+  },
+  "passkey_ceremonies": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id"
+        ],
+        "name": "passkey_ceremonies_app_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "id"
+        ],
+        "table": "apps"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "passkey_ceremonies_expiry",
+        "ent_index": "passkey_ceremonies_expiry"
+      },
+      {
+        "columns": [
+          "app_id",
+          "user_id",
+          "id"
+        ],
+        "descending": [
+          false,
+          false,
+          false
+        ],
+        "name": "passkey_ceremonies_user",
+        "predicate": "",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "passkeys": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "user_id"
+        ],
+        "name": "passkeys_app_id_user_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "users"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "passkeys_app_id_credential_hash_key",
+        "ent_index": "passkeys_app_id_credential_hash_key"
+      },
+      {
+        "name": "passkeys_user",
+        "ent_index": "passkeys_user"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "platform_idempotency": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "operator_id"
+        ],
+        "name": "platform_idempotency_operator_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "id"
+        ],
+        "table": "operators"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "operator_id",
+      "idem_key"
+    ]
+  },
+  "refresh_families": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "client_id"
+        ],
+        "name": "refresh_families_app_id_client_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "client_id"
+        ],
+        "table": "clients"
+      },
+      {
+        "columns": [
+          "app_id",
+          "session_id"
+        ],
+        "name": "refresh_families_app_id_session_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "sessions"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "refresh_tokens": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "family_id"
+        ],
+        "name": "refresh_tokens_app_id_family_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "refresh_families"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "refresh_tokens_app_id_family_id_generation_key",
+        "ent_index": "refresh_tokens_app_id_family_id_generation_key"
+      },
+      {
+        "name": "refresh_tokens_expires_at_idx",
+        "ent_index": "refresh_tokens_expires_at_idx"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "digest"
+    ]
+  },
+  "sessions": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id",
+          "user_id"
+        ],
+        "name": "sessions_app_id_user_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "app_id",
+          "id"
+        ],
+        "table": "users"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "sessions_app_id_handle_digest_key",
+        "ent_index": "sessions_app_id_handle_digest_key"
+      },
+      {
+        "name": "sessions_expires_at_idx",
+        "ent_index": "sessions_expires_at_idx"
+      },
+      {
+        "name": "sessions_user_id_id_idx",
+        "ent_index": "sessions_user_id_id_idx"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "signing_keys": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id"
+        ],
+        "name": "signing_keys_app_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "id"
+        ],
+        "table": "apps"
+      }
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "app_id"
+        ],
+        "descending": [
+          false
+        ],
+        "name": "signing_keys_current_unique",
+        "predicate": "(current_key = 1)",
+        "unique": true
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  },
+  "users": {
+    "checks": {},
+    "columns": {},
+    "foreign_keys": [
+      {
+        "columns": [
+          "app_id"
+        ],
+        "name": "users_app_id_fkey",
+        "on_delete": "NO ACTION",
+        "on_update": "NO ACTION",
+        "references": [
+          "id"
+        ],
+        "table": "apps"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "users_status_id_idx",
+        "ent_index": "users_status_id_idx"
+      }
+    ],
+    "primary_key": [
+      "app_id",
+      "id"
+    ]
+  }
+}

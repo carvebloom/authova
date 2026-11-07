@@ -1,0 +1,13 @@
+// Copyright Authova contributors. SPDX-License-Identifier: Apache-2.0
+syntax = "proto3";
+package authova.wire;
+option go_package = "github.com/carvebloom/authova/api/authova/wire;wire";
+import "google/protobuf/descriptor.proto";
+// JSON fragments carry OpenAPI constraints/HTTP semantics that protobuf does not
+// express. Structural property types and HTTP paths come from descriptors.
+extend google.protobuf.FileOptions { string document = 51000; }
+extend google.protobuf.MessageOptions { string schema = 51001; bool unwrapped_list = 51002; bool nullable_string = 51007; }
+extend google.protobuf.FieldOptions { string property = 51003; string item = 51004; string parameter = 51005; bool null_clears = 51008; }
+extend google.protobuf.MethodOptions { string operation = 51006; }
+// Presence preserves omitted, null and empty cursors on the legacy HTTP wire.
+message NullableString { option (nullable_string) = true; string value = 1; bool is_null = 2; }

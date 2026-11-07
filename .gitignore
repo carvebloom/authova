@@ -1,0 +1,17 @@
+/bin/
+/.dev/
+/output/
+/coverage.out
+*.local
+.DS_Store
+
+/node_modules/
+/test-results/
+/playwright-report/
+/.playwright-cli/
+__pycache__/
+*.pyc
+/.tools/
+/.migration/
+**/node_modules/
+**/dist/

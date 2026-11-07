@@ -1,0 +1,219 @@
+// Copyright Authova contributors. SPDX-License-Identifier: Apache-2.0
+// Public contract authority. Generated OpenAPI must not be edited.
+syntax = "proto3";
+package authova.management.v1;
+option go_package = "github.com/carvebloom/authova/api/authova/v1;v1";
+import "api/authova/wire/options.proto";
+import "google/api/annotations.proto";
+import "api/authova/v1/management.proto";
+option (authova.wire.document) = "{\"components\":{\"securitySchemes\":{\"queryAgent\":{\"bearerFormat\":\"JWT\",\"description\":\"Short-lived autonomous Agent token for urn:authova:query:APP_ID. Exact scopes are documented per operation.\",\"scheme\":\"bearer\",\"type\":\"http\"}}},\"info\":{\"description\":\"Purpose-bound autonomous query identities. All operations are GET. Ordinary business and Console credentials are rejected. No mutations or raw credentials are exposed.\",\"license\":{\"identifier\":\"Apache-2.0\",\"name\":\"Apache-2.0\"},\"title\":\"Authova read-only Agent queries\",\"version\":\"0.1.0-rc.1\"},\"openapi\":\"3.1.2\",\"security\":[{\"queryAgent\":[]}],\"servers\":[{\"url\":\"/\"}],\"tags\":[{\"description\":\"Read-only App and tenant facts\",\"name\":\"queries\"}]}";
+message QueryContractAgentGrantPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\"],\"x-authova-schema-name\":\"AgentGrantPage\"}";
+  QueryContractAgentGrantPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{\"maxItems\":100}", (authova.wire.item) = "{}"];
+  optional string next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{}"];
+}
+message QueryContractAgentInstallationPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\"],\"x-authova-schema-name\":\"AgentInstallationPage\"}";
+  QueryContractAgentInstallationPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{\"maxItems\":100}", (authova.wire.item) = "{}"];
+  optional string next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{}"];
+}
+message QueryContractAgentPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\"],\"x-authova-schema-name\":\"AgentPage\"}";
+  QueryContractAgentPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{\"maxItems\":100}", (authova.wire.item) = "{}"];
+  optional string next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{}"];
+}
+message QueryAudit {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"app_id\",\"actor_id\",\"action\",\"subject_id\",\"created_at\"]}";
+  optional string action = 1 [json_name = "action", (authova.wire.property) = "{}"];
+  optional string actor_id = 2 [json_name = "actor_id", (authova.wire.property) = "{}"];
+  optional string app_id = 3 [json_name = "app_id", (authova.wire.property) = "{}"];
+  optional string created_at = 4 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  optional string id = 5 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string subject_id = 6 [json_name = "subject_id", (authova.wire.property) = "{}"];
+}
+message QueryAuditPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\"]}";
+  QueryAuditPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{\"maxItems\":100}", (authova.wire.item) = "{}"];
+  optional string next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{}"];
+}
+message QueryConfiguration {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"app\",\"policy\",\"resource_limits\",\"passkey_available\",\"email_otp_configured\",\"phone_otp_configured\",\"connections\"]}";
+  App app = 1 [json_name = "app", (authova.wire.property) = "{}"];
+  QueryConfigurationConnectionsList connections = 2 [json_name = "connections", (authova.wire.property) = "{\"maxItems\":100}", (authova.wire.item) = "{}"];
+  optional string connections_next_cursor = 3 [json_name = "connections_next_cursor", (authova.wire.property) = "{}"];
+  optional bool email_otp_configured = 4 [json_name = "email_otp_configured", (authova.wire.property) = "{}"];
+  optional bool passkey_available = 5 [json_name = "passkey_available", (authova.wire.property) = "{}"];
+  optional bool phone_otp_configured = 6 [json_name = "phone_otp_configured", (authova.wire.property) = "{}"];
+  AuthenticationPolicy policy = 7 [json_name = "policy", (authova.wire.property) = "{}"];
+  ResourceLimits resource_limits = 8 [json_name = "resource_limits", (authova.wire.property) = "{}"];
+}
+message QueryConnection {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"name\",\"provider_type\",\"status\",\"config_version\"]}";
+  optional int64 config_version = 1 [json_name = "config_version", (authova.wire.property) = "{}"];
+  optional string id = 2 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string name = 3 [json_name = "name", (authova.wire.property) = "{}"];
+  optional string provider_type = 4 [json_name = "provider_type", (authova.wire.property) = "{}"];
+  optional string status = 5 [json_name = "status", (authova.wire.property) = "{}"];
+}
+message QueryPrincipal {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"app_id\",\"client_id\",\"agent_id\",\"installation_id\",\"grant_id\",\"tenant_id\",\"scopes\",\"expires_at\"]}";
+  optional string agent_id = 1 [json_name = "agent_id", (authova.wire.property) = "{}"];
+  optional string app_id = 2 [json_name = "app_id", (authova.wire.property) = "{}"];
+  optional string client_id = 3 [json_name = "client_id", (authova.wire.property) = "{}"];
+  optional int64 expires_at = 4 [json_name = "expires_at", (authova.wire.property) = "{}"];
+  optional string grant_id = 5 [json_name = "grant_id", (authova.wire.property) = "{}"];
+  optional string installation_id = 6 [json_name = "installation_id", (authova.wire.property) = "{}"];
+  QueryPrincipalScopesList scopes = 7 [json_name = "scopes", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  optional string tenant_id = 8 [json_name = "tenant_id", (authova.wire.property) = "{}"];
+}
+message QueryUser {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"id\",\"app_id\",\"display_name\",\"status\",\"created_at\",\"contacts_redacted\"]}";
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{}"];
+  optional bool contacts_redacted = 2 [json_name = "contacts_redacted", (authova.wire.property) = "{\"description\":\"Contacts are masked unless authova.query.contacts is explicitly approved.\"}"];
+  optional string created_at = 3 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
+  optional string display_name = 4 [json_name = "display_name", (authova.wire.property) = "{}"];
+  optional string email = 5 [json_name = "email", (authova.wire.property) = "{}"];
+  optional string id = 6 [json_name = "id", (authova.wire.property) = "{}"];
+  optional string phone = 7 [json_name = "phone", (authova.wire.property) = "{}"];
+  optional string status = 8 [json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"disabled\",\"deleted\",\"quarantined\"]}"];
+}
+message QueryUserPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\"]}";
+  QueryUserPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{\"maxItems\":100}", (authova.wire.item) = "{}"];
+  optional string next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{}"];
+}
+message QueryContractSessionPage {
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"items\"],\"x-authova-schema-name\":\"SessionPage\"}";
+  QueryContractSessionPageItemsList items = 1 [json_name = "items", (authova.wire.property) = "{\"maxItems\":100}", (authova.wire.item) = "{}"];
+  optional string next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{}"];
+}
+message QueryAgentPageRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{\"format\":\"uuid\"}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{\"default\":20,\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+}
+message QueryAgentRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{\"format\":\"uuid\"}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string id = 2 [json_name = "id", (authova.wire.property) = "{\"maxLength\":128,\"minLength\":1}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"id\",\"required\":true}"];
+  optional string cursor = 3 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\",\"x-authova-undocumented\":true}"];
+  optional int64 limit = 4 [json_name = "limit", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\",\"x-authova-undocumented\":true}"];
+}
+message QueryQueryAuditPageRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{\"format\":\"uuid\"}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{\"default\":20,\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+}
+message QueryQueryConfigurationRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{\"format\":\"uuid\"}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{\"default\":20,\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+}
+message QueryQueryPrincipalRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{\"format\":\"uuid\"}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\",\"x-authova-undocumented\":true}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\",\"x-authova-undocumented\":true}"];
+}
+message QueryAgentGrantPageRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{\"format\":\"uuid\"}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{\"default\":20,\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+  optional string agent_id = 4 [json_name = "agent_id", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"agent_id\"}"];
+  optional string user_id = 5 [json_name = "user_id", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"user_id\"}"];
+  optional string tenant_id = 6 [json_name = "tenant_id", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"tenant_id\"}"];
+  optional string installation_id = 7 [json_name = "installation_id", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"installation_id\"}"];
+}
+message QueryAgentGrantRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{\"format\":\"uuid\"}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string id = 2 [json_name = "id", (authova.wire.property) = "{\"maxLength\":128,\"minLength\":1}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"id\",\"required\":true}"];
+  optional string cursor = 3 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\",\"x-authova-undocumented\":true}"];
+  optional int64 limit = 4 [json_name = "limit", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\",\"x-authova-undocumented\":true}"];
+}
+message QueryAgentInstallationPageRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{\"format\":\"uuid\"}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{\"default\":20,\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+  optional string agent_id = 4 [json_name = "agent_id", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"agent_id\"}"];
+  optional string user_id = 5 [json_name = "user_id", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"user_id\"}"];
+  optional string tenant_id = 6 [json_name = "tenant_id", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"tenant_id\"}"];
+}
+message QueryAgentInstallationRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{\"format\":\"uuid\"}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string id = 2 [json_name = "id", (authova.wire.property) = "{\"maxLength\":128,\"minLength\":1}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"id\",\"required\":true}"];
+  optional string cursor = 3 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\",\"x-authova-undocumented\":true}"];
+  optional int64 limit = 4 [json_name = "limit", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\",\"x-authova-undocumented\":true}"];
+}
+message QueryQueryUserPageRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{\"format\":\"uuid\"}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string cursor = 2 [json_name = "cursor", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 3 [json_name = "limit", (authova.wire.property) = "{\"default\":20,\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+}
+message QueryQueryUserRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{\"format\":\"uuid\"}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string id = 2 [json_name = "id", (authova.wire.property) = "{\"maxLength\":128,\"minLength\":1}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"id\",\"required\":true}"];
+  optional string cursor = 3 [json_name = "cursor", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\",\"x-authova-undocumented\":true}"];
+  optional int64 limit = 4 [json_name = "limit", (authova.wire.property) = "{}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\",\"x-authova-undocumented\":true}"];
+}
+message QuerySessionPageRequest {
+  optional string app_id = 1 [json_name = "app_id", (authova.wire.property) = "{\"format\":\"uuid\"}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"app_id\",\"required\":true}"];
+  optional string user_id = 2 [json_name = "user_id", (authova.wire.property) = "{\"maxLength\":128,\"minLength\":1}", (authova.wire.parameter) = "{\"in\":\"path\",\"name\":\"user_id\",\"required\":true}"];
+  optional string cursor = 3 [json_name = "cursor", (authova.wire.property) = "{\"maxLength\":128}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"cursor\"}"];
+  optional int64 limit = 4 [json_name = "limit", (authova.wire.property) = "{\"default\":20,\"maximum\":100,\"minimum\":1}", (authova.wire.parameter) = "{\"in\":\"query\",\"name\":\"limit\"}"];
+}
+message QueryContractAgentGrantPageItemsList { option (authova.wire.unwrapped_list) = true; repeated AgentGrant values = 1; bool is_null = 2; }
+message QueryContractAgentInstallationPageItemsList { option (authova.wire.unwrapped_list) = true; repeated AgentInstallation values = 1; bool is_null = 2; }
+message QueryContractAgentPageItemsList { option (authova.wire.unwrapped_list) = true; repeated Agent values = 1; bool is_null = 2; }
+message QueryAuditPageItemsList { option (authova.wire.unwrapped_list) = true; repeated QueryAudit values = 1; bool is_null = 2; }
+message QueryConfigurationConnectionsList { option (authova.wire.unwrapped_list) = true; repeated QueryConnection values = 1; bool is_null = 2; }
+message QueryPrincipalScopesList { option (authova.wire.unwrapped_list) = true; repeated string values = 1; bool is_null = 2; }
+message QueryUserPageItemsList { option (authova.wire.unwrapped_list) = true; repeated QueryUser values = 1; bool is_null = 2; }
+message QueryContractSessionPageItemsList { option (authova.wire.unwrapped_list) = true; repeated Session values = 1; bool is_null = 2; }
+service Query {
+  rpc QueryAgentPage(QueryAgentPageRequest) returns (QueryContractAgentPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/query/agents" };
+    option (authova.wire.operation) = "{\"description\":\"Requires authova.query.agents, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.\",\"operationId\":\"queryAgentPage\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Read-only result\",\"headers\":{\"Cache-Control\":{\"schema\":{\"const\":\"no-store\",\"type\":\"string\"}},\"X-Request-ID\":{\"schema\":{\"type\":\"string\"}}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or duplicate parameter\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or no longer live credential\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Wrong purpose, mode, scope or tenant boundary\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Object not in the approved boundary\"},\"405\":{\"description\":\"Only GET is accepted\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Admission rejected\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Dependency unavailable\"}},\"security\":[{\"queryAgent\":[]}],\"summary\":\"Query agents\",\"tags\":[\"queries\"],\"x-required-scope\":\"authova.query.agents\",\"x-authova-document-schemas\":[\"Agent\",\"AgentGrant\",\"AgentGrantPage\",\"AgentInstallation\",\"AgentInstallationPage\",\"AgentPage\",\"App\",\"AuthenticationPolicy\",\"Problem\",\"QueryAudit\",\"QueryAuditPage\",\"QueryConfiguration\",\"QueryConnection\",\"QueryPrincipal\",\"QueryUser\",\"QueryUserPage\",\"ResourceLimits\",\"Session\",\"SessionPage\"]}";
+  }
+  rpc QueryAgent(QueryAgentRequest) returns (Agent) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/query/agents/{id}" };
+    option (authova.wire.operation) = "{\"description\":\"Requires authova.query.agents, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.\",\"operationId\":\"queryAgent\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Read-only result\",\"headers\":{\"Cache-Control\":{\"schema\":{\"const\":\"no-store\",\"type\":\"string\"}},\"X-Request-ID\":{\"schema\":{\"type\":\"string\"}}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or duplicate parameter\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or no longer live credential\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Wrong purpose, mode, scope or tenant boundary\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Object not in the approved boundary\"},\"405\":{\"description\":\"Only GET is accepted\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Admission rejected\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Dependency unavailable\"}},\"security\":[{\"queryAgent\":[]}],\"summary\":\"Query agents/{id}\",\"tags\":[\"queries\"],\"x-required-scope\":\"authova.query.agents\"}";
+  }
+  rpc QueryQueryAuditPage(QueryQueryAuditPageRequest) returns (QueryAuditPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/query/audit" };
+    option (authova.wire.operation) = "{\"description\":\"Requires authova.query.audit, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.\",\"operationId\":\"queryQueryAuditPage\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Read-only result\",\"headers\":{\"Cache-Control\":{\"schema\":{\"const\":\"no-store\",\"type\":\"string\"}},\"X-Request-ID\":{\"schema\":{\"type\":\"string\"}}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or duplicate parameter\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or no longer live credential\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Wrong purpose, mode, scope or tenant boundary\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Object not in the approved boundary\"},\"405\":{\"description\":\"Only GET is accepted\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Admission rejected\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Dependency unavailable\"}},\"security\":[{\"queryAgent\":[]}],\"summary\":\"Query audit\",\"tags\":[\"queries\"],\"x-required-scope\":\"authova.query.audit\"}";
+  }
+  rpc QueryQueryConfiguration(QueryQueryConfigurationRequest) returns (QueryConfiguration) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/query/configuration" };
+    option (authova.wire.operation) = "{\"description\":\"Requires authova.query.configuration, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.\",\"operationId\":\"queryQueryConfiguration\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Read-only result\",\"headers\":{\"Cache-Control\":{\"schema\":{\"const\":\"no-store\",\"type\":\"string\"}},\"X-Request-ID\":{\"schema\":{\"type\":\"string\"}}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or duplicate parameter\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or no longer live credential\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Wrong purpose, mode, scope or tenant boundary\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Object not in the approved boundary\"},\"405\":{\"description\":\"Only GET is accepted\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Admission rejected\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Dependency unavailable\"}},\"security\":[{\"queryAgent\":[]}],\"summary\":\"Query configuration\",\"tags\":[\"queries\"],\"x-required-scope\":\"authova.query.configuration\"}";
+  }
+  rpc QueryQueryPrincipal(QueryQueryPrincipalRequest) returns (QueryPrincipal) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/query/context" };
+    option (authova.wire.operation) = "{\"description\":\"Requires authova.query.context, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Tenant-bound credentials are restricted to their authoritative tenant.\",\"operationId\":\"queryQueryPrincipal\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Read-only result\",\"headers\":{\"Cache-Control\":{\"schema\":{\"const\":\"no-store\",\"type\":\"string\"}},\"X-Request-ID\":{\"schema\":{\"type\":\"string\"}}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or duplicate parameter\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or no longer live credential\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Wrong purpose, mode, scope or tenant boundary\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Object not in the approved boundary\"},\"405\":{\"description\":\"Only GET is accepted\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Admission rejected\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Dependency unavailable\"}},\"security\":[{\"queryAgent\":[]}],\"summary\":\"Query context\",\"tags\":[\"queries\"],\"x-required-scope\":\"authova.query.context\"}";
+  }
+  rpc QueryAgentGrantPage(QueryAgentGrantPageRequest) returns (QueryContractAgentGrantPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/query/grants" };
+    option (authova.wire.operation) = "{\"description\":\"Requires authova.query.grants, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Tenant-bound credentials are restricted to their authoritative tenant.\",\"operationId\":\"queryAgentGrantPage\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Read-only result\",\"headers\":{\"Cache-Control\":{\"schema\":{\"const\":\"no-store\",\"type\":\"string\"}},\"X-Request-ID\":{\"schema\":{\"type\":\"string\"}}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or duplicate parameter\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or no longer live credential\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Wrong purpose, mode, scope or tenant boundary\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Object not in the approved boundary\"},\"405\":{\"description\":\"Only GET is accepted\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Admission rejected\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Dependency unavailable\"}},\"security\":[{\"queryAgent\":[]}],\"summary\":\"Query grants\",\"tags\":[\"queries\"],\"x-required-scope\":\"authova.query.grants\"}";
+  }
+  rpc QueryAgentGrant(QueryAgentGrantRequest) returns (AgentGrant) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/query/grants/{id}" };
+    option (authova.wire.operation) = "{\"description\":\"Requires authova.query.grants, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Tenant-bound credentials are restricted to their authoritative tenant.\",\"operationId\":\"queryAgentGrant\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Read-only result\",\"headers\":{\"Cache-Control\":{\"schema\":{\"const\":\"no-store\",\"type\":\"string\"}},\"X-Request-ID\":{\"schema\":{\"type\":\"string\"}}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or duplicate parameter\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or no longer live credential\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Wrong purpose, mode, scope or tenant boundary\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Object not in the approved boundary\"},\"405\":{\"description\":\"Only GET is accepted\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Admission rejected\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Dependency unavailable\"}},\"security\":[{\"queryAgent\":[]}],\"summary\":\"Query grants/{id}\",\"tags\":[\"queries\"],\"x-required-scope\":\"authova.query.grants\"}";
+  }
+  rpc QueryAgentInstallationPage(QueryAgentInstallationPageRequest) returns (QueryContractAgentInstallationPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/query/installations" };
+    option (authova.wire.operation) = "{\"description\":\"Requires authova.query.installations, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Tenant-bound credentials are restricted to their authoritative tenant.\",\"operationId\":\"queryAgentInstallationPage\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Read-only result\",\"headers\":{\"Cache-Control\":{\"schema\":{\"const\":\"no-store\",\"type\":\"string\"}},\"X-Request-ID\":{\"schema\":{\"type\":\"string\"}}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or duplicate parameter\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or no longer live credential\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Wrong purpose, mode, scope or tenant boundary\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Object not in the approved boundary\"},\"405\":{\"description\":\"Only GET is accepted\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Admission rejected\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Dependency unavailable\"}},\"security\":[{\"queryAgent\":[]}],\"summary\":\"Query installations\",\"tags\":[\"queries\"],\"x-required-scope\":\"authova.query.installations\"}";
+  }
+  rpc QueryAgentInstallation(QueryAgentInstallationRequest) returns (AgentInstallation) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/query/installations/{id}" };
+    option (authova.wire.operation) = "{\"description\":\"Requires authova.query.installations, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Tenant-bound credentials are restricted to their authoritative tenant.\",\"operationId\":\"queryAgentInstallation\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Read-only result\",\"headers\":{\"Cache-Control\":{\"schema\":{\"const\":\"no-store\",\"type\":\"string\"}},\"X-Request-ID\":{\"schema\":{\"type\":\"string\"}}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or duplicate parameter\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or no longer live credential\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Wrong purpose, mode, scope or tenant boundary\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Object not in the approved boundary\"},\"405\":{\"description\":\"Only GET is accepted\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Admission rejected\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Dependency unavailable\"}},\"security\":[{\"queryAgent\":[]}],\"summary\":\"Query installations/{id}\",\"tags\":[\"queries\"],\"x-required-scope\":\"authova.query.installations\"}";
+  }
+  rpc QueryQueryUserPage(QueryQueryUserPageRequest) returns (QueryUserPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/query/users" };
+    option (authova.wire.operation) = "{\"description\":\"Requires authova.query.users, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.\",\"operationId\":\"queryQueryUserPage\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Read-only result\",\"headers\":{\"Cache-Control\":{\"schema\":{\"const\":\"no-store\",\"type\":\"string\"}},\"X-Request-ID\":{\"schema\":{\"type\":\"string\"}}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or duplicate parameter\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or no longer live credential\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Wrong purpose, mode, scope or tenant boundary\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Object not in the approved boundary\"},\"405\":{\"description\":\"Only GET is accepted\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Admission rejected\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Dependency unavailable\"}},\"security\":[{\"queryAgent\":[]}],\"summary\":\"Query users\",\"tags\":[\"queries\"],\"x-required-scope\":\"authova.query.users\"}";
+  }
+  rpc QueryQueryUser(QueryQueryUserRequest) returns (QueryUser) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/query/users/{id}" };
+    option (authova.wire.operation) = "{\"description\":\"Requires authova.query.users, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.\",\"operationId\":\"queryQueryUser\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Read-only result\",\"headers\":{\"Cache-Control\":{\"schema\":{\"const\":\"no-store\",\"type\":\"string\"}},\"X-Request-ID\":{\"schema\":{\"type\":\"string\"}}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or duplicate parameter\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or no longer live credential\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Wrong purpose, mode, scope or tenant boundary\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Object not in the approved boundary\"},\"405\":{\"description\":\"Only GET is accepted\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Admission rejected\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Dependency unavailable\"}},\"security\":[{\"queryAgent\":[]}],\"summary\":\"Query users/{id}\",\"tags\":[\"queries\"],\"x-required-scope\":\"authova.query.users\"}";
+  }
+  rpc QuerySessionPage(QuerySessionPageRequest) returns (QueryContractSessionPage) {
+    option (google.api.http) = { get: "/api/v1/apps/{app_id}/query/users/{user_id}/sessions" };
+    option (authova.wire.operation) = "{\"description\":\"Requires authova.query.sessions, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.\",\"operationId\":\"querySessionPage\",\"responses\":{\"200\":{\"content\":{\"application/json\":{}},\"description\":\"Read-only result\",\"headers\":{\"Cache-Control\":{\"schema\":{\"const\":\"no-store\",\"type\":\"string\"}},\"X-Request-ID\":{\"schema\":{\"type\":\"string\"}}}},\"400\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or duplicate parameter\"},\"401\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Invalid or no longer live credential\"},\"403\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Wrong purpose, mode, scope or tenant boundary\"},\"404\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Object not in the approved boundary\"},\"405\":{\"description\":\"Only GET is accepted\"},\"429\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Admission rejected\"},\"503\":{\"content\":{\"application/problem+json\":{\"schema\":{\"$ref\":\"#/components/schemas/Problem\"}}},\"description\":\"Dependency unavailable\"}},\"security\":[{\"queryAgent\":[]}],\"summary\":\"Query users/{user_id}/sessions\",\"tags\":[\"queries\"],\"x-required-scope\":\"authova.query.sessions\"}";
+  }
+}

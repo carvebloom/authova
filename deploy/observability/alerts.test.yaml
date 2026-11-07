@@ -1,0 +1,37 @@
+rule_files: [authova-alerts.yaml]
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{job="authova-core",instance="core:8080",deployment="test"}'
+        values: '0 0 0'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: AuthovaTargetUnavailable
+        exp_alerts:
+          - exp_labels: {job: authova-core, instance: 'core:8080', deployment: test, severity: critical}
+            exp_annotations:
+              summary: Authova scrape target unavailable
+              runbook: Check process, private scrape route and readiness before restarting.
+  - interval: 1m
+    input_series:
+      - series: 'authova_outbox_oldest_due_seconds{deployment="test",instance="core"}'
+        values: '90 90 90 90'
+      - series: 'authova_outbox_oldest_due_seconds{deployment="test",instance="worker"}'
+        values: '90 90 90 90'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: AuthovaOutboxDelayed
+        exp_alerts:
+          - exp_labels: {deployment: test, severity: warning}
+            exp_annotations:
+              summary: Due delivery has been delayed for over a minute
+              runbook: Inspect worker, provider rejection and queue snapshot freshness. Avoid logging verification code payloads.
+  - interval: 1m
+    input_series:
+      - series: 'authova_outbox_oldest_due_seconds{deployment="test"}'
+        values: '0 0 0 0'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: AuthovaOutboxDelayed
+        exp_alerts: []

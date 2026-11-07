@@ -1,0 +1,4 @@
+release/notices/** -whitespace
+docs/implementation/evidence/*.log -whitespace
+docs/implementation/evidence/**/*.log -whitespace
+docs/implementation/evidence/**/*.txt -whitespace

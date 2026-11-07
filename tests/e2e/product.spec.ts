@@ -1,0 +1,258 @@
+import { test, expect } from '@playwright/test'
+import { readFileSync, mkdirSync } from 'node:fs'
+import { createHmac } from 'node:crypto'
+
+const demo = JSON.parse(readFileSync('.dev/rp.json', 'utf8'))
+const bootstrap = JSON.parse(readFileSync('.dev/bootstrap.json', 'utf8'))
+const password = 'A verified local demo password phrase'
+const email = `demo-${Date.now()}@example.test`
+const snapshots = 'output/playwright'
+mkdirSync(snapshots, { recursive: true })
+
+function totp(secret: string) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
+  let bits = ''
+  for (const char of secret) bits += alphabet.indexOf(char).toString(2).padStart(5, '0')
+  const key = Buffer.from(bits.match(/.{8}/g)!.map((byte) => parseInt(byte, 2)))
+  const counter = Buffer.alloc(8)
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30000)))
+  const hash = createHmac('sha1', key).update(counter).digest()
+  return String((hash.readUInt32BE(hash[hash.length - 1]! & 15) & 0x7fffffff) % 1000000).padStart(6, '0')
+}
+
+test('real Console login and data; browser never receives a management token', async ({ page }) => {
+  await new Promise(resolve => setTimeout(resolve, 31000 - (Date.now() % 30000)))
+  await page.goto('http://127.0.0.1:18090')
+  await expect(page.getByLabel(/^邮箱/)).toBeVisible()
+  try {
+    await page.getByLabel(/^邮箱/).fill(bootstrap.email)
+    await page.getByLabel(/^密码/).fill(bootstrap.password)
+    await page.getByLabel(/^动态口令/).fill(totp(bootstrap.totp_secret))
+  } catch { throw new Error('Private credential input failed; details suppressed') }
+  await page.getByRole('button', { name: '登录', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '应用', exact: true })).toBeVisible()
+  await expect(page.getByText('Notes / App 1', { exact: true }).first()).toBeVisible()
+  const browserStorage = await page.evaluate(() => ({ local: Object.keys(localStorage), session: Object.keys(sessionStorage), readableCookies: document.cookie }))
+  expect(browserStorage.local).not.toContain('token')
+  expect(browserStorage.readableCookies).not.toContain('av_console')
+  await page.screenshot({ path: `${snapshots}/console-apps.png`, fullPage: true })
+  await page.goto('http://127.0.0.1:18090/#/platform/operators')
+  await expect(page.getByRole('heading', { name: '平台运营账号', exact: true })).toBeVisible()
+  await page.getByRole('button', {name:'创建运营账号',exact:true}).click()
+  const dialog=page.getByRole('dialog')
+  await dialog.getByLabel(/^邮箱/).fill(`auditor-${Date.now()}@example.test`)
+  await dialog.getByLabel('初始密码').fill('A test-only auditor password phrase')
+  await dialog.getByLabel('角色',{exact:true}).selectOption('auditor')
+  await dialog.getByRole('button',{name:'创建',exact:true}).click()
+  await expect(page.getByText('TOTP 配置密钥仅此一次显示',{exact:true})).toBeVisible()
+  await page.getByRole('button',{name:'我已安全传达，关闭',exact:true}).click()
+  await expect(page.getByText('TOTP 配置密钥仅此一次显示',{exact:true})).toHaveCount(0)
+  await page.screenshot({path:`${snapshots}/platform-operators.png`,fullPage:true})
+
+  await page.goto('http://127.0.0.1:18090/#/apps')
+  await page.getByRole('link',{name:'Notes / App 1',exact:true}).click()
+  await expect(page.getByText('短信验证码',{exact:true})).toBeVisible()
+  await expect(page.getByText('联邦回调地址',{exact:true})).toBeVisible()
+  await page.getByRole('link',{name:'连接',exact:true}).click()
+  await expect(page.getByRole('heading',{name:'连接',exact:true})).toBeVisible()
+  const connName=`GitHub fixture ${Date.now()}`
+  const secrets=['test-only-github-secret','test-only-github-rotated-secret']
+  const responseChecks:Promise<void>[]=[]
+  page.on('response',response=>{
+    if(response.url().includes('/bff/apps/') && response.url().includes('/connections') && response.status()<400){
+      responseChecks.push(response.text().then(text=>{for(const secret of secrets)expect(text).not.toContain(secret)}))
+    }
+  })
+  await page.getByRole('button',{name:'创建连接',exact:true}).click()
+  const connectionDialog=page.getByRole('dialog')
+  await connectionDialog.getByLabel('类型',{exact:true}).selectOption('github')
+  await connectionDialog.getByLabel('名称',{exact:true}).fill(connName)
+  await connectionDialog.getByLabel('Client ID',{exact:true}).fill('test-only-github-client')
+  await connectionDialog.getByLabel('Client Secret',{exact:true}).fill(secrets[0]!)
+  await connectionDialog.getByRole('button',{name:'创建',exact:true}).click()
+  const created=page.getByRole('row').filter({hasText:connName})
+  await expect(created).toContainText('GitHub')
+  await created.getByRole('button',{name:'编辑',exact:true}).click()
+  await connectionDialog.getByLabel('状态',{exact:true}).selectOption('disabled')
+  await connectionDialog.getByLabel('操作原因').fill('Local browser disable acceptance')
+  await connectionDialog.getByRole('button',{name:'保存',exact:true}).click()
+  await expect(created).toContainText('已禁用')
+  await created.getByRole('button',{name:'编辑',exact:true}).click()
+  await expect(connectionDialog.getByText(/当前配置版本 2/)).toBeVisible()
+  await connectionDialog.getByLabel('状态',{exact:true}).selectOption('active')
+  await connectionDialog.getByLabel('新 Client Secret').fill(secrets[1]!)
+  await connectionDialog.getByLabel('操作原因').fill('Local browser reenable and secret rotation acceptance')
+  await connectionDialog.getByRole('button',{name:'保存',exact:true}).click()
+  await expect(created).toContainText('活跃')
+  await expect(page.getByRole('status').filter({hasText:'配置版本 3'})).toBeVisible()
+  // Keep the fake GitHub credentials disabled after verification, so the Demo login has usable choices.
+  await created.getByRole('button',{name:'编辑',exact:true}).click()
+  await connectionDialog.getByLabel('状态',{exact:true}).selectOption('disabled')
+  await connectionDialog.getByLabel('操作原因').fill('Leave protocol fixture disabled after browser acceptance')
+  await connectionDialog.getByRole('button',{name:'保存',exact:true}).click()
+  await expect(created).toContainText('已禁用')
+
+  for (const provider of [{kind:'wechat',label:'微信网站扫码',issuer:'https://open.weixin.qq.com',secret:'test-only-wechat-secret'},{kind:'qq',label:'QQ 网站登录',issuer:'https://graph.qq.com',secret:'test-only-qq-key'}]) {
+    secrets.push(provider.secret)
+    const name=`${provider.label} fixture ${Date.now()}`
+    await page.getByRole('button',{name:'创建连接',exact:true}).click()
+    await connectionDialog.getByLabel('类型',{exact:true}).selectOption(provider.kind)
+    await expect(connectionDialog.getByLabel('Issuer',{exact:true})).toHaveCount(0)
+    await expect(connectionDialog.getByText(provider.issuer,{exact:true})).toBeVisible()
+    await connectionDialog.getByLabel('名称',{exact:true}).fill(name)
+    await connectionDialog.getByLabel('Client ID',{exact:true}).fill('test-only-social-appid')
+    await connectionDialog.getByLabel('Client Secret',{exact:true}).fill(provider.secret)
+    await connectionDialog.getByRole('button',{name:'创建',exact:true}).click()
+    const row=page.getByRole('row').filter({hasText:name})
+    await expect(row).toContainText(provider.label)
+    await row.getByRole('button',{name:'编辑',exact:true}).click()
+    await connectionDialog.getByLabel('状态',{exact:true}).selectOption('disabled')
+    await connectionDialog.getByLabel('操作原因').fill('Keep social protocol fixture disabled after local acceptance')
+    await connectionDialog.getByRole('button',{name:'保存',exact:true}).click()
+    await expect(row).toContainText('已禁用')
+  }
+  await Promise.all(responseChecks)
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+  await page.screenshot({path:`${snapshots}/social-connections-config.png`,fullPage:true,animations:'disabled'})
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await expect(page.locator('.topbar')).toBeVisible()
+  await expect(page.locator('.shell')).toHaveCount(1)
+  await expect(page.locator('.topbar')).toHaveCount(1)
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  await page.screenshot({ path: `${snapshots}/social-console-mobile.png`, fullPage: true, animations: 'disabled' })
+})
+
+test('same email registers independently in two Apps; SMTP OTP, PKCE, refresh and live introspection', async ({ page, request }) => {
+  test.setTimeout(150000)
+  const subjects: string[] = []
+  for (let index = 0; index < demo.apps.length; index++) {
+    const app = demo.apps[index]
+    await page.goto(`http://127.0.0.1:18088/apps/${app.key}/login`)
+    await page.getByText('注册、验证码登录或找回密码', { exact: true }).click()
+    await page.getByLabel('地址', { exact: true }).fill(email)
+    const oldInbox = await (await request.get('http://127.0.0.1:58025/api/v1/messages')).json()
+    const seen = new Set(oldInbox.messages.map((item: any) => item.ID))
+    await page.getByRole('button', { name: '发送验证码', exact: true }).click()
+    await expect(page.getByLabel('验证码', { exact: true })).toBeVisible()
+    let messageID = ''
+    await expect.poll(async () => {
+      const response = await request.get('http://127.0.0.1:58025/api/v1/messages')
+      const inbox = await response.json()
+      const message = inbox.messages.find((item: any) => !seen.has(item.ID) && item.To.some((to: any) => to.Address === email))
+      messageID = message?.ID ?? ''
+      return Boolean(messageID)
+    }, { timeout: 20000 }).toBe(true)
+    const response = await request.get(`http://127.0.0.1:58025/api/v1/message/${messageID}`)
+    const delivered = await response.json()
+    const code = (delivered.Text as string).match(/code: ([0-9]{6})/)?.[1]
+    if (!code) throw new Error('SMTP delivery did not contain a verification code')
+    await page.getByLabel('验证码', { exact: true }).fill(code)
+    await page.getByRole('button', { name: '验证并继续', exact: true }).click()
+    await page.getByLabel('昵称').fill(`Demo User ${index + 1}`)
+    await page.getByLabel('设置密码').fill(`${password} ${index + 1}`)
+    await page.getByRole('button', { name: '创建账号', exact: true }).click()
+    await expect(page.getByRole('heading', { name: '确认授权', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: '允许并继续', exact: true }).click()
+    await expect(page).toHaveURL(new RegExp(`/apps/${app.key}/home`))
+    subjects.push((await page.locator('dd').first().innerText()).trim())
+    await page.getByRole('button', { name: '检查令牌并访问资源', exact: true }).click()
+    await expect(page.getByRole('status')).toHaveText('令牌有效，当前 App 的示例资源访问成功。')
+    await page.getByRole('button', { name: '轮换刷新令牌', exact: true }).click()
+    await expect(page.getByRole('status')).toHaveText('刷新令牌已轮换，旧令牌不能再次使用。')
+    await page.screenshot({ path: `${snapshots}/app-${index + 1}-identity.png`, fullPage: true })
+    if(index===0){
+      await page.goto(`http://127.0.0.1:18080/a/${app.key}/ui/account`)
+      await expect(page.getByRole('heading',{name:'账号安全',exact:true})).toBeVisible()
+      await page.getByText('修改密码',{exact:true}).click()
+      await page.getByLabel('当前密码',{exact:true}).fill(`${password} 1`)
+      await page.getByLabel('新密码',{exact:true}).fill(`${password} changed`)
+      await page.getByRole('button',{name:'修改并撤销旧会话',exact:true}).click()
+      await expect(page.getByText('已退出当前 App。',{exact:true})).toBeVisible()
+      await page.goto(`http://127.0.0.1:18088/apps/${app.key}/login`)
+      await page.getByLabel('邮箱 / 手机号').fill(email)
+      await page.getByLabel('密码',{exact:true}).fill(`${password} changed`)
+      await page.getByRole('button',{name:'登录',exact:true}).click()
+      await page.getByRole('button',{name:'允许并继续',exact:true}).click()
+      await expect(page).toHaveURL(new RegExp(`/apps/${app.key}/home`))
+      await page.goto(`http://127.0.0.1:18080/a/${app.key}/ui/account`)
+      await page.getByText('删除账号资料',{exact:true}).click()
+      await page.getByLabel('输入 DELETE 确认').fill('DELETE')
+      await page.getByRole('button',{name:'清除资料并退出',exact:true}).click()
+      await expect(page.getByText('已退出当前 App。',{exact:true})).toBeVisible()
+    }
+
+  }
+  expect(subjects[0]).not.toEqual(subjects[1])
+  const destination=demo.apps[1]
+  await page.goto(`http://127.0.0.1:18088/apps/${destination.key}/login`)
+  await page.getByRole('button',{name:'通过 Local OIDC provider 登录',exact:true}).click()
+  await expect(page.getByText('注册、验证码登录或找回密码',{exact:true})).toBeVisible()
+  await page.getByText('注册、验证码登录或找回密码',{exact:true}).click()
+  const federatedEmail=`provider-${Date.now()}@example.test`
+  const before=await (await request.get('http://127.0.0.1:58025/api/v1/messages')).json()
+  const seenBefore=new Set(before.messages.map((item:any)=>item.ID))
+  await page.getByLabel('地址',{exact:true}).fill(federatedEmail)
+  await page.getByRole('button',{name:'发送验证码',exact:true}).click()
+  let providerMessage=''
+  await expect.poll(async()=>{const inbox=await(await request.get('http://127.0.0.1:58025/api/v1/messages')).json();const item=inbox.messages.find((item:any)=>!seenBefore.has(item.ID)&&item.To.some((to:any)=>to.Address===federatedEmail));providerMessage=item?.ID??'';return Boolean(providerMessage)},{timeout:20000}).toBe(true)
+  const received=await(await request.get(`http://127.0.0.1:58025/api/v1/message/${providerMessage}`)).json()
+  const providerCode=(received.Text as string).match(/code: ([0-9]{6})/)?.[1]
+  if(!providerCode)throw new Error('Provider SMTP proof missing')
+  await page.getByLabel('验证码',{exact:true}).fill(providerCode)
+  await page.getByRole('button',{name:'验证并继续',exact:true}).click()
+  await page.getByLabel('昵称').fill('Federated Demo User')
+  await page.getByLabel('设置密码').fill('A local provider password phrase')
+  await page.getByRole('button',{name:'创建账号',exact:true}).click()
+  await page.getByRole('button',{name:'允许并继续',exact:true}).click()
+  await expect(page.getByRole('heading',{name:'确认授权',exact:true})).toBeVisible()
+  await page.getByRole('button',{name:'允许并继续',exact:true}).click()
+  await expect(page).toHaveURL(new RegExp(`/apps/${destination.key}/home`))
+  await expect(page.getByText('Federated Demo User',{exact:true})).toBeVisible()
+  await page.screenshot({path:`${snapshots}/federated-login.png`,fullPage:true})
+
+  // Manage a freshly registered App 2 user through the real Console UI.
+  await new Promise(resolve => setTimeout(resolve, 31000 - (Date.now() % 30000)))
+  await page.goto('http://127.0.0.1:18090')
+  try {
+    await page.getByLabel(/^邮箱/).fill(bootstrap.email)
+    await page.getByLabel(/^密码/).fill(bootstrap.password)
+    await page.getByLabel(/^动态口令/).fill(totp(bootstrap.totp_secret))
+  } catch { throw new Error('Private credential input failed; diagnostics suppressed') }
+  await page.getByRole('button', { name: '登录', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '应用', exact: true })).toBeVisible()
+  await page.getByRole('link', { name: destination.name, exact: true }).click()
+  await page.getByRole('link', { name: '用户', exact: true }).click()
+  await page.getByRole('searchbox', { name: '搜索用户' }).fill(email)
+  await page.getByRole('button', { name: '搜索', exact: true }).click()
+  const userRow = page.getByRole('row').filter({ hasText: 'Demo User 2' })
+  await expect(userRow).toBeVisible()
+  await userRow.getByRole('link', { name: '详情' }).click()
+  await expect(page.getByRole('heading', { name: 'Demo User 2', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '设为管理员' }).click()
+  let dialog = page.getByRole('dialog')
+  await dialog.getByLabel('管理员角色', { exact: true }).selectOption('auditor')
+  await dialog.getByLabel('操作原因').fill('Verify scoped role management on a newly registered user')
+  await dialog.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page.getByText('管理员角色已设置为「审计员」。', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '变更管理员角色' }).click()
+  await dialog.getByLabel('管理员角色', { exact: true }).selectOption('')
+  await dialog.getByLabel('操作原因').fill('Remove temporary acceptance role')
+  await dialog.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page.getByText('管理员角色已撤销。', { exact: true })).toBeVisible()
+  const activeSession = page.getByRole('row').filter({ has: page.getByRole('button', { name: '撤销', exact: true }) }).first()
+  await activeSession.getByRole('button', { name: '撤销', exact: true }).click()
+  dialog = page.getByRole('dialog')
+  await dialog.getByLabel('操作原因').fill('Revoke the local acceptance session')
+  await dialog.getByRole('button', { name: '确认撤销', exact: true }).click()
+  await expect(page.getByText('会话已撤销。', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '禁用用户', exact: true }).click()
+  await dialog.getByLabel('操作原因').fill('Disable completed local acceptance user')
+  await dialog.getByRole('button', { name: '确认禁用', exact: true }).click()
+  await expect(page.getByText('用户已禁用。', { exact: true })).toBeVisible()
+  await expect(page.locator('.detail-grid')).toContainText('已禁用')
+  await page.screenshot({ path: 'output/console-redesign-browser/user-detail.png', fullPage: true })
+
+})

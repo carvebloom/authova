@@ -1,0 +1,5 @@
+
+/bin/
+/output/
+*.local
+.DS_Store

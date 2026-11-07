@@ -1,0 +1,166 @@
+{
+  "date": "2026-11-06",
+  "status": "unpublished v1 baseline and isolated instances verified",
+  "schema_version": 1,
+  "next_revision": 2,
+  "baseline_files": {
+    "postgres": {
+      "path": "internal/migrations/sql/postgres/001_initial.sql",
+      "sha256": "8284ef782ed6d5e318a82e4fa71ab2ea42e23718646559004888b982f8af3ab1"
+    },
+    "mysql": {
+      "path": "internal/migrations/sql/mysql/001_initial.sql",
+      "sha256": "6df439ed6b1f22fdd3bdbe2e231803ee724bc8cf42397fa2b90ee8872beb387e"
+    }
+  },
+  "gates": {
+    "v1-focused": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-focused",
+        "exit_code": 0
+      }
+    ],
+    "v1-safety": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-focused",
+        "exit_code": 0
+      }
+    ],
+    "v1-full": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-final",
+        "exit_code": 0
+      },
+      {
+        "gate": "contract-combination-final",
+        "exit_code": 0
+      }
+    ]
+  },
+  "real_upgrade": [
+    {
+      "dialect": "postgres",
+      "initial_schema_version": 1,
+      "upgraded_schema_version": 2,
+      "authova_history_rows": 2,
+      "atlas_revision_rows": 2,
+      "same_facts_sha256": "98127d4ae6a19eb4ffbd84f0165f4fbb0671d4a2a1284e26f6e3225f9cd8d61e",
+      "rerun_passed": true,
+      "older_binary_refused_without_renumbering": true,
+      "restricted_runtime_ready": 200
+    },
+    {
+      "dialect": "mysql",
+      "initial_schema_version": 1,
+      "upgraded_schema_version": 2,
+      "authova_history_rows": 2,
+      "atlas_revision_rows": 2,
+      "same_facts_sha256": "537cf80c89ab0d99bf037b8a2834209d3be51f858609b5e43defb240a9868138",
+      "rerun_passed": true,
+      "older_binary_refused_without_renumbering": true,
+      "restricted_runtime_ready": 200
+    }
+  ],
+  "http_smoke": {
+    "core_ready": 200,
+    "console_ready": 200,
+    "agent_demo": 200,
+    "console_totp_login": 200,
+    "console_app_create": 201
+  },
+  "source_files_unchanged": 1163,
+  "old_databases_and_keys": "preserved; no renumbering or deletion",
+  "active_instance": {
+    "database": "authova_v1",
+    "state": ".migration/instance-v1"
+  },
+  "agent_demo": {
+    "database": "authova_migration_agent_v1",
+    "state": ".migration/demos/v1/agent"
+  },
+  "historical_reports": "Earlier migration/engineering/browser/performance results are not relabeled as v1 evidence.",
+  "full_race": {
+    "passed_packages": 29,
+    "passed_test_nodes": 693,
+    "failures": 0,
+    "integration_seconds": 542.278,
+    "log_sha256": "3b8a4de3779f56ee72c39e9005dc2957413699dbf5a059893596de0cb9a77c76"
+  },
+  "preserved_and_current_versions": {
+    "authova": 8,
+    "authova_v1": 1,
+    "authova_migration_agent_demo": 8,
+    "authova_migration_agent_v1": 1
+  },
+  "oci": {
+    "production_mode": true,
+    "valkey_mtls_acl": true,
+    "ingress_tls_verified": false,
+    "database_tls_verified": false,
+    "checks": {
+      "core_nonroot_readonly_health": true,
+      "console_nonroot_readonly_health": true,
+      "console_no_core_credentials": true,
+      "core_ready": 200,
+      "core_auth": 401,
+      "console_static": 200,
+      "console_auth": 401,
+      "console_origin": 403
+    },
+    "images": {
+      "core": "sha256:877ce7768ab6e56176f579cb22284f92b8f6d8d96efa6d6fcbf22c8da390ed96",
+      "console": "sha256:c285e76af7f846a964f7d0dccbbee5b66856b5fd042113efee5f0c85f17336c1"
+    }
+  },
+  "generation_checks": {
+    "ent_files": 207,
+    "proto_http_openapi_go_ts_console": "passed"
+  },
+  "static_checks": {
+    "go_vet": "passed",
+    "staticcheck": "passed",
+    "catalog_and_planner_unit_tests": "passed",
+    "python_tools_compile": "passed"
+  },
+  "performance": {
+    "report": "performance-summary.json",
+    "schema_versions": {
+      "postgres": {
+        "old": 8,
+        "new": 1
+      },
+      "mysql": {
+        "old": 8,
+        "new": 1
+      }
+    },
+    "all_runs_zero_failures_and_drops": true
+  },
+  "historical_performance_report": "performance-pre-v1.json",
+  "skip_count": 18,
+  "live_pg_ent_model_check": "zero diff"
+}

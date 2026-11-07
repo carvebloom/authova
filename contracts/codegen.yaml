@@ -1,0 +1,7 @@
+package: management
+generate:
+  models: true
+  client: true
+output: generated/management/client.gen.go
+output-options:
+  client-type-name: ManagementAPIClient

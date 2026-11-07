@@ -1,0 +1,2543 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:ab2f5dfa-e4d4-4d0c-8e4e-77642ee58031",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "name": "github.com/carvebloom/authova",
+      "version": "0.1.0-rc.1"
+    },
+    "properties": [
+      {
+        "name": "inventory:scope",
+        "value": "Go source module dependencies; not an OS image vulnerability scan or legal review"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "github.com/carvebloom/authova",
+      "version": "0.1.0-rc.1",
+      "bom-ref": "github.com/carvebloom/authova@0.1.0-rc.1",
+      "purl": "pkg:golang/github.com/carvebloom/authova@0.1.0-rc.1"
+    },
+    {
+      "type": "library",
+      "name": "ariga.io/atlas",
+      "version": "v0.36.2-0.20250730182955-2c6300d0a3e1",
+      "bom-ref": "ariga.io/atlas@v0.36.2-0.20250730182955-2c6300d0a3e1",
+      "purl": "pkg:golang/ariga.io/atlas@v0.36.2-0.20250730182955-2c6300d0a3e1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:NPPfBaVZgz4LKBCIc0FbMogCjvXN+yGf7CZwotOwJo8="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "cel.dev/expr",
+      "version": "v0.25.2",
+      "bom-ref": "cel.dev/expr@v0.25.2",
+      "purl": "pkg:golang/cel.dev/expr@v0.25.2"
+    },
+    {
+      "type": "library",
+      "name": "cloud.google.com/go/auth",
+      "version": "v0.18.2",
+      "bom-ref": "cloud.google.com/go/auth@v0.18.2",
+      "purl": "pkg:golang/cloud.google.com/go/auth@v0.18.2"
+    },
+    {
+      "type": "library",
+      "name": "cloud.google.com/go/compute/metadata",
+      "version": "v0.9.0",
+      "bom-ref": "cloud.google.com/go/compute/metadata@v0.9.0",
+      "purl": "pkg:golang/cloud.google.com/go/compute/metadata@v0.9.0"
+    },
+    {
+      "type": "library",
+      "name": "entgo.io/ent",
+      "version": "v0.14.6",
+      "bom-ref": "entgo.io/ent@v0.14.6",
+      "purl": "pkg:golang/entgo.io/ent@v0.14.6",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:/f2696BpwuWAEEG6PVGWflg6+Inrpq4pRWuNlWz/Skk="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "filippo.io/edwards25519",
+      "version": "v1.2.0",
+      "bom-ref": "filippo.io/edwards25519@v1.2.0",
+      "purl": "pkg:golang/filippo.io/edwards25519@v1.2.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:crnVqOiS4jqYleHd9vaKZ+HKtHfllngJIiOpNpoJsjo="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/BurntSushi/toml",
+      "version": "v1.3.2",
+      "bom-ref": "github.com/BurntSushi/toml@v1.3.2",
+      "purl": "pkg:golang/github.com/BurntSushi/toml@v1.3.2"
+    },
+    {
+      "type": "library",
+      "name": "github.com/CloudyKit/fastprinter",
+      "version": "v0.0.0-20200109182630-33d98a066a53",
+      "bom-ref": "github.com/CloudyKit/fastprinter@v0.0.0-20200109182630-33d98a066a53",
+      "purl": "pkg:golang/github.com/CloudyKit/fastprinter@v0.0.0-20200109182630-33d98a066a53"
+    },
+    {
+      "type": "library",
+      "name": "github.com/CloudyKit/jet/v6",
+      "version": "v6.2.0",
+      "bom-ref": "github.com/CloudyKit/jet/v6@v6.2.0",
+      "purl": "pkg:golang/github.com/CloudyKit/jet/v6@v6.2.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/DATA-DOG/go-sqlmock",
+      "version": "v1.5.0",
+      "bom-ref": "github.com/DATA-DOG/go-sqlmock@v1.5.0",
+      "purl": "pkg:golang/github.com/DATA-DOG/go-sqlmock@v1.5.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp",
+      "version": "v1.33.0",
+      "bom-ref": "github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp@v1.33.0",
+      "purl": "pkg:golang/github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp@v1.33.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/Joker/jade",
+      "version": "v1.1.3",
+      "bom-ref": "github.com/Joker/jade@v1.1.3",
+      "purl": "pkg:golang/github.com/Joker/jade@v1.1.3"
+    },
+    {
+      "type": "library",
+      "name": "github.com/RaveNoX/go-jsoncommentstrip",
+      "version": "v1.0.0",
+      "bom-ref": "github.com/RaveNoX/go-jsoncommentstrip@v1.0.0",
+      "purl": "pkg:golang/github.com/RaveNoX/go-jsoncommentstrip@v1.0.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/Shopify/goreferrer",
+      "version": "v0.0.0-20220729165902-8cddb4f5de06",
+      "bom-ref": "github.com/Shopify/goreferrer@v0.0.0-20220729165902-8cddb4f5de06",
+      "purl": "pkg:golang/github.com/Shopify/goreferrer@v0.0.0-20220729165902-8cddb4f5de06"
+    },
+    {
+      "type": "library",
+      "name": "github.com/agext/levenshtein",
+      "version": "v1.2.3",
+      "bom-ref": "github.com/agext/levenshtein@v1.2.3",
+      "purl": "pkg:golang/github.com/agext/levenshtein@v1.2.3",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:YB2fHEn0UJagG8T1rrWknE3ZQzWM06O8AMAatNn7lmo="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/alecthomas/kingpin/v2",
+      "version": "v2.4.0",
+      "bom-ref": "github.com/alecthomas/kingpin/v2@v2.4.0",
+      "purl": "pkg:golang/github.com/alecthomas/kingpin/v2@v2.4.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/alecthomas/units",
+      "version": "v0.0.0-20240927000941-0f3dac36c52b",
+      "bom-ref": "github.com/alecthomas/units@v0.0.0-20240927000941-0f3dac36c52b",
+      "purl": "pkg:golang/github.com/alecthomas/units@v0.0.0-20240927000941-0f3dac36c52b"
+    },
+    {
+      "type": "library",
+      "name": "github.com/andybalholm/brotli",
+      "version": "v1.1.0",
+      "bom-ref": "github.com/andybalholm/brotli@v1.1.0",
+      "purl": "pkg:golang/github.com/andybalholm/brotli@v1.1.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/apapsch/go-jsonmerge/v2",
+      "version": "v2.0.0",
+      "bom-ref": "github.com/apapsch/go-jsonmerge/v2@v2.0.0",
+      "purl": "pkg:golang/github.com/apapsch/go-jsonmerge/v2@v2.0.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:axGnT1gRIfimI7gJifB699GoE/oq+F2MU7Dml6nw9rQ="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/apparentlymart/go-dump",
+      "version": "v0.0.0-20180507223929-23540a00eaa3",
+      "bom-ref": "github.com/apparentlymart/go-dump@v0.0.0-20180507223929-23540a00eaa3",
+      "purl": "pkg:golang/github.com/apparentlymart/go-dump@v0.0.0-20180507223929-23540a00eaa3"
+    },
+    {
+      "type": "library",
+      "name": "github.com/apparentlymart/go-textseg/v13",
+      "version": "v13.0.0",
+      "bom-ref": "github.com/apparentlymart/go-textseg/v13@v13.0.0",
+      "purl": "pkg:golang/github.com/apparentlymart/go-textseg/v13@v13.0.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/apparentlymart/go-textseg/v15",
+      "version": "v15.0.0",
+      "bom-ref": "github.com/apparentlymart/go-textseg/v15@v15.0.0",
+      "purl": "pkg:golang/github.com/apparentlymart/go-textseg/v15@v15.0.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:uYvfpb3DyLSCGWnctWKGj857c6ew1u1fNQOlOtuGxQY="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/aymerick/douceur",
+      "version": "v0.2.0",
+      "bom-ref": "github.com/aymerick/douceur@v0.2.0",
+      "purl": "pkg:golang/github.com/aymerick/douceur@v0.2.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/beorn7/perks",
+      "version": "v1.0.1",
+      "bom-ref": "github.com/beorn7/perks@v1.0.1",
+      "purl": "pkg:golang/github.com/beorn7/perks@v1.0.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/bmatcuk/doublestar",
+      "version": "v1.3.4",
+      "bom-ref": "github.com/bmatcuk/doublestar@v1.3.4",
+      "purl": "pkg:golang/github.com/bmatcuk/doublestar@v1.3.4",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:gPypJ5xD31uhX6Tf54sDPUOBXTqKH4c9aPY66CyQrS0="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/bmatcuk/doublestar/v4",
+      "version": "v4.10.2",
+      "bom-ref": "github.com/bmatcuk/doublestar/v4@v4.10.2",
+      "purl": "pkg:golang/github.com/bmatcuk/doublestar/v4@v4.10.2",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:eF7W7HWKg3z9NrWV9pTLnNeoXaqq3Tq9DNKXVMfoCnw="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/bytedance/sonic",
+      "version": "v1.11.6",
+      "bom-ref": "github.com/bytedance/sonic@v1.11.6",
+      "purl": "pkg:golang/github.com/bytedance/sonic@v1.11.6"
+    },
+    {
+      "type": "library",
+      "name": "github.com/bytedance/sonic/loader",
+      "version": "v0.1.1",
+      "bom-ref": "github.com/bytedance/sonic/loader@v0.1.1",
+      "purl": "pkg:golang/github.com/bytedance/sonic/loader@v0.1.1"
+    },
+    {
+      "type": "library",
+      "name": "github.com/cenkalti/backoff/v5",
+      "version": "v5.0.3",
+      "bom-ref": "github.com/cenkalti/backoff/v5@v5.0.3",
+      "purl": "pkg:golang/github.com/cenkalti/backoff/v5@v5.0.3",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:ZN+IMa753KfX5hd8vVaMixjnqRZ3y8CuJKRKj1xcsSM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/cespare/xxhash/v2",
+      "version": "v2.3.0",
+      "bom-ref": "github.com/cespare/xxhash/v2@v2.3.0",
+      "purl": "pkg:golang/github.com/cespare/xxhash/v2@v2.3.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/clipperhouse/displaywidth",
+      "version": "v0.6.2",
+      "bom-ref": "github.com/clipperhouse/displaywidth@v0.6.2",
+      "purl": "pkg:golang/github.com/clipperhouse/displaywidth@v0.6.2",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:ZDpTkFfpHOKte4RG5O/BOyf3ysnvFswpyYrV7z2uAKo="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/clipperhouse/stringish",
+      "version": "v0.1.1",
+      "bom-ref": "github.com/clipperhouse/stringish@v0.1.1",
+      "purl": "pkg:golang/github.com/clipperhouse/stringish@v0.1.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:+NSqMOr3GR6k1FdRhhnXrLfztGzuG+VuFDfatpWHKCs="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/clipperhouse/uax29/v2",
+      "version": "v2.3.0",
+      "bom-ref": "github.com/clipperhouse/uax29/v2@v2.3.0",
+      "purl": "pkg:golang/github.com/clipperhouse/uax29/v2@v2.3.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:SNdx9DVUqMoBuBoW3iLOj4FQv3dN5mDtuqwuhIGpJy4="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/cloudwego/base64x",
+      "version": "v0.1.4",
+      "bom-ref": "github.com/cloudwego/base64x@v0.1.4",
+      "purl": "pkg:golang/github.com/cloudwego/base64x@v0.1.4"
+    },
+    {
+      "type": "library",
+      "name": "github.com/cloudwego/iasm",
+      "version": "v0.2.0",
+      "bom-ref": "github.com/cloudwego/iasm@v0.2.0",
+      "purl": "pkg:golang/github.com/cloudwego/iasm@v0.2.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/cncf/xds/go",
+      "version": "v0.0.0-20260202195803-dba9d589def2",
+      "bom-ref": "github.com/cncf/xds/go@v0.0.0-20260202195803-dba9d589def2",
+      "purl": "pkg:golang/github.com/cncf/xds/go@v0.0.0-20260202195803-dba9d589def2"
+    },
+    {
+      "type": "library",
+      "name": "github.com/coreos/go-oidc/v3",
+      "version": "v3.21.0",
+      "bom-ref": "github.com/coreos/go-oidc/v3@v3.21.0",
+      "purl": "pkg:golang/github.com/coreos/go-oidc/v3@v3.21.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:wZo4Q9Pum8dYEj0eMUPrqR+kvuGkeUplbLpNCkBqoWM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/cpuguy83/go-md2man/v2",
+      "version": "v2.0.2",
+      "bom-ref": "github.com/cpuguy83/go-md2man/v2@v2.0.2",
+      "purl": "pkg:golang/github.com/cpuguy83/go-md2man/v2@v2.0.2"
+    },
+    {
+      "type": "library",
+      "name": "github.com/davecgh/go-spew",
+      "version": "v1.1.1",
+      "bom-ref": "github.com/davecgh/go-spew@v1.1.1",
+      "purl": "pkg:golang/github.com/davecgh/go-spew@v1.1.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/envoyproxy/go-control-plane",
+      "version": "v0.14.0",
+      "bom-ref": "github.com/envoyproxy/go-control-plane@v0.14.0",
+      "purl": "pkg:golang/github.com/envoyproxy/go-control-plane@v0.14.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/envoyproxy/go-control-plane/envoy",
+      "version": "v1.37.0",
+      "bom-ref": "github.com/envoyproxy/go-control-plane/envoy@v1.37.0",
+      "purl": "pkg:golang/github.com/envoyproxy/go-control-plane/envoy@v1.37.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/envoyproxy/go-control-plane/ratelimit",
+      "version": "v0.1.0",
+      "bom-ref": "github.com/envoyproxy/go-control-plane/ratelimit@v0.1.0",
+      "purl": "pkg:golang/github.com/envoyproxy/go-control-plane/ratelimit@v0.1.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/envoyproxy/protoc-gen-validate",
+      "version": "v1.3.3",
+      "bom-ref": "github.com/envoyproxy/protoc-gen-validate@v1.3.3",
+      "purl": "pkg:golang/github.com/envoyproxy/protoc-gen-validate@v1.3.3"
+    },
+    {
+      "type": "library",
+      "name": "github.com/fatih/color",
+      "version": "v1.18.0",
+      "bom-ref": "github.com/fatih/color@v1.18.0",
+      "purl": "pkg:golang/github.com/fatih/color@v1.18.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:S8gINlzdQ840/4pfAwic/ZE0djQEH3wM94VfqLTZcOM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/fatih/structs",
+      "version": "v1.1.0",
+      "bom-ref": "github.com/fatih/structs@v1.1.0",
+      "purl": "pkg:golang/github.com/fatih/structs@v1.1.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/felixge/httpsnoop",
+      "version": "v1.1.0",
+      "bom-ref": "github.com/felixge/httpsnoop@v1.1.0",
+      "purl": "pkg:golang/github.com/felixge/httpsnoop@v1.1.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/flosch/pongo2/v4",
+      "version": "v4.0.2",
+      "bom-ref": "github.com/flosch/pongo2/v4@v4.0.2",
+      "purl": "pkg:golang/github.com/flosch/pongo2/v4@v4.0.2"
+    },
+    {
+      "type": "library",
+      "name": "github.com/fsnotify/fsnotify",
+      "version": "v1.10.1",
+      "bom-ref": "github.com/fsnotify/fsnotify@v1.10.1",
+      "purl": "pkg:golang/github.com/fsnotify/fsnotify@v1.10.1"
+    },
+    {
+      "type": "library",
+      "name": "github.com/fxamacker/cbor/v2",
+      "version": "v2.9.4",
+      "bom-ref": "github.com/fxamacker/cbor/v2@v2.9.4",
+      "purl": "pkg:golang/github.com/fxamacker/cbor/v2@v2.9.4",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:xwjVlxEMR3S605oUlgBjKLTTeGFciYPGYCtF/35LKGo="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/gabriel-vasile/mimetype",
+      "version": "v1.4.3",
+      "bom-ref": "github.com/gabriel-vasile/mimetype@v1.4.3",
+      "purl": "pkg:golang/github.com/gabriel-vasile/mimetype@v1.4.3"
+    },
+    {
+      "type": "library",
+      "name": "github.com/gin-contrib/sse",
+      "version": "v0.1.0",
+      "bom-ref": "github.com/gin-contrib/sse@v0.1.0",
+      "purl": "pkg:golang/github.com/gin-contrib/sse@v0.1.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/gin-gonic/gin",
+      "version": "v1.10.1",
+      "bom-ref": "github.com/gin-gonic/gin@v1.10.1",
+      "purl": "pkg:golang/github.com/gin-gonic/gin@v1.10.1"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-chi/chi/v5",
+      "version": "v5.3.2",
+      "bom-ref": "github.com/go-chi/chi/v5@v5.3.2",
+      "purl": "pkg:golang/github.com/go-chi/chi/v5@v5.3.2",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:5YQkICvTCSZ25hoRsyJazN0scjzKGiu4VAUc7H1o1nY="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-jose/go-jose/v4",
+      "version": "v4.1.4",
+      "bom-ref": "github.com/go-jose/go-jose/v4@v4.1.4",
+      "purl": "pkg:golang/github.com/go-jose/go-jose/v4@v4.1.4",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:moDMcTHmvE6Groj34emNPLs/qtYXRVcd6S7NHbHz3kA="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-kratos/kratos/v3",
+      "version": "v3.0.0",
+      "bom-ref": "github.com/go-kratos/kratos/v3@v3.0.0",
+      "purl": "pkg:golang/github.com/go-kratos/kratos/v3@v3.0.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:dCXqKoeo2Bo9jgC72YfuwJ3g7bPCkHeVeNGyZQ51bLE="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-logr/logr",
+      "version": "v1.4.4",
+      "bom-ref": "github.com/go-logr/logr@v1.4.4",
+      "purl": "pkg:golang/github.com/go-logr/logr@v1.4.4",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:tG4xh9yMsRCAiodLVTxyrkzSZ9+o0L1Kg/+cPVcbP/8="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-logr/stdr",
+      "version": "v1.2.2",
+      "bom-ref": "github.com/go-logr/stdr@v1.2.2",
+      "purl": "pkg:golang/github.com/go-logr/stdr@v1.2.2",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/analysis",
+      "version": "v0.25.5",
+      "bom-ref": "github.com/go-openapi/analysis@v0.25.5",
+      "purl": "pkg:golang/github.com/go-openapi/analysis@v0.25.5"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/errors",
+      "version": "v0.22.8",
+      "bom-ref": "github.com/go-openapi/errors@v0.22.8",
+      "purl": "pkg:golang/github.com/go-openapi/errors@v0.22.8"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/inflect",
+      "version": "v0.19.0",
+      "bom-ref": "github.com/go-openapi/inflect@v0.19.0",
+      "purl": "pkg:golang/github.com/go-openapi/inflect@v0.19.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:9jCH9scKIbHeV9m12SmPilScz6krDxKRasNNSNPXu/4="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/jsonpointer",
+      "version": "v1.0.0",
+      "bom-ref": "github.com/go-openapi/jsonpointer@v1.0.0",
+      "purl": "pkg:golang/github.com/go-openapi/jsonpointer@v1.0.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/jsonreference",
+      "version": "v1.0.0",
+      "bom-ref": "github.com/go-openapi/jsonreference@v1.0.0",
+      "purl": "pkg:golang/github.com/go-openapi/jsonreference@v1.0.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/loads",
+      "version": "v0.25.0",
+      "bom-ref": "github.com/go-openapi/loads@v0.25.0",
+      "purl": "pkg:golang/github.com/go-openapi/loads@v0.25.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/runtime",
+      "version": "v0.33.0",
+      "bom-ref": "github.com/go-openapi/runtime@v0.33.0",
+      "purl": "pkg:golang/github.com/go-openapi/runtime@v0.33.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/runtime/server-middleware",
+      "version": "v0.30.0",
+      "bom-ref": "github.com/go-openapi/runtime/server-middleware@v0.30.0",
+      "purl": "pkg:golang/github.com/go-openapi/runtime/server-middleware@v0.30.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/spec",
+      "version": "v0.22.9",
+      "bom-ref": "github.com/go-openapi/spec@v0.22.9",
+      "purl": "pkg:golang/github.com/go-openapi/spec@v0.22.9"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/strfmt",
+      "version": "v0.27.0",
+      "bom-ref": "github.com/go-openapi/strfmt@v0.27.0",
+      "purl": "pkg:golang/github.com/go-openapi/strfmt@v0.27.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/swag",
+      "version": "v0.28.0",
+      "bom-ref": "github.com/go-openapi/swag@v0.28.0",
+      "purl": "pkg:golang/github.com/go-openapi/swag@v0.28.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/swag/cmdutils",
+      "version": "v0.28.0",
+      "bom-ref": "github.com/go-openapi/swag/cmdutils@v0.28.0",
+      "purl": "pkg:golang/github.com/go-openapi/swag/cmdutils@v0.28.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/swag/conv",
+      "version": "v0.28.0",
+      "bom-ref": "github.com/go-openapi/swag/conv@v0.28.0",
+      "purl": "pkg:golang/github.com/go-openapi/swag/conv@v0.28.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/swag/fileutils",
+      "version": "v0.28.0",
+      "bom-ref": "github.com/go-openapi/swag/fileutils@v0.28.0",
+      "purl": "pkg:golang/github.com/go-openapi/swag/fileutils@v0.28.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/swag/jsonutils",
+      "version": "v0.28.0",
+      "bom-ref": "github.com/go-openapi/swag/jsonutils@v0.28.0",
+      "purl": "pkg:golang/github.com/go-openapi/swag/jsonutils@v0.28.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/swag/loading",
+      "version": "v0.28.0",
+      "bom-ref": "github.com/go-openapi/swag/loading@v0.28.0",
+      "purl": "pkg:golang/github.com/go-openapi/swag/loading@v0.28.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/swag/mangling",
+      "version": "v0.28.0",
+      "bom-ref": "github.com/go-openapi/swag/mangling@v0.28.0",
+      "purl": "pkg:golang/github.com/go-openapi/swag/mangling@v0.28.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/swag/netutils",
+      "version": "v0.28.0",
+      "bom-ref": "github.com/go-openapi/swag/netutils@v0.28.0",
+      "purl": "pkg:golang/github.com/go-openapi/swag/netutils@v0.28.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/swag/pools",
+      "version": "v0.28.0",
+      "bom-ref": "github.com/go-openapi/swag/pools@v0.28.0",
+      "purl": "pkg:golang/github.com/go-openapi/swag/pools@v0.28.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/swag/stringutils",
+      "version": "v0.28.0",
+      "bom-ref": "github.com/go-openapi/swag/stringutils@v0.28.0",
+      "purl": "pkg:golang/github.com/go-openapi/swag/stringutils@v0.28.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/swag/typeutils",
+      "version": "v0.28.0",
+      "bom-ref": "github.com/go-openapi/swag/typeutils@v0.28.0",
+      "purl": "pkg:golang/github.com/go-openapi/swag/typeutils@v0.28.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/swag/yamlutils",
+      "version": "v0.28.0",
+      "bom-ref": "github.com/go-openapi/swag/yamlutils@v0.28.0",
+      "purl": "pkg:golang/github.com/go-openapi/swag/yamlutils@v0.28.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-openapi/validate",
+      "version": "v0.26.1",
+      "bom-ref": "github.com/go-openapi/validate@v0.26.1",
+      "purl": "pkg:golang/github.com/go-openapi/validate@v0.26.1"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-playground/assert/v2",
+      "version": "v2.2.0",
+      "bom-ref": "github.com/go-playground/assert/v2@v2.2.0",
+      "purl": "pkg:golang/github.com/go-playground/assert/v2@v2.2.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:JvknZsQTYeFEAhQwI4qEt9cyV5ONwRHC+lYKSsYSR8s="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-playground/form/v4",
+      "version": "v4.3.0",
+      "bom-ref": "github.com/go-playground/form/v4@v4.3.0",
+      "purl": "pkg:golang/github.com/go-playground/form/v4@v4.3.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:OVttojbQv2WNCs4P+VnjPtrt/+30Ipw4890W3OaFlvk="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-playground/locales",
+      "version": "v0.14.1",
+      "bom-ref": "github.com/go-playground/locales@v0.14.1",
+      "purl": "pkg:golang/github.com/go-playground/locales@v0.14.1"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-playground/universal-translator",
+      "version": "v0.18.1",
+      "bom-ref": "github.com/go-playground/universal-translator@v0.18.1",
+      "purl": "pkg:golang/github.com/go-playground/universal-translator@v0.18.1"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-playground/validator/v10",
+      "version": "v10.20.0",
+      "bom-ref": "github.com/go-playground/validator/v10@v10.20.0",
+      "purl": "pkg:golang/github.com/go-playground/validator/v10@v10.20.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-sql-driver/mysql",
+      "version": "v1.10.1",
+      "bom-ref": "github.com/go-sql-driver/mysql@v1.10.1",
+      "purl": "pkg:golang/github.com/go-sql-driver/mysql@v1.10.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:arlSnNLq6a5yxGxV7qg9lF4j0C+KwD6NbQyKr9QL6ME="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-test/deep",
+      "version": "v1.0.3",
+      "bom-ref": "github.com/go-test/deep@v1.0.3",
+      "purl": "pkg:golang/github.com/go-test/deep@v1.0.3",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:ZrJSEWsXzPOxaZnFteGEfooLba+ju3FYIbOrS+rQd68="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-viper/mapstructure/v2",
+      "version": "v2.5.0",
+      "bom-ref": "github.com/go-viper/mapstructure/v2@v2.5.0",
+      "purl": "pkg:golang/github.com/go-viper/mapstructure/v2@v2.5.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:vM5IJoUAy3d7zRSVtIwQgBj7BiWtMPfmPEgAXnvj1Ro="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-webauthn/webauthn",
+      "version": "v0.18.2",
+      "bom-ref": "github.com/go-webauthn/webauthn@v0.18.2",
+      "purl": "pkg:golang/github.com/go-webauthn/webauthn@v0.18.2",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:0BeftmEHU7i3Dv0VFwBtidy/ba37Vcdjvqst9EYu8Sk="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-webauthn/x",
+      "version": "v0.3.1",
+      "bom-ref": "github.com/go-webauthn/x@v0.3.1",
+      "purl": "pkg:golang/github.com/go-webauthn/x@v0.3.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:1ff37z3XfmTTomkhlURgGizLIDyOvPgTt2t9nlzKLRo="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/goccy/go-json",
+      "version": "v0.10.2",
+      "bom-ref": "github.com/goccy/go-json@v0.10.2",
+      "purl": "pkg:golang/github.com/goccy/go-json@v0.10.2"
+    },
+    {
+      "type": "library",
+      "name": "github.com/golang-jwt/jwt/v5",
+      "version": "v5.3.1",
+      "bom-ref": "github.com/golang-jwt/jwt/v5@v5.3.1",
+      "purl": "pkg:golang/github.com/golang-jwt/jwt/v5@v5.3.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:kYf81DTWFe7t+1VvL7eS+jKFVWaUnK9cB1qbwn63YCY="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/golang/glog",
+      "version": "v1.2.5",
+      "bom-ref": "github.com/golang/glog@v1.2.5",
+      "purl": "pkg:golang/github.com/golang/glog@v1.2.5"
+    },
+    {
+      "type": "library",
+      "name": "github.com/golang/groupcache",
+      "version": "v0.0.0-20210331224755-41bb18bfe9da",
+      "bom-ref": "github.com/golang/groupcache@v0.0.0-20210331224755-41bb18bfe9da",
+      "purl": "pkg:golang/github.com/golang/groupcache@v0.0.0-20210331224755-41bb18bfe9da"
+    },
+    {
+      "type": "library",
+      "name": "github.com/golang/mock",
+      "version": "v1.6.0",
+      "bom-ref": "github.com/golang/mock@v1.6.0",
+      "purl": "pkg:golang/github.com/golang/mock@v1.6.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:ErTB+efbowRARo13NNdxyJji2egdxLGQhRaY+DUumQc="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/golang/protobuf",
+      "version": "v1.5.4",
+      "bom-ref": "github.com/golang/protobuf@v1.5.4",
+      "purl": "pkg:golang/github.com/golang/protobuf@v1.5.4",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/golang/snappy",
+      "version": "v0.0.4",
+      "bom-ref": "github.com/golang/snappy@v0.0.4",
+      "purl": "pkg:golang/github.com/golang/snappy@v0.0.4"
+    },
+    {
+      "type": "library",
+      "name": "github.com/gomarkdown/markdown",
+      "version": "v0.0.0-20240328165702-4d01890c35c0",
+      "bom-ref": "github.com/gomarkdown/markdown@v0.0.0-20240328165702-4d01890c35c0",
+      "purl": "pkg:golang/github.com/gomarkdown/markdown@v0.0.0-20240328165702-4d01890c35c0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/google/go-cmp",
+      "version": "v0.7.0",
+      "bom-ref": "github.com/google/go-cmp@v0.7.0",
+      "purl": "pkg:golang/github.com/google/go-cmp@v0.7.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/google/go-github/v31",
+      "version": "v31.0.0",
+      "bom-ref": "github.com/google/go-github/v31@v31.0.0",
+      "purl": "pkg:golang/github.com/google/go-github/v31@v31.0.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/google/go-querystring",
+      "version": "v1.2.0",
+      "bom-ref": "github.com/google/go-querystring@v1.2.0",
+      "purl": "pkg:golang/github.com/google/go-querystring@v1.2.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/google/go-tpm",
+      "version": "v0.9.8",
+      "bom-ref": "github.com/google/go-tpm@v0.9.8",
+      "purl": "pkg:golang/github.com/google/go-tpm@v0.9.8",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:slArAR9Ft+1ybZu0lBwpSmpwhRXaa85hWtMinMyRAWo="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/google/go-tpm-tools",
+      "version": "v0.3.13-0.20230620182252-4639ecce2aba",
+      "bom-ref": "github.com/google/go-tpm-tools@v0.3.13-0.20230620182252-4639ecce2aba",
+      "purl": "pkg:golang/github.com/google/go-tpm-tools@v0.3.13-0.20230620182252-4639ecce2aba",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:qJEJcuLzH5KDR0gKc0zcktin6KSAwL7+jWKBYceddTc="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/google/gofuzz",
+      "version": "v1.2.0",
+      "bom-ref": "github.com/google/gofuzz@v1.2.0",
+      "purl": "pkg:golang/github.com/google/gofuzz@v1.2.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:xRy4A+RhZaiKjJ1bPfwQ8sedCA+YS2YcCHW6ec7JMi0="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/google/jsonschema-go",
+      "version": "v0.4.3",
+      "bom-ref": "github.com/google/jsonschema-go@v0.4.3",
+      "purl": "pkg:golang/github.com/google/jsonschema-go@v0.4.3",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:/DBOLZTfDow7pe2GmaJNhltueGTtDKICi8V8p+DQPd0="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/google/s2a-go",
+      "version": "v0.1.9",
+      "bom-ref": "github.com/google/s2a-go@v0.1.9",
+      "purl": "pkg:golang/github.com/google/s2a-go@v0.1.9"
+    },
+    {
+      "type": "library",
+      "name": "github.com/google/uuid",
+      "version": "v1.6.0",
+      "bom-ref": "github.com/google/uuid@v1.6.0",
+      "purl": "pkg:golang/github.com/google/uuid@v1.6.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/googleapis/enterprise-certificate-proxy",
+      "version": "v0.3.11",
+      "bom-ref": "github.com/googleapis/enterprise-certificate-proxy@v0.3.11",
+      "purl": "pkg:golang/github.com/googleapis/enterprise-certificate-proxy@v0.3.11"
+    },
+    {
+      "type": "library",
+      "name": "github.com/googleapis/gax-go/v2",
+      "version": "v2.17.0",
+      "bom-ref": "github.com/googleapis/gax-go/v2@v2.17.0",
+      "purl": "pkg:golang/github.com/googleapis/gax-go/v2@v2.17.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/gorilla/css",
+      "version": "v1.0.0",
+      "bom-ref": "github.com/gorilla/css@v1.0.0",
+      "purl": "pkg:golang/github.com/gorilla/css@v1.0.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/gorilla/mux",
+      "version": "v1.8.1",
+      "bom-ref": "github.com/gorilla/mux@v1.8.1",
+      "purl": "pkg:golang/github.com/gorilla/mux@v1.8.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/gorilla/securecookie",
+      "version": "v1.1.2",
+      "bom-ref": "github.com/gorilla/securecookie@v1.1.2",
+      "purl": "pkg:golang/github.com/gorilla/securecookie@v1.1.2",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:YCIWL56dvtr73r6715mJs5ZvhtnY73hBvEF8kXD8ePA="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/gorilla/websocket",
+      "version": "v1.5.3",
+      "bom-ref": "github.com/gorilla/websocket@v1.5.3",
+      "purl": "pkg:golang/github.com/gorilla/websocket@v1.5.3",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/grpc-ecosystem/grpc-gateway/v2",
+      "version": "v2.30.0",
+      "bom-ref": "github.com/grpc-ecosystem/grpc-gateway/v2@v2.30.0",
+      "purl": "pkg:golang/github.com/grpc-ecosystem/grpc-gateway/v2@v2.30.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:/Tnpcb2E0Pz/tN9s3bfEY2Q8ePCEX9iuS+cneUwncnw="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/hashicorp/hcl/v2",
+      "version": "v2.18.1",
+      "bom-ref": "github.com/hashicorp/hcl/v2@v2.18.1",
+      "purl": "pkg:golang/github.com/hashicorp/hcl/v2@v2.18.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:6nxnOJFku1EuSawSD81fuviYUV8DxFr3fp2dUi3ZYSo="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/inconshreveable/mousetrap",
+      "version": "v1.1.0",
+      "bom-ref": "github.com/inconshreveable/mousetrap@v1.1.0",
+      "purl": "pkg:golang/github.com/inconshreveable/mousetrap@v1.1.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/iris-contrib/schema",
+      "version": "v0.0.6",
+      "bom-ref": "github.com/iris-contrib/schema@v0.0.6",
+      "purl": "pkg:golang/github.com/iris-contrib/schema@v0.0.6"
+    },
+    {
+      "type": "library",
+      "name": "github.com/jackc/pgpassfile",
+      "version": "v1.0.0",
+      "bom-ref": "github.com/jackc/pgpassfile@v1.0.0",
+      "purl": "pkg:golang/github.com/jackc/pgpassfile@v1.0.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/jackc/pgservicefile",
+      "version": "v0.0.0-20240606120523-5a60cdf6a761",
+      "bom-ref": "github.com/jackc/pgservicefile@v0.0.0-20240606120523-5a60cdf6a761",
+      "purl": "pkg:golang/github.com/jackc/pgservicefile@v0.0.0-20240606120523-5a60cdf6a761",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/jackc/pgx/v5",
+      "version": "v5.11.0",
+      "bom-ref": "github.com/jackc/pgx/v5@v5.11.0",
+      "purl": "pkg:golang/github.com/jackc/pgx/v5@v5.11.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:IzBBtyK9AHqf98cctWFifYSci2hgQR/cd56wB4p+ogg="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/jackc/puddle/v2",
+      "version": "v2.2.2",
+      "bom-ref": "github.com/jackc/puddle/v2@v2.2.2",
+      "purl": "pkg:golang/github.com/jackc/puddle/v2@v2.2.2",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/jeremija/gosubmit",
+      "version": "v0.2.8",
+      "bom-ref": "github.com/jeremija/gosubmit@v0.2.8",
+      "purl": "pkg:golang/github.com/jeremija/gosubmit@v0.2.8"
+    },
+    {
+      "type": "library",
+      "name": "github.com/jessevdk/go-flags",
+      "version": "v1.5.0",
+      "bom-ref": "github.com/jessevdk/go-flags@v1.5.0",
+      "purl": "pkg:golang/github.com/jessevdk/go-flags@v1.5.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/josharian/intern",
+      "version": "v1.0.0",
+      "bom-ref": "github.com/josharian/intern@v1.0.0",
+      "purl": "pkg:golang/github.com/josharian/intern@v1.0.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/jpillora/backoff",
+      "version": "v1.0.0",
+      "bom-ref": "github.com/jpillora/backoff@v1.0.0",
+      "purl": "pkg:golang/github.com/jpillora/backoff@v1.0.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/json-iterator/go",
+      "version": "v1.1.12",
+      "bom-ref": "github.com/json-iterator/go@v1.1.12",
+      "purl": "pkg:golang/github.com/json-iterator/go@v1.1.12"
+    },
+    {
+      "type": "library",
+      "name": "github.com/juju/gnuflag",
+      "version": "v0.0.0-20171113085948-2ce1bb71843d",
+      "bom-ref": "github.com/juju/gnuflag@v0.0.0-20171113085948-2ce1bb71843d",
+      "purl": "pkg:golang/github.com/juju/gnuflag@v0.0.0-20171113085948-2ce1bb71843d"
+    },
+    {
+      "type": "library",
+      "name": "github.com/julienschmidt/httprouter",
+      "version": "v1.3.0",
+      "bom-ref": "github.com/julienschmidt/httprouter@v1.3.0",
+      "purl": "pkg:golang/github.com/julienschmidt/httprouter@v1.3.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/kataras/blocks",
+      "version": "v0.0.8",
+      "bom-ref": "github.com/kataras/blocks@v0.0.8",
+      "purl": "pkg:golang/github.com/kataras/blocks@v0.0.8"
+    },
+    {
+      "type": "library",
+      "name": "github.com/kataras/golog",
+      "version": "v0.1.11",
+      "bom-ref": "github.com/kataras/golog@v0.1.11",
+      "purl": "pkg:golang/github.com/kataras/golog@v0.1.11"
+    },
+    {
+      "type": "library",
+      "name": "github.com/kataras/iris/v12",
+      "version": "v12.2.11",
+      "bom-ref": "github.com/kataras/iris/v12@v12.2.11",
+      "purl": "pkg:golang/github.com/kataras/iris/v12@v12.2.11"
+    },
+    {
+      "type": "library",
+      "name": "github.com/kataras/pio",
+      "version": "v0.0.13",
+      "bom-ref": "github.com/kataras/pio@v0.0.13",
+      "purl": "pkg:golang/github.com/kataras/pio@v0.0.13"
+    },
+    {
+      "type": "library",
+      "name": "github.com/kataras/sitemap",
+      "version": "v0.0.6",
+      "bom-ref": "github.com/kataras/sitemap@v0.0.6",
+      "purl": "pkg:golang/github.com/kataras/sitemap@v0.0.6"
+    },
+    {
+      "type": "library",
+      "name": "github.com/kataras/tunnel",
+      "version": "v0.0.4",
+      "bom-ref": "github.com/kataras/tunnel@v0.0.4",
+      "purl": "pkg:golang/github.com/kataras/tunnel@v0.0.4"
+    },
+    {
+      "type": "library",
+      "name": "github.com/klauspost/compress",
+      "version": "v1.20.1",
+      "bom-ref": "github.com/klauspost/compress@v1.20.1",
+      "purl": "pkg:golang/github.com/klauspost/compress@v1.20.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:T7kKElXUMXrUJ2E9QhQhxFtcK5rPyLdsGZvdbLMPdiQ="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/klauspost/cpuid/v2",
+      "version": "v2.2.7",
+      "bom-ref": "github.com/klauspost/cpuid/v2@v2.2.7",
+      "purl": "pkg:golang/github.com/klauspost/cpuid/v2@v2.2.7"
+    },
+    {
+      "type": "library",
+      "name": "github.com/kr/pretty",
+      "version": "v0.3.1",
+      "bom-ref": "github.com/kr/pretty@v0.3.1",
+      "purl": "pkg:golang/github.com/kr/pretty@v0.3.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/kr/text",
+      "version": "v0.2.0",
+      "bom-ref": "github.com/kr/text@v0.2.0",
+      "purl": "pkg:golang/github.com/kr/text@v0.2.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/kylelemons/godebug",
+      "version": "v1.1.0",
+      "bom-ref": "github.com/kylelemons/godebug@v1.1.0",
+      "purl": "pkg:golang/github.com/kylelemons/godebug@v1.1.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/labstack/echo/v4",
+      "version": "v4.15.1",
+      "bom-ref": "github.com/labstack/echo/v4@v4.15.1",
+      "purl": "pkg:golang/github.com/labstack/echo/v4@v4.15.1"
+    },
+    {
+      "type": "library",
+      "name": "github.com/labstack/gommon",
+      "version": "v0.4.2",
+      "bom-ref": "github.com/labstack/gommon@v0.4.2",
+      "purl": "pkg:golang/github.com/labstack/gommon@v0.4.2"
+    },
+    {
+      "type": "library",
+      "name": "github.com/leodido/go-urn",
+      "version": "v1.4.0",
+      "bom-ref": "github.com/leodido/go-urn@v1.4.0",
+      "purl": "pkg:golang/github.com/leodido/go-urn@v1.4.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/mailgun/raymond/v2",
+      "version": "v2.0.48",
+      "bom-ref": "github.com/mailgun/raymond/v2@v2.0.48",
+      "purl": "pkg:golang/github.com/mailgun/raymond/v2@v2.0.48"
+    },
+    {
+      "type": "library",
+      "name": "github.com/mailru/easyjson",
+      "version": "v0.7.7",
+      "bom-ref": "github.com/mailru/easyjson@v0.7.7",
+      "purl": "pkg:golang/github.com/mailru/easyjson@v0.7.7"
+    },
+    {
+      "type": "library",
+      "name": "github.com/mattn/go-colorable",
+      "version": "v0.1.14",
+      "bom-ref": "github.com/mattn/go-colorable@v0.1.14",
+      "purl": "pkg:golang/github.com/mattn/go-colorable@v0.1.14",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:9A9LHSqF/7dyVVX6g0U9cwm9pG3kP9gSzcuIPHPsaIE="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/mattn/go-isatty",
+      "version": "v0.0.20",
+      "bom-ref": "github.com/mattn/go-isatty@v0.0.20",
+      "purl": "pkg:golang/github.com/mattn/go-isatty@v0.0.20",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/mattn/go-runewidth",
+      "version": "v0.0.19",
+      "bom-ref": "github.com/mattn/go-runewidth@v0.0.19",
+      "purl": "pkg:golang/github.com/mattn/go-runewidth@v0.0.19",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:v++JhqYnZuu5jSKrk9RbgF5v4CGUjqRfBm05byFGLdw="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/mattn/go-sqlite3",
+      "version": "v1.14.28",
+      "bom-ref": "github.com/mattn/go-sqlite3@v1.14.28",
+      "purl": "pkg:golang/github.com/mattn/go-sqlite3@v1.14.28",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:ThEiQrnbtumT+QMknw63Befp/ce/nUPgBPMlRFEum7A="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/microcosm-cc/bluemonday",
+      "version": "v1.0.26",
+      "bom-ref": "github.com/microcosm-cc/bluemonday@v1.0.26",
+      "purl": "pkg:golang/github.com/microcosm-cc/bluemonday@v1.0.26"
+    },
+    {
+      "type": "library",
+      "name": "github.com/mitchellh/go-wordwrap",
+      "version": "v1.0.1",
+      "bom-ref": "github.com/mitchellh/go-wordwrap@v1.0.1",
+      "purl": "pkg:golang/github.com/mitchellh/go-wordwrap@v1.0.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:TLuKupo69TCn6TQSyGxwI1EblZZEsQ0vMlAFQflz0v0="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/mitchellh/mapstructure",
+      "version": "v1.5.0",
+      "bom-ref": "github.com/mitchellh/mapstructure@v1.5.0",
+      "purl": "pkg:golang/github.com/mitchellh/mapstructure@v1.5.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/modelcontextprotocol/go-sdk",
+      "version": "v1.8.0",
+      "bom-ref": "github.com/modelcontextprotocol/go-sdk@v1.8.0",
+      "purl": "pkg:golang/github.com/modelcontextprotocol/go-sdk@v1.8.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:KIvahhYqwtbeniWVPs3TcXEA7b8jEtwfBpOTAI+Urx4="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/modern-go/concurrent",
+      "version": "v0.0.0-20180306012644-bacd9c7ef1dd",
+      "bom-ref": "github.com/modern-go/concurrent@v0.0.0-20180306012644-bacd9c7ef1dd",
+      "purl": "pkg:golang/github.com/modern-go/concurrent@v0.0.0-20180306012644-bacd9c7ef1dd"
+    },
+    {
+      "type": "library",
+      "name": "github.com/modern-go/reflect2",
+      "version": "v1.0.2",
+      "bom-ref": "github.com/modern-go/reflect2@v1.0.2",
+      "purl": "pkg:golang/github.com/modern-go/reflect2@v1.0.2"
+    },
+    {
+      "type": "library",
+      "name": "github.com/muhlemmer/gu",
+      "version": "v0.3.1",
+      "bom-ref": "github.com/muhlemmer/gu@v0.3.1",
+      "purl": "pkg:golang/github.com/muhlemmer/gu@v0.3.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:7EAqmFrW7n3hETvuAdmFmn4hS8W+z3LgKtrnow+YzNM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/muhlemmer/httpforwarded",
+      "version": "v0.1.0",
+      "bom-ref": "github.com/muhlemmer/httpforwarded@v0.1.0",
+      "purl": "pkg:golang/github.com/muhlemmer/httpforwarded@v0.1.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:x4DLrzXdliq8mprgUMR0olDvHGkou5BJsK/vWUetyzY="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/munnerz/goautoneg",
+      "version": "v0.0.0-20191010083416-a7dc8b61c822",
+      "bom-ref": "github.com/munnerz/goautoneg@v0.0.0-20191010083416-a7dc8b61c822",
+      "purl": "pkg:golang/github.com/munnerz/goautoneg@v0.0.0-20191010083416-a7dc8b61c822",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/mwitkow/go-conntrack",
+      "version": "v0.0.0-20190716064945-2f068394615f",
+      "bom-ref": "github.com/mwitkow/go-conntrack@v0.0.0-20190716064945-2f068394615f",
+      "purl": "pkg:golang/github.com/mwitkow/go-conntrack@v0.0.0-20190716064945-2f068394615f"
+    },
+    {
+      "type": "library",
+      "name": "github.com/niemeyer/pretty",
+      "version": "v0.0.0-20200227124842-a10e7caefd8e",
+      "bom-ref": "github.com/niemeyer/pretty@v0.0.0-20200227124842-a10e7caefd8e",
+      "purl": "pkg:golang/github.com/niemeyer/pretty@v0.0.0-20200227124842-a10e7caefd8e"
+    },
+    {
+      "type": "library",
+      "name": "github.com/oapi-codegen/nullable",
+      "version": "v1.1.0",
+      "bom-ref": "github.com/oapi-codegen/nullable@v1.1.0",
+      "purl": "pkg:golang/github.com/oapi-codegen/nullable@v1.1.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:eAh8JVc5430VtYVnq00Hrbpag9PFRGWLjxR1/3KntMs="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/oapi-codegen/runtime",
+      "version": "v1.7.0",
+      "bom-ref": "github.com/oapi-codegen/runtime@v1.7.0",
+      "purl": "pkg:golang/github.com/oapi-codegen/runtime@v1.7.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:t7358VYPvNbWJ9gdAkIK/smVeHpBf6yp8VTsaZsb/7k="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/oklog/ulid/v2",
+      "version": "v2.1.1",
+      "bom-ref": "github.com/oklog/ulid/v2@v2.1.1",
+      "purl": "pkg:golang/github.com/oklog/ulid/v2@v2.1.1"
+    },
+    {
+      "type": "library",
+      "name": "github.com/olekukonko/cat",
+      "version": "v0.0.0-20250911104152-50322a0618f6",
+      "bom-ref": "github.com/olekukonko/cat@v0.0.0-20250911104152-50322a0618f6",
+      "purl": "pkg:golang/github.com/olekukonko/cat@v0.0.0-20250911104152-50322a0618f6",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:zrbMGy9YXpIeTnGj4EljqMiZsIcE09mmF8XsD5AYOJc="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/olekukonko/errors",
+      "version": "v1.1.0",
+      "bom-ref": "github.com/olekukonko/errors@v1.1.0",
+      "purl": "pkg:golang/github.com/olekukonko/errors@v1.1.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:RNuGIh15QdDenh+hNvKrJkmxxjV4hcS50Db478Ou5sM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/olekukonko/ll",
+      "version": "v0.1.4-0.20260115111900-9e59c2286df0",
+      "bom-ref": "github.com/olekukonko/ll@v0.1.4-0.20260115111900-9e59c2286df0",
+      "purl": "pkg:golang/github.com/olekukonko/ll@v0.1.4-0.20260115111900-9e59c2286df0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:jrYnow5+hy3WRDCBypUFvVKNSPPCdqgSXIE9eJDD8LM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/olekukonko/tablewriter",
+      "version": "v1.1.3",
+      "bom-ref": "github.com/olekukonko/tablewriter@v1.1.3",
+      "purl": "pkg:golang/github.com/olekukonko/tablewriter@v1.1.3",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:VSHhghXxrP0JHl+0NnKid7WoEmd9/urKRJLysb70nnA="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/olekukonko/ts",
+      "version": "v0.0.0-20171002115256-78ecb04241c0",
+      "bom-ref": "github.com/olekukonko/ts@v0.0.0-20171002115256-78ecb04241c0",
+      "purl": "pkg:golang/github.com/olekukonko/ts@v0.0.0-20171002115256-78ecb04241c0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/onsi/gomega",
+      "version": "v1.42.1",
+      "bom-ref": "github.com/onsi/gomega@v1.42.1",
+      "purl": "pkg:golang/github.com/onsi/gomega@v1.42.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:iN1rCUX+44NZ1Dc97MPoeFYbFR0vh8zxoxMFwKdyZ6I="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pelletier/go-toml/v2",
+      "version": "v2.2.2",
+      "bom-ref": "github.com/pelletier/go-toml/v2@v2.2.2",
+      "purl": "pkg:golang/github.com/pelletier/go-toml/v2@v2.2.2"
+    },
+    {
+      "type": "library",
+      "name": "github.com/philhofer/fwd",
+      "version": "v1.2.0",
+      "bom-ref": "github.com/philhofer/fwd@v1.2.0",
+      "purl": "pkg:golang/github.com/philhofer/fwd@v1.2.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:e6DnBTl7vGY+Gz322/ASL4Gyp1FspeMvx1RNDoToZuM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/planetscale/vtprotobuf",
+      "version": "v0.6.1-0.20240319094008-0393e58bdf10",
+      "bom-ref": "github.com/planetscale/vtprotobuf@v0.6.1-0.20240319094008-0393e58bdf10",
+      "purl": "pkg:golang/github.com/planetscale/vtprotobuf@v0.6.1-0.20240319094008-0393e58bdf10"
+    },
+    {
+      "type": "library",
+      "name": "github.com/pmezard/go-difflib",
+      "version": "v1.0.0",
+      "bom-ref": "github.com/pmezard/go-difflib@v1.0.0",
+      "purl": "pkg:golang/github.com/pmezard/go-difflib@v1.0.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/prometheus/client_golang",
+      "version": "v1.25.0",
+      "bom-ref": "github.com/prometheus/client_golang@v1.25.0",
+      "purl": "pkg:golang/github.com/prometheus/client_golang@v1.25.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:cDtW1TcFsMi1RJc8khwCKB4VhzwV04aKqbYtNOXuiK0="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/prometheus/client_model",
+      "version": "v0.6.3",
+      "bom-ref": "github.com/prometheus/client_model@v0.6.3",
+      "purl": "pkg:golang/github.com/prometheus/client_model@v0.6.3",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:O0jaTVAYNxTHYInEPFJt5I3+sN8zqBtVMPTB1qyxiEo="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/prometheus/common",
+      "version": "v0.72.0",
+      "bom-ref": "github.com/prometheus/common@v0.72.0",
+      "purl": "pkg:golang/github.com/prometheus/common@v0.72.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:tAYsE+sPJxIncDAobm4H5aQjmox9ZxEIIqPbiffa8G4="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/prometheus/procfs",
+      "version": "v0.22.0",
+      "bom-ref": "github.com/prometheus/procfs@v0.22.0",
+      "purl": "pkg:golang/github.com/prometheus/procfs@v0.22.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:6q9+/JL9IKAPbCmBrv9n5O5Ty3NKnciV5X7YGw0oics="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/rogpeppe/fastuuid",
+      "version": "v1.2.0",
+      "bom-ref": "github.com/rogpeppe/fastuuid@v1.2.0",
+      "purl": "pkg:golang/github.com/rogpeppe/fastuuid@v1.2.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/rogpeppe/go-internal",
+      "version": "v1.14.1",
+      "bom-ref": "github.com/rogpeppe/go-internal@v1.14.1",
+      "purl": "pkg:golang/github.com/rogpeppe/go-internal@v1.14.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/rs/cors",
+      "version": "v1.11.1",
+      "bom-ref": "github.com/rs/cors@v1.11.1",
+      "purl": "pkg:golang/github.com/rs/cors@v1.11.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:eU3gRzXLRK57F5rKMGMZURNdIG4EoAmX8k94r9wXWHA="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/russross/blackfriday/v2",
+      "version": "v2.1.0",
+      "bom-ref": "github.com/russross/blackfriday/v2@v2.1.0",
+      "purl": "pkg:golang/github.com/russross/blackfriday/v2@v2.1.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/schollz/closestmatch",
+      "version": "v2.1.0+incompatible",
+      "bom-ref": "github.com/schollz/closestmatch@v2.1.0+incompatible",
+      "purl": "pkg:golang/github.com/schollz/closestmatch@v2.1.0+incompatible"
+    },
+    {
+      "type": "library",
+      "name": "github.com/segmentio/asm",
+      "version": "v1.1.3",
+      "bom-ref": "github.com/segmentio/asm@v1.1.3",
+      "purl": "pkg:golang/github.com/segmentio/asm@v1.1.3",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:WM03sfUOENvvKexOLp+pCqgb/WDjsi7EK8gIsICtzhc="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/segmentio/encoding",
+      "version": "v0.5.4",
+      "bom-ref": "github.com/segmentio/encoding@v0.5.4",
+      "purl": "pkg:golang/github.com/segmentio/encoding@v0.5.4",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:OW1VRern8Nw6ITAtwSZ7Idrl3MXCFwXHPgqESYfvNt0="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/sergi/go-diff",
+      "version": "v1.3.1",
+      "bom-ref": "github.com/sergi/go-diff@v1.3.1",
+      "purl": "pkg:golang/github.com/sergi/go-diff@v1.3.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:xkr+Oxo4BOQKmkn/B9eMK0g5Kg/983T9DqqPHwYqD+8="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/sirupsen/logrus",
+      "version": "v1.9.1",
+      "bom-ref": "github.com/sirupsen/logrus@v1.9.1",
+      "purl": "pkg:golang/github.com/sirupsen/logrus@v1.9.1"
+    },
+    {
+      "type": "library",
+      "name": "github.com/spf13/cobra",
+      "version": "v1.7.0",
+      "bom-ref": "github.com/spf13/cobra@v1.7.0",
+      "purl": "pkg:golang/github.com/spf13/cobra@v1.7.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:hyqWnYt1ZQShIddO5kBpj3vu05/++x6tJ6dg8EC572I="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/spf13/pflag",
+      "version": "v1.0.5",
+      "bom-ref": "github.com/spf13/pflag@v1.0.5",
+      "purl": "pkg:golang/github.com/spf13/pflag@v1.0.5",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:iy+VFUOCP1a+8yFto/drg2CJ5u0yRoB7fZw3DKv/JXA="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/spiffe/go-spiffe/v2",
+      "version": "v2.7.0",
+      "bom-ref": "github.com/spiffe/go-spiffe/v2@v2.7.0",
+      "purl": "pkg:golang/github.com/spiffe/go-spiffe/v2@v2.7.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/spkg/bom",
+      "version": "v0.0.0-20160624110644-59b7046e48ad",
+      "bom-ref": "github.com/spkg/bom@v0.0.0-20160624110644-59b7046e48ad",
+      "purl": "pkg:golang/github.com/spkg/bom@v0.0.0-20160624110644-59b7046e48ad"
+    },
+    {
+      "type": "library",
+      "name": "github.com/stretchr/objx",
+      "version": "v0.5.0",
+      "bom-ref": "github.com/stretchr/objx@v0.5.0",
+      "purl": "pkg:golang/github.com/stretchr/objx@v0.5.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/stretchr/testify",
+      "version": "v1.12.1",
+      "bom-ref": "github.com/stretchr/testify@v1.12.1",
+      "purl": "pkg:golang/github.com/stretchr/testify@v1.12.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/tdewolff/minify/v2",
+      "version": "v2.20.19",
+      "bom-ref": "github.com/tdewolff/minify/v2@v2.20.19",
+      "purl": "pkg:golang/github.com/tdewolff/minify/v2@v2.20.19"
+    },
+    {
+      "type": "library",
+      "name": "github.com/tdewolff/parse/v2",
+      "version": "v2.7.12",
+      "bom-ref": "github.com/tdewolff/parse/v2@v2.7.12",
+      "purl": "pkg:golang/github.com/tdewolff/parse/v2@v2.7.12"
+    },
+    {
+      "type": "library",
+      "name": "github.com/tinylib/msgp",
+      "version": "v1.6.4",
+      "bom-ref": "github.com/tinylib/msgp@v1.6.4",
+      "purl": "pkg:golang/github.com/tinylib/msgp@v1.6.4",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:mOwYbyYDLPj35mkA2BjjYejgJk9BuHxDdvRnb6v2ZcQ="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/twitchyliquid64/golang-asm",
+      "version": "v0.15.1",
+      "bom-ref": "github.com/twitchyliquid64/golang-asm@v0.15.1",
+      "purl": "pkg:golang/github.com/twitchyliquid64/golang-asm@v0.15.1"
+    },
+    {
+      "type": "library",
+      "name": "github.com/ugorji/go/codec",
+      "version": "v1.2.12",
+      "bom-ref": "github.com/ugorji/go/codec@v1.2.12",
+      "purl": "pkg:golang/github.com/ugorji/go/codec@v1.2.12"
+    },
+    {
+      "type": "library",
+      "name": "github.com/valkey-io/valkey-go",
+      "version": "v1.0.78",
+      "bom-ref": "github.com/valkey-io/valkey-go@v1.0.78",
+      "purl": "pkg:golang/github.com/valkey-io/valkey-go@v1.0.78",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:1Ce8hRaaNXpKfqmqZQRhnbVh1eW8MGR873pdXVvE4y8="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/valyala/bytebufferpool",
+      "version": "v1.0.0",
+      "bom-ref": "github.com/valyala/bytebufferpool@v1.0.0",
+      "purl": "pkg:golang/github.com/valyala/bytebufferpool@v1.0.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/valyala/fasttemplate",
+      "version": "v1.2.2",
+      "bom-ref": "github.com/valyala/fasttemplate@v1.2.2",
+      "purl": "pkg:golang/github.com/valyala/fasttemplate@v1.2.2"
+    },
+    {
+      "type": "library",
+      "name": "github.com/vmihailenco/msgpack/v5",
+      "version": "v5.4.1",
+      "bom-ref": "github.com/vmihailenco/msgpack/v5@v5.4.1",
+      "purl": "pkg:golang/github.com/vmihailenco/msgpack/v5@v5.4.1"
+    },
+    {
+      "type": "library",
+      "name": "github.com/vmihailenco/tagparser/v2",
+      "version": "v2.0.0",
+      "bom-ref": "github.com/vmihailenco/tagparser/v2@v2.0.0",
+      "purl": "pkg:golang/github.com/vmihailenco/tagparser/v2@v2.0.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/x448/float16",
+      "version": "v0.8.4",
+      "bom-ref": "github.com/x448/float16@v0.8.4",
+      "purl": "pkg:golang/github.com/x448/float16@v0.8.4",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/xhit/go-str2duration/v2",
+      "version": "v2.1.0",
+      "bom-ref": "github.com/xhit/go-str2duration/v2@v2.1.0",
+      "purl": "pkg:golang/github.com/xhit/go-str2duration/v2@v2.1.0"
+    },
+    {
+      "type": "library",
+      "name": "github.com/yosida95/uritemplate/v3",
+      "version": "v3.0.2",
+      "bom-ref": "github.com/yosida95/uritemplate/v3@v3.0.2",
+      "purl": "pkg:golang/github.com/yosida95/uritemplate/v3@v3.0.2",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:Ed3Oyj9yrmi9087+NczuL5BwkIc4wvTb5zIM+UJPGz4="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/yosssi/ace",
+      "version": "v0.0.5",
+      "bom-ref": "github.com/yosssi/ace@v0.0.5",
+      "purl": "pkg:golang/github.com/yosssi/ace@v0.0.5"
+    },
+    {
+      "type": "library",
+      "name": "github.com/yuin/goldmark",
+      "version": "v1.4.13",
+      "bom-ref": "github.com/yuin/goldmark@v1.4.13",
+      "purl": "pkg:golang/github.com/yuin/goldmark@v1.4.13"
+    },
+    {
+      "type": "library",
+      "name": "github.com/zclconf/go-cty",
+      "version": "v1.14.4",
+      "bom-ref": "github.com/zclconf/go-cty@v1.14.4",
+      "purl": "pkg:golang/github.com/zclconf/go-cty@v1.14.4",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:uXXczd9QDGsgu0i/QFR/hzI5NYCHLf6NQw/atrbnhq8="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/zclconf/go-cty-debug",
+      "version": "v0.0.0-20191215020915-b22d67c1ba0b",
+      "bom-ref": "github.com/zclconf/go-cty-debug@v0.0.0-20191215020915-b22d67c1ba0b",
+      "purl": "pkg:golang/github.com/zclconf/go-cty-debug@v0.0.0-20191215020915-b22d67c1ba0b"
+    },
+    {
+      "type": "library",
+      "name": "github.com/zclconf/go-cty-yaml",
+      "version": "v1.1.0",
+      "bom-ref": "github.com/zclconf/go-cty-yaml@v1.1.0",
+      "purl": "pkg:golang/github.com/zclconf/go-cty-yaml@v1.1.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:nP+jp0qPHv2IhUVqmQSzjvqAWcObN0KBkUl2rWBdig0="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/zitadel/oidc/v3",
+      "version": "v3.51.14",
+      "bom-ref": "github.com/zitadel/oidc/v3@v3.51.14",
+      "purl": "pkg:golang/github.com/zitadel/oidc/v3@v3.51.14",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:gVuKmazBpMLv92Rzjfc+/gYOf3ZwUe70whbowfHsnbM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/zitadel/schema",
+      "version": "v1.3.2",
+      "bom-ref": "github.com/zitadel/schema@v1.3.2",
+      "purl": "pkg:golang/github.com/zitadel/schema@v1.3.2",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:gfJvt7dOMfTmxzhscZ9KkapKo3Nei3B6cAxjav+lyjI="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opencensus.io",
+      "version": "v0.24.0",
+      "bom-ref": "go.opencensus.io@v0.24.0",
+      "purl": "pkg:golang/go.opencensus.io@v0.24.0"
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/auto/sdk",
+      "version": "v1.2.1",
+      "bom-ref": "go.opentelemetry.io/auto/sdk@v1.2.1",
+      "purl": "pkg:golang/go.opentelemetry.io/auto/sdk@v1.2.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/contrib/detectors/gcp",
+      "version": "v1.44.0",
+      "bom-ref": "go.opentelemetry.io/contrib/detectors/gcp@v1.44.0",
+      "purl": "pkg:golang/go.opentelemetry.io/contrib/detectors/gcp@v1.44.0"
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc",
+      "version": "v0.70.0",
+      "bom-ref": "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc@v0.70.0",
+      "purl": "pkg:golang/go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc@v0.70.0"
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp",
+      "version": "v0.70.0",
+      "bom-ref": "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp@v0.70.0",
+      "purl": "pkg:golang/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp@v0.70.0"
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/otel",
+      "version": "v1.47.0",
+      "bom-ref": "go.opentelemetry.io/otel@v1.47.0",
+      "purl": "pkg:golang/go.opentelemetry.io/otel@v1.47.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:j7ALJ/zgkS7Z6aeJW09p8VC9804bC+PpeTfCD4XPnOM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/otel/exporters/otlp/otlptrace",
+      "version": "v1.47.0",
+      "bom-ref": "go.opentelemetry.io/otel/exporters/otlp/otlptrace@v1.47.0",
+      "purl": "pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlptrace@v1.47.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:julhjPeUH/q/7hinbSdDdqt5h7Zw9YWmRlWRhI0jd54="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp",
+      "version": "v1.47.0",
+      "bom-ref": "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp@v1.47.0",
+      "purl": "pkg:golang/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp@v1.47.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:aXZXsZ012wOgVkqaiQv+Z/d8V0xKjmg70F6m4CE94lc="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/otel/exporters/stdout/stdouttrace",
+      "version": "v1.45.0",
+      "bom-ref": "go.opentelemetry.io/otel/exporters/stdout/stdouttrace@v1.45.0",
+      "purl": "pkg:golang/go.opentelemetry.io/otel/exporters/stdout/stdouttrace@v1.45.0"
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/otel/log",
+      "version": "v1.47.0",
+      "bom-ref": "go.opentelemetry.io/otel/log@v1.47.0",
+      "purl": "pkg:golang/go.opentelemetry.io/otel/log@v1.47.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:cOTS1CcLbSQeZKanGJ+0JpF/+t4PELi3O3bbl2lqCcI="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/otel/metric",
+      "version": "v1.47.0",
+      "bom-ref": "go.opentelemetry.io/otel/metric@v1.47.0",
+      "purl": "pkg:golang/go.opentelemetry.io/otel/metric@v1.47.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:4PptaldXx3Eat1XjMZ68pPJEs5wrhlemctZE9a3UdWY="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/otel/sdk",
+      "version": "v1.47.0",
+      "bom-ref": "go.opentelemetry.io/otel/sdk@v1.47.0",
+      "purl": "pkg:golang/go.opentelemetry.io/otel/sdk@v1.47.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:zWXEr4j2lFefG87TU6Yg8a7ngfohIKFZHKp0Hf5hC6I="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/otel/sdk/metric",
+      "version": "v1.47.0",
+      "bom-ref": "go.opentelemetry.io/otel/sdk/metric@v1.47.0",
+      "purl": "pkg:golang/go.opentelemetry.io/otel/sdk/metric@v1.47.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:lfISg2j93VT6yqdk9OfUaZmw/GfcZqCCV3jdXtsPnKw="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/otel/trace",
+      "version": "v1.47.0",
+      "bom-ref": "go.opentelemetry.io/otel/trace@v1.47.0",
+      "purl": "pkg:golang/go.opentelemetry.io/otel/trace@v1.47.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:JOjX/Oci8K94QHddo+bbfya/Ai/nf6/dt9ZfrFNWSrM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/proto/otlp",
+      "version": "v1.11.0",
+      "bom-ref": "go.opentelemetry.io/proto/otlp@v1.11.0",
+      "purl": "pkg:golang/go.opentelemetry.io/proto/otlp@v1.11.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:5rrYs0Ykyj50sdU/JU0x8etU+LubXWb+gED6TbEdMIk="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.uber.org/goleak",
+      "version": "v1.3.0",
+      "bom-ref": "go.uber.org/goleak@v1.3.0",
+      "purl": "pkg:golang/go.uber.org/goleak@v1.3.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.uber.org/mock",
+      "version": "v0.6.0",
+      "bom-ref": "go.uber.org/mock@v0.6.0",
+      "purl": "pkg:golang/go.uber.org/mock@v0.6.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:hyF9dfmbgIX5EfOdasqLsWD6xqpNZlXblLB/Dbnwv3Y="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.yaml.in/yaml/v2",
+      "version": "v2.4.4",
+      "bom-ref": "go.yaml.in/yaml/v2@v2.4.4",
+      "purl": "pkg:golang/go.yaml.in/yaml/v2@v2.4.4",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:tuyd0P+2Ont/d6e2rl3be67goVK4R6deVxCUX5vyPaQ="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.yaml.in/yaml/v3",
+      "version": "v3.0.5",
+      "bom-ref": "go.yaml.in/yaml/v3@v3.0.5",
+      "purl": "pkg:golang/go.yaml.in/yaml/v3@v3.0.5",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/arch",
+      "version": "v0.8.0",
+      "bom-ref": "golang.org/x/arch@v0.8.0",
+      "purl": "pkg:golang/golang.org/x/arch@v0.8.0"
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/crypto",
+      "version": "v0.58.0",
+      "bom-ref": "golang.org/x/crypto@v0.58.0",
+      "purl": "pkg:golang/golang.org/x/crypto@v0.58.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:COkYLr4k7nDI4r6QtMML2AfzeIswWHAJthLS6K/M/54="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/exp",
+      "version": "v0.0.0-20240404231335-c0f41cb1a7a0",
+      "bom-ref": "golang.org/x/exp@v0.0.0-20240404231335-c0f41cb1a7a0",
+      "purl": "pkg:golang/golang.org/x/exp@v0.0.0-20240404231335-c0f41cb1a7a0"
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/mod",
+      "version": "v0.42.0",
+      "bom-ref": "golang.org/x/mod@v0.42.0",
+      "purl": "pkg:golang/golang.org/x/mod@v0.42.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:ICeL3t2L30ljSPHHxDnR4fqVcBt/zR2zJAb9juavmQg="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/net",
+      "version": "v0.61.0",
+      "bom-ref": "golang.org/x/net@v0.61.0",
+      "purl": "pkg:golang/golang.org/x/net@v0.61.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:RR+6j/BTBCrggOLugxa+66R8FvoN6MHlzDlZIbN9YFw="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/oauth2",
+      "version": "v0.37.0",
+      "bom-ref": "golang.org/x/oauth2@v0.37.0",
+      "purl": "pkg:golang/golang.org/x/oauth2@v0.37.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:JUlcxA8oAtauLfiH8FX2/FkAWHAdi0QtGCGc+hofE98="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/sync",
+      "version": "v0.24.0",
+      "bom-ref": "golang.org/x/sync@v0.24.0",
+      "purl": "pkg:golang/golang.org/x/sync@v0.24.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:iqiDrGoDgyuvAKrhLQthUEzU/R378N78gXbBjxed7oA="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/sys",
+      "version": "v0.49.0",
+      "bom-ref": "golang.org/x/sys@v0.49.0",
+      "purl": "pkg:golang/golang.org/x/sys@v0.49.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:XbzkgYJHdqh/8m2Uu0W/dQv8nktxx4BFHp1M0gROTXA="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/telemetry",
+      "version": "v0.0.0-20261009151841-97e8ea77aa2a",
+      "bom-ref": "golang.org/x/telemetry@v0.0.0-20261009151841-97e8ea77aa2a",
+      "purl": "pkg:golang/golang.org/x/telemetry@v0.0.0-20261009151841-97e8ea77aa2a"
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/term",
+      "version": "v0.47.0",
+      "bom-ref": "golang.org/x/term@v0.47.0",
+      "purl": "pkg:golang/golang.org/x/term@v0.47.0"
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/text",
+      "version": "v0.43.0",
+      "bom-ref": "golang.org/x/text@v0.43.0",
+      "purl": "pkg:golang/golang.org/x/text@v0.43.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:1QivrlhwAsnMOcqgOdl9my7s9OyZl8O5/UGUTJVXoWc="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/time",
+      "version": "v0.15.0",
+      "bom-ref": "golang.org/x/time@v0.15.0",
+      "purl": "pkg:golang/golang.org/x/time@v0.15.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:bbrp8t3bGUeFOx08pvsMYRTCVSMk89u4tKbNOZbp88U="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/tools",
+      "version": "v0.52.0",
+      "bom-ref": "golang.org/x/tools@v0.52.0",
+      "purl": "pkg:golang/golang.org/x/tools@v0.52.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:ryxg4U63oaUYk7uOLTF37n43f4qgtGvqV4Ioit1BaEs="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/tools/go/expect",
+      "version": "v0.1.0-deprecated",
+      "bom-ref": "golang.org/x/tools/go/expect@v0.1.0-deprecated",
+      "purl": "pkg:golang/golang.org/x/tools/go/expect@v0.1.0-deprecated",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:jY2C5HGYR5lqex3gEniOQL0r7Dq5+VGVgY1nudX5lXY="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/tools/go/packages/packagestest",
+      "version": "v0.1.1-deprecated",
+      "bom-ref": "golang.org/x/tools/go/packages/packagestest@v0.1.1-deprecated",
+      "purl": "pkg:golang/golang.org/x/tools/go/packages/packagestest@v0.1.1-deprecated",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:1h2MnaIAIXISqTFKdENegdpAgUXz6NrPEsbIeWaBRvM="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "gonum.org/v1/gonum",
+      "version": "v0.17.0",
+      "bom-ref": "gonum.org/v1/gonum@v0.17.0",
+      "purl": "pkg:golang/gonum.org/v1/gonum@v0.17.0",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:VbpOemQlsSMrYmn7T2OUvQ4dqxQXU+ouZFQsZOx50z4="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "google.golang.org/genproto/googleapis/api",
+      "version": "v0.0.0-20260928230214-8a89bd6388cc",
+      "bom-ref": "google.golang.org/genproto/googleapis/api@v0.0.0-20260928230214-8a89bd6388cc",
+      "purl": "pkg:golang/google.golang.org/genproto/googleapis/api@v0.0.0-20260928230214-8a89bd6388cc",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:rZHRz0ogq4Pid1IKtA/ivHi8XONVF5tqUQXA2TtgpkE="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "google.golang.org/genproto/googleapis/rpc",
+      "version": "v0.0.0-20260928230214-8a89bd6388cc",
+      "bom-ref": "google.golang.org/genproto/googleapis/rpc@v0.0.0-20260928230214-8a89bd6388cc",
+      "purl": "pkg:golang/google.golang.org/genproto/googleapis/rpc@v0.0.0-20260928230214-8a89bd6388cc",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:4bNTbnb44EqGVy9HaQxSY2jnafSUdgV3qHtedvNpDKg="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "google.golang.org/grpc",
+      "version": "v1.83.2",
+      "bom-ref": "google.golang.org/grpc@v1.83.2",
+      "purl": "pkg:golang/google.golang.org/grpc@v1.83.2",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "google.golang.org/protobuf",
+      "version": "v1.36.12",
+      "bom-ref": "google.golang.org/protobuf@v1.36.12",
+      "purl": "pkg:golang/google.golang.org/protobuf@v1.36.12",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "gopkg.in/check.v1",
+      "version": "v1.0.0-20201130134442-10cb98267c6c",
+      "bom-ref": "gopkg.in/check.v1@v1.0.0-20201130134442-10cb98267c6c",
+      "purl": "pkg:golang/gopkg.in/check.v1@v1.0.0-20201130134442-10cb98267c6c",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk="
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "gopkg.in/ini.v1",
+      "version": "v1.67.0",
+      "bom-ref": "gopkg.in/ini.v1@v1.67.0",
+      "purl": "pkg:golang/gopkg.in/ini.v1@v1.67.0"
+    },
+    {
+      "type": "library",
+      "name": "gopkg.in/yaml.v3",
+      "version": "v3.0.1",
+      "bom-ref": "gopkg.in/yaml.v3@v3.0.1",
+      "purl": "pkg:golang/gopkg.in/yaml.v3@v3.0.1",
+      "properties": [
+        {
+          "name": "go:module:checksum",
+          "value": "h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA="
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+rule_files: [authova-alerts.yaml]
+scrape_configs:
+  - job_name: authova-core
+    static_configs:
+      - targets: [host.docker.internal:18180]
+        labels: {deployment: authova-local-passkey}
+  - job_name: authova-worker
+    static_configs:
+      - targets: [host.docker.internal:18181]
+        labels: {deployment: authova-local-passkey}
+# Configure Alertmanager and private network/TLS/auth in your own deployment.
+# /metrics is operational data: never expose it through the public login ingress.

@@ -1,0 +1,60 @@
+{
+  "authority": "api/authova/v1/*.proto",
+  "comparison": "exact JSON equality except documented additive response schemas matching existing runtime output",
+  "documents": {
+    "management": {
+      "baseline_sha256": "e8d46054463dc7c667d5376c8e8c56b5238f917fba280e92afc8f8f1e1559f6a",
+      "derived_sha256": "6af2bec56930dbfb87c069e6f45015e931a7558dc4d0cf27fa5fc18e4a2eb05e",
+      "semantic_equal": false,
+      "operations": 51,
+      "schemas": 61,
+      "compatible_after_removing_documented_additions": true,
+      "additive_schemas": [
+        "AdministratorAssigned",
+        "ManagementClientProvisioned",
+        "OperatorUpdated",
+        "SigningKeyRotated",
+        "UserDisabled"
+      ],
+      "additive_responses": [
+        {
+          "path": "/api/v1/apps/{app_id}/administrators/{user_id}",
+          "method": "put",
+          "operation_id": "set_app_administrator",
+          "change": "document existing JSON success body; HTTP behavior retained"
+        },
+        {
+          "path": "/api/v1/apps/{app_id}/keys/rotate",
+          "method": "post",
+          "operation_id": "rotate_app_signing_key",
+          "change": "document existing JSON success body; HTTP behavior retained"
+        },
+        {
+          "path": "/api/v1/apps/{app_id}/management-client",
+          "method": "post",
+          "operation_id": "provision_system_management_client",
+          "change": "document existing JSON success body; HTTP behavior retained"
+        },
+        {
+          "path": "/api/v1/apps/{app_id}/users/{user_id}/disable",
+          "method": "post",
+          "operation_id": "disable_user",
+          "change": "document existing JSON success body; HTTP behavior retained"
+        },
+        {
+          "path": "/api/v1/platform/operators/{operator_id}",
+          "method": "patch",
+          "operation_id": "update_platform_operator",
+          "change": "document existing JSON success body; HTTP behavior retained"
+        }
+      ]
+    },
+    "query": {
+      "baseline_sha256": "f920b4c55510c7dcc5f39886fb6fd26ff9f0915b3767a9fc41582b7532d9dcb3",
+      "derived_sha256": "f920b4c55510c7dcc5f39886fb6fd26ff9f0915b3767a9fc41582b7532d9dcb3",
+      "semantic_equal": true,
+      "operations": 12,
+      "schemas": 19
+    }
+  }
+}

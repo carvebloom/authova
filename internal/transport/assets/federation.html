@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>继续登录 · {{.App.Name}}</title>
+<link rel="stylesheet" href="/a/{{.App.Key}}/ui/login.css?v={{.AssetVersion}}">
+<script defer src="/a/{{.App.Key}}/ui/federation.js?v={{.AssetVersion}}"></script>
+</head>
+<body>
+<main>
+<p class="brand">Authova</p>
+<p class="eyebrow">{{.App.Name}}</p>
+<h1>继续登录</h1>
+<p class="step-lead">正在前往身份提供方。</p>
+<p class="continue-wrap"><a id="identity-provider-link" class="continue-link" href="{{.URL}}">继续登录</a></p>
+<footer>由 Authova 安全提供</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,178 @@
+{
+  "date": "2026-11-06",
+  "status": "local architecture implementation verified; release limits explicit",
+  "remote_created": false,
+  "published": false,
+  "old_business_data_migrated": false,
+  "source_hashes_unchanged": 1163,
+  "gates": {
+    "complete-proto": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-final",
+        "exit_code": 0
+      },
+      {
+        "gate": "contract-combination-final",
+        "exit_code": 0
+      }
+    ],
+    "final-acceptance": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-final",
+        "exit_code": 0
+      },
+      {
+        "gate": "contract-combination-final",
+        "exit_code": 0
+      }
+    ],
+    "passkey-http": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-focused",
+        "exit_code": 0
+      }
+    ],
+    "ent-physical": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-focused",
+        "exit_code": 0
+      }
+    ],
+    "proto-commit-empty": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-focused",
+        "exit_code": 0
+      }
+    ],
+    "management-typed": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-focused",
+        "exit_code": 0
+      }
+    ],
+    "engineering-full": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-final",
+        "exit_code": 0
+      },
+      {
+        "gate": "contract-combination-final",
+        "exit_code": 0
+      }
+    ],
+    "engineering-qualified-final": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-focused",
+        "exit_code": 0
+      }
+    ],
+    "v1-full": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-final",
+        "exit_code": 0
+      },
+      {
+        "gate": "contract-combination-final",
+        "exit_code": 0
+      }
+    ]
+  },
+  "auxiliary": "auxiliary-validation.json",
+  "browser": "browser-proto.json",
+  "performance": "performance-summary.json",
+  "migrations": "MIGRATIONS.md",
+  "earlier_failed_runs": {
+    "final-ent-proto": "Fixture App list exceeded default page; fixed cursor assumption. Original command remains failed.",
+    "full-management": "Kratos buffered empty 204 as 200; fixed underlying writer flush and added regression. Original command remains failed."
+  },
+  "full_race": {
+    "passed_packages": 28,
+    "passed_test_nodes": 678,
+    "failed_events": 0,
+    "integration_seconds": 557.477,
+    "evidence_sha256": "091f39dfa692b0e3fa56b3a20b56d94e8a0da110cc519afc41f723712cefdd61"
+  },
+  "skip_count": 18,
+  "engineering": "engineering-validation.json",
+  "latest_full_race": {
+    "passed_packages": 29,
+    "passed_test_nodes": 693,
+    "failures": 0,
+    "integration_seconds": 542.278,
+    "log_sha256": "3b8a4de3779f56ee72c39e9005dc2957413699dbf5a059893596de0cb9a77c76"
+  },
+  "current_schema_version": 1,
+  "current_validation": "v1-validation.json"
+}

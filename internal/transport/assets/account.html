@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>账号安全 · {{.App.Name}}</title>
+<link rel="stylesheet" href="/a/{{.App.Key}}/ui/login.css?v={{.AssetVersion}}">
+<script defer src="/a/{{.App.Key}}/ui/passkeys.js?v={{.AssetVersion}}"></script>
+</head>
+<body>
+<main>
+<p class="brand">Authova</p>
+<p class="eyebrow">{{.App.Name}}</p>
+<h1>账号安全</h1>
+<p class="account-name">{{.User.DisplayName}}</p>
+<p class="help account-contact">{{.User.Email}} {{.User.Phone}}</p>
+<p class="help">敏感操作需要最近 10 分钟内完成认证。</p>
+<section class="passkey-panel" data-passkey-panel data-mode="account" data-base="{{.Base}}/passkeys" data-csrf="{{.CSRF}}" data-available="{{and .PasskeyEnabled .PasskeyAvailable}}"><h2>Passkey 通行密钥</h2><p class="help">每个 App 的凭据独立管理。添加需要最近认证；删除会撤销其他会话，并保留至少一种可用登录方式。</p>{{if not .PasskeyEnabled}}<p class="help">此应用尚未开启 Passkey 登录。</p>{{else if not .PasskeyAvailable}}<p class="help">当前域名不支持 Passkey，请使用配置好的 HTTPS 域名。IP 地址无法作为 RP ID。</p>{{end}}<ul data-passkey-list class="passkey-list" aria-label="已注册的 Passkey"></ul><form class="auth-form" data-passkey-register><label>Passkey 名称<input name="name" maxlength="100" placeholder="例如：我的手机" required></label><button data-passkey-action>添加 Passkey</button></form><p role="status" aria-live="polite" data-passkey-status></p><button type="button" class="text-button" data-passkey-reload>重新读取 Passkey 列表</button><noscript><p class="help">Passkey 需要启用 JavaScript。</p></noscript></section>
+<details><summary>更换认证器</summary><p>验证现有认证器或一次性恢复码，再确认新认证器。成功后撤销旧会话和恢复码。</p><form action="{{.Base}}/mfa/replace" method="post"><input type="hidden" name="_csrf" value="{{.CSRF}}"><label>现有认证器验证码或恢复码<input name="code" autocomplete="off" required></label><button>验证并设置新认证器</button></form></details>
+<details><summary>重新生成恢复码</summary><p>需要现有认证器验证码。旧恢复码和会话会失效；新恢复码只展示一次。</p><form action="{{.Base}}/mfa/recovery-codes" method="post"><input type="hidden" name="_csrf" value="{{.CSRF}}"><label>认证器验证码<input name="code" inputmode="numeric" autocomplete="one-time-code" required></label><button>重新生成并退出</button></form></details>
+<details><summary>修改密码</summary><form action="{{.Base}}/password" method="post"><input type="hidden" name="_csrf" value="{{.CSRF}}"><label>当前密码<input name="old_password" type="password" autocomplete="current-password"></label><label>新密码<input name="new_password" type="password" minlength="15" autocomplete="new-password" required></label><button>修改并撤销旧会话</button></form></details>
+<details><summary>更换邮箱或手机号</summary><form action="{{.Base}}/identifier" method="post"><input type="hidden" name="_csrf" value="{{.CSRF}}"><label>类型<select name="kind"><option value="email">邮箱</option><option value="phone">手机</option></select></label><label>新地址<input name="destination" required></label><button>验证新地址</button></form></details>
+<details><summary>绑定外部身份</summary>{{range .Connections}}<div class="conn-row"><p class="conn-meta">{{.Name}} · {{if .Bound}}已绑定 {{.Bound}} 个身份{{else}}未绑定{{end}} · {{.Status}}</p><div class="conn-actions">{{if eq .Status "active"}}<form action="{{$.Base}}/link" method="post"><input type="hidden" name="_csrf" value="{{$.CSRF}}"><input type="hidden" name="connection_id" value="{{.ID}}"><button class="secondary">绑定 {{.Name}}</button></form>{{end}}{{if .Bound}}<form action="{{$.Base}}/unlink" method="post"><input type="hidden" name="_csrf" value="{{$.CSRF}}"><input type="hidden" name="connection_id" value="{{.ID}}"><button class="secondary">解绑 {{.Name}}</button></form>{{end}}</div></div>{{else}}<p class="help">暂无可绑定的外部身份。</p>{{end}}</details>
+<details><summary>删除账号资料</summary><p class="help">资料和登录凭据会被清除，旧身份 ID 保留为已删除状态。业务系统中的数据由业务系统处理。</p><form action="{{.Base}}/erase" method="post"><input type="hidden" name="_csrf" value="{{.CSRF}}"><label>输入 DELETE 确认<input name="confirm" required></label><button>清除资料并退出</button></form></details>
+<p class="account-exit"><a href="/a/{{.App.Key}}/ui/logout">退出当前 App</a></p>
+<footer>由 Authova 安全提供</footer>
+<p><a href="/a/{{.App.Key}}/ui/account/agents">管理 Agent 授权</a></p></main>
+</body>
+</html>

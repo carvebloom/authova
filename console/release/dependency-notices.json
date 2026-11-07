@@ -1,0 +1,110 @@
+[
+  {
+    "module": "github.com/carvebloom/authova/console",
+    "version": "0.1.0-rc.1",
+    "file": "notices/9bb0c81ce6934e1f/LICENSE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "module": "github.com/carvebloom/authova/console",
+    "version": "0.1.0-rc.1",
+    "file": "notices/9bb0c81ce6934e1f/NOTICE",
+    "sha256": "1e360b0aeccb5119a4a819724fd44b08f960a2b5b45b813f7d0c0c04c45e5071"
+  },
+  {
+    "module": "cloud.google.com/go/compute/metadata",
+    "version": "v0.3.0",
+    "file": "notices/0f0a9074d7d9bf97/LICENSE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "module": "github.com/coreos/go-oidc/v3",
+    "version": "v3.21.0",
+    "file": "notices/7cd0fd73658571a4/LICENSE",
+    "sha256": "cb5e8e7e5f4a3988e1063c142c60dc2df75605f4c46515e776e3aca6df976e14"
+  },
+  {
+    "module": "github.com/coreos/go-oidc/v3",
+    "version": "v3.21.0",
+    "file": "notices/7cd0fd73658571a4/NOTICE",
+    "sha256": "dccd26c6fd9c296daf44d0bc56bb4efc566edd4880381b3331c9a63e6e471338"
+  },
+  {
+    "module": "github.com/go-jose/go-jose/v4",
+    "version": "v4.1.4",
+    "file": "notices/7b1947d2a79df84f/LICENSE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "module": "github.com/google/go-cmp",
+    "version": "v0.7.0",
+    "file": "notices/68154086d1bb97c0/LICENSE",
+    "sha256": "17b5d209ba8f9684257ecfcff87df6ceda6194143a8fbd074f29727cff6f0c40"
+  },
+  {
+    "module": "github.com/onsi/gomega",
+    "version": "v1.42.1",
+    "file": "notices/cf6b9d4c546418b4/LICENSE",
+    "sha256": "3da40f6328f42cbc970672f8129e0ecb6e2cc4f5117a072593ba247276354454"
+  },
+  {
+    "module": "github.com/valkey-io/valkey-go",
+    "version": "v1.0.78",
+    "file": "notices/2ca67fe1a7a06385/LICENSE",
+    "sha256": "283ea6cc2997a1a70da0049e09adf9317bb60ca1b51279b65196b83a69e1996b"
+  },
+  {
+    "module": "github.com/valkey-io/valkey-go",
+    "version": "v1.0.78",
+    "file": "notices/2ca67fe1a7a06385/NOTICE",
+    "sha256": "41824cdce292fe84e7130615e322aae144fdb9e1d147c00ce901b92694fae02c"
+  },
+  {
+    "module": "go.yaml.in/yaml/v3",
+    "version": "v3.0.5",
+    "file": "notices/6e4ce618136452ca/LICENSE",
+    "sha256": "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
+  },
+  {
+    "module": "go.yaml.in/yaml/v3",
+    "version": "v3.0.5",
+    "file": "notices/6e4ce618136452ca/NOTICE",
+    "sha256": "f6c2dd3a67b576eafb89b80200b8b1627230bf3821a0c14cb99a22ac19107d00"
+  },
+  {
+    "module": "golang.org/x/crypto",
+    "version": "v0.57.0",
+    "file": "notices/0679ec780e4b4d27/LICENSE",
+    "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+  },
+  {
+    "module": "golang.org/x/net",
+    "version": "v0.60.0",
+    "file": "notices/15c710684eedf3d4/LICENSE",
+    "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+  },
+  {
+    "module": "golang.org/x/oauth2",
+    "version": "v0.37.0",
+    "file": "notices/636809519be14c75/LICENSE",
+    "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+  },
+  {
+    "module": "golang.org/x/sys",
+    "version": "v0.48.0",
+    "file": "notices/2a81efe5fc811142/LICENSE",
+    "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+  },
+  {
+    "module": "golang.org/x/term",
+    "version": "v0.46.0",
+    "file": "notices/11bfcf1bc0c48296/LICENSE",
+    "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+  },
+  {
+    "module": "golang.org/x/text",
+    "version": "v0.42.0",
+    "file": "notices/530a556028a30ad6/LICENSE",
+    "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+  }
+]

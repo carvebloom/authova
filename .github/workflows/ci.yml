@@ -1,0 +1,85 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod, cache: true}
+      - run: make check
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...
+      - run: go run honnef.co/go/tools/cmd/staticcheck@v0.8.2 ./...
+      - run: go build -trimpath ./cmd/...
+  databases:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: {POSTGRES_USER: authova_migrator, POSTGRES_PASSWORD: integration-only, POSTGRES_DB: authova_quality_ci}
+        ports: ['5432:5432']
+        options: --health-cmd='pg_isready -U authova_migrator -d authova_quality_ci' --health-interval=2s --health-retries=30
+      valkey:
+        image: valkey/valkey:9.1-alpine
+        ports: ['6379:6379']
+        options: --health-cmd='valkey-cli ping' --health-interval=2s --health-retries=30
+      mysql:
+        image: mysql:8.4.11@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70
+        env: {MYSQL_ROOT_PASSWORD: integration-only, MYSQL_DATABASE: authova_quality_ci}
+        ports: ['3306:3306']
+        options: --health-cmd='mysqladmin ping --silent' --health-interval=2s --health-retries=60
+    env:
+      AUTHOVA_TEST_DISPOSABLE_DATABASE: authova_quality_ci
+      AUTHOVA_MODE: development
+      AUTHOVA_BASE_URL: http://127.0.0.1:18080
+      AUTHOVA_CONSOLE_URL: http://127.0.0.1:18090
+      AUTHOVA_TEST_VALKEY_ADDRESS: 127.0.0.1:6379
+      AUTHOVA_MASTER_KEY_FILE: /tmp/authova_quality_ci-test-master
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod, cache: true}
+      - run: python3 -c "import secrets;open('/tmp/authova_quality_ci-test-master','wb').write(secrets.token_bytes(32))"
+      - run: |
+          PGPASSWORD=integration-only psql -h127.0.0.1 -Uauthova_migrator -dauthova_quality_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE authova_runtime LOGIN PASSWORD 'integration-runtime-only' NOSUPERUSER NOBYPASSRLS; GRANT CONNECT ON DATABASE authova_quality_ci TO authova_runtime; GRANT USAGE ON SCHEMA public TO authova_runtime; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT,INSERT,UPDATE,DELETE ON TABLES TO authova_runtime;"
+          MYSQL_PWD=integration-only mysql -h127.0.0.1 -uroot -e "CREATE USER 'authova_runtime'@'%' IDENTIFIED BY 'integration-runtime-only'; GRANT SELECT,INSERT,UPDATE,DELETE ON authova_quality_ci.* TO 'authova_runtime'@'%';"
+          AUTHOVA_DATABASE_URL='postgres://authova_migrator:integration-only@127.0.0.1:5432/authova_quality_ci?sslmode=disable' go run ./cmd/authova migrate
+          AUTHOVA_DATABASE_DRIVER=mysql AUTHOVA_DATABASE_URL='root:integration-only@tcp(127.0.0.1:3306)/authova_quality_ci?parseTime=true' go run ./cmd/authova migrate
+      - run: go test -race -count=1 -v ./internal/integration
+        env:
+          AUTHOVA_TEST_POSTGRES_DSN: postgres://authova_runtime:integration-runtime-only@127.0.0.1:5432/authova_quality_ci?sslmode=disable
+          AUTHOVA_TEST_MYSQL_DSN: authova_runtime:integration-runtime-only@tcp(127.0.0.1:3306)/authova_quality_ci?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin
+      - run: go test -race -count=1 -v ./internal/storage/sqlstore ./internal/delivery ./internal/runtimehttp
+        env:
+          AUTHOVA_TEST_MIGRATOR_POSTGRES_DSN: postgres://authova_migrator:integration-only@127.0.0.1:5432/authova_quality_ci?sslmode=disable
+          AUTHOVA_TEST_MIGRATOR_MYSQL_DSN: root:integration-only@tcp(127.0.0.1:3306)/authova_quality_ci?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin
+          AUTHOVA_TEST_POSTGRES_DSN: postgres://authova_runtime:integration-runtime-only@127.0.0.1:5432/authova_quality_ci?sslmode=disable
+          AUTHOVA_TEST_MYSQL_DSN: authova_runtime:integration-runtime-only@tcp(127.0.0.1:3306)/authova_quality_ci?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin
+      - uses: actions/setup-node@v4
+        with: {node-version: '26'}
+      - run: python3 scripts/verify-contract-combination.py
+        env:
+          AUTHOVA_TEST_POSTGRES_DSN: postgres://authova_runtime:integration-runtime-only@127.0.0.1:5432/authova_quality_ci?sslmode=disable
+          AUTHOVA_TEST_MYSQL_DSN: authova_runtime:integration-runtime-only@tcp(127.0.0.1:3306)/authova_quality_ci?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin
+  console-and-generation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod, cache: true}
+      - uses: actions/setup-node@v4
+        with: {node-version: '26', cache: npm, cache-dependency-path: console/web/package-lock.json}
+      - uses: arduino/setup-protoc@v3
+        with: {version: '36.2', repo-token: '${{ secrets.GITHUB_TOKEN }}'}
+      - run: python3 scripts/generate-api.py --install-tools --check
+      - run: make build-all ent-check
+      - run: git diff --exit-code -- internal/ent
+      - run: npm --prefix console/web ci
+      - run: npm --prefix console/web run typecheck
+      - run: npm --prefix console/web run lint
+      - run: npm --prefix console/web run format:check
+      - run: npm --prefix console/web audit
+      - run: npm --prefix console/web test
+      - run: npm --prefix console/web run build

@@ -1,0 +1,14 @@
+[
+  " M .github/workflows/ci.yml",
+  " M Makefile",
+  " M README.md",
+  " M scripts/check-generated.py",
+  "?? cmd/",
+  "?? docs/agent-query.md",
+  "?? mcpquery/",
+  "?? openapi/v1/query.yaml",
+  "?? scripts/build-query-openapi.py",
+  "?? sdk/query/",
+  "?? skills/",
+  ""
+]

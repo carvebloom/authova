@@ -1,0 +1,2412 @@
+{
+  "components": {
+    "schemas": {
+      "Agent": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_modes": {
+            "items": {
+              "enum": [
+                "delegated",
+                "autonomous"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "allowed_resources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "allowed_scopes": {
+            "items": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 27,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "app_id": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "config_version": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "grant_ttl_seconds": {
+            "maximum": 2592000,
+            "minimum": 300,
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "token_ttl_seconds": {
+            "maximum": 300,
+            "minimum": 30,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "app_id",
+          "client_id",
+          "name",
+          "description",
+          "kind",
+          "status",
+          "allowed_modes",
+          "allowed_scopes",
+          "allowed_resources",
+          "token_ttl_seconds",
+          "grant_ttl_seconds",
+          "config_version",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "AgentGrant": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_id": {
+            "type": "string"
+          },
+          "app_id": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "config_version": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "installation_id": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "revoked_at": {
+            "type": "integer"
+          },
+          "scopes": {
+            "items": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 27,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "app_id",
+          "agent_id",
+          "installation_id",
+          "client_id",
+          "user_id",
+          "tenant_id",
+          "mode",
+          "resource",
+          "status",
+          "scopes",
+          "config_version",
+          "created_at",
+          "expires_at",
+          "revoked_at"
+        ],
+        "type": "object"
+      },
+      "AgentGrantPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AgentGrant"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "next_cursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "AgentInstallation": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_id": {
+            "type": "string"
+          },
+          "allowed_modes": {
+            "items": {
+              "enum": [
+                "delegated",
+                "autonomous"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "allowed_scopes": {
+            "items": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 27,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "app_id": {
+            "type": "string"
+          },
+          "autonomous_grant_id": {
+            "type": "string"
+          },
+          "config_version": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "responsible_party": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "app_id",
+          "agent_id",
+          "tenant_id",
+          "user_id",
+          "responsible_party",
+          "resource",
+          "status",
+          "autonomous_grant_id",
+          "allowed_scopes",
+          "allowed_modes",
+          "config_version",
+          "created_at",
+          "expires_at"
+        ],
+        "type": "object"
+      },
+      "AgentInstallationPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AgentInstallation"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "next_cursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "AgentPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Agent"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "next_cursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "App": {
+        "additionalProperties": false,
+        "properties": {
+          "app_key": {
+            "type": "string"
+          },
+          "config_version": {
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "issuer": {
+            "format": "uri",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "require_mfa": {
+            "type": "boolean"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "suspended",
+              "quarantined"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "app_key",
+          "name",
+          "slug",
+          "status",
+          "issuer",
+          "config_version",
+          "created_at",
+          "require_mfa"
+        ],
+        "type": "object"
+      },
+      "AuthenticationPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "email_otp_enabled": {
+            "type": "boolean"
+          },
+          "external_registration_enabled": {
+            "type": "boolean"
+          },
+          "federation_enabled": {
+            "type": "boolean"
+          },
+          "passkey_enabled": {
+            "type": "boolean"
+          },
+          "password_login_enabled": {
+            "type": "boolean"
+          },
+          "phone_otp_enabled": {
+            "type": "boolean"
+          },
+          "registration_enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "registration_enabled",
+          "password_login_enabled",
+          "email_otp_enabled",
+          "phone_otp_enabled",
+          "federation_enabled",
+          "external_registration_enabled",
+          "passkey_enabled"
+        ],
+        "type": "object"
+      },
+      "Problem": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "type": "object"
+      },
+      "QueryAudit": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actor_id": {
+            "type": "string"
+          },
+          "app_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "subject_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "app_id",
+          "actor_id",
+          "action",
+          "subject_id",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "QueryAuditPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/QueryAudit"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "next_cursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "QueryConfiguration": {
+        "additionalProperties": false,
+        "properties": {
+          "app": {
+            "$ref": "#/components/schemas/App"
+          },
+          "connections": {
+            "items": {
+              "$ref": "#/components/schemas/QueryConnection"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "connections_next_cursor": {
+            "type": "string"
+          },
+          "email_otp_configured": {
+            "type": "boolean"
+          },
+          "passkey_available": {
+            "type": "boolean"
+          },
+          "phone_otp_configured": {
+            "type": "boolean"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/AuthenticationPolicy"
+          },
+          "resource_limits": {
+            "$ref": "#/components/schemas/ResourceLimits"
+          }
+        },
+        "required": [
+          "app",
+          "policy",
+          "resource_limits",
+          "passkey_available",
+          "email_otp_configured",
+          "phone_otp_configured",
+          "connections"
+        ],
+        "type": "object"
+      },
+      "QueryConnection": {
+        "additionalProperties": false,
+        "properties": {
+          "config_version": {
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provider_type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "provider_type",
+          "status",
+          "config_version"
+        ],
+        "type": "object"
+      },
+      "QueryPrincipal": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_id": {
+            "type": "string"
+          },
+          "app_id": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "integer"
+          },
+          "grant_id": {
+            "type": "string"
+          },
+          "installation_id": {
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "tenant_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "app_id",
+          "client_id",
+          "agent_id",
+          "installation_id",
+          "grant_id",
+          "tenant_id",
+          "scopes",
+          "expires_at"
+        ],
+        "type": "object"
+      },
+      "QueryUser": {
+        "additionalProperties": false,
+        "properties": {
+          "app_id": {
+            "type": "string"
+          },
+          "contacts_redacted": {
+            "description": "Contacts are masked unless authova.query.contacts is explicitly approved.",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "disabled",
+              "deleted",
+              "quarantined"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "app_id",
+          "display_name",
+          "status",
+          "created_at",
+          "contacts_redacted"
+        ],
+        "type": "object"
+      },
+      "QueryUserPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/QueryUser"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "next_cursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "ResourceLimits": {
+        "additionalProperties": false,
+        "properties": {
+          "db_concurrency": {
+            "maximum": 4096,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "email_challenges_per_hour": {
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "http_concurrency": {
+            "maximum": 100000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "kdf_concurrency": {
+            "maximum": 512,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "requests_per_second": {
+            "maximum": 1000000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "sms_challenges_per_hour": {
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "http_concurrency",
+          "kdf_concurrency",
+          "db_concurrency",
+          "requests_per_second",
+          "email_challenges_per_hour",
+          "sms_challenges_per_hour"
+        ],
+        "type": "object"
+      },
+      "Session": {
+        "additionalProperties": false,
+        "properties": {
+          "amr": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "status",
+          "created_at",
+          "expires_at",
+          "amr"
+        ],
+        "type": "object"
+      },
+      "SessionPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Session"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "next_cursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "queryAgent": {
+        "bearerFormat": "JWT",
+        "description": "Short-lived autonomous Agent token for urn:authova:query:APP_ID. Exact scopes are documented per operation.",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Purpose-bound autonomous query identities. All operations are GET. Ordinary business and Console credentials are rejected. No mutations or raw credentials are exposed.",
+    "license": {
+      "identifier": "Apache-2.0",
+      "name": "Apache-2.0"
+    },
+    "title": "Authova read-only Agent queries",
+    "version": "0.1.0-rc.1"
+  },
+  "openapi": "3.1.2",
+  "paths": {
+    "/api/v1/apps/{app_id}/query/agents": {
+      "get": {
+        "description": "Requires authova.query.agents, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.",
+        "operationId": "queryAgentPage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentPage"
+                }
+              }
+            },
+            "description": "Read-only result",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or duplicate parameter"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or no longer live credential"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Wrong purpose, mode, scope or tenant boundary"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Object not in the approved boundary"
+          },
+          "405": {
+            "description": "Only GET is accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Admission rejected"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Dependency unavailable"
+          }
+        },
+        "security": [
+          {
+            "queryAgent": []
+          }
+        ],
+        "summary": "Query agents",
+        "tags": [
+          "queries"
+        ],
+        "x-required-scope": "authova.query.agents"
+      }
+    },
+    "/api/v1/apps/{app_id}/query/agents/{id}": {
+      "get": {
+        "description": "Requires authova.query.agents, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.",
+        "operationId": "queryAgent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            },
+            "description": "Read-only result",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or duplicate parameter"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or no longer live credential"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Wrong purpose, mode, scope or tenant boundary"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Object not in the approved boundary"
+          },
+          "405": {
+            "description": "Only GET is accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Admission rejected"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Dependency unavailable"
+          }
+        },
+        "security": [
+          {
+            "queryAgent": []
+          }
+        ],
+        "summary": "Query agents/{id}",
+        "tags": [
+          "queries"
+        ],
+        "x-required-scope": "authova.query.agents"
+      }
+    },
+    "/api/v1/apps/{app_id}/query/audit": {
+      "get": {
+        "description": "Requires authova.query.audit, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.",
+        "operationId": "queryQueryAuditPage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryAuditPage"
+                }
+              }
+            },
+            "description": "Read-only result",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or duplicate parameter"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or no longer live credential"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Wrong purpose, mode, scope or tenant boundary"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Object not in the approved boundary"
+          },
+          "405": {
+            "description": "Only GET is accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Admission rejected"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Dependency unavailable"
+          }
+        },
+        "security": [
+          {
+            "queryAgent": []
+          }
+        ],
+        "summary": "Query audit",
+        "tags": [
+          "queries"
+        ],
+        "x-required-scope": "authova.query.audit"
+      }
+    },
+    "/api/v1/apps/{app_id}/query/configuration": {
+      "get": {
+        "description": "Requires authova.query.configuration, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.",
+        "operationId": "queryQueryConfiguration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryConfiguration"
+                }
+              }
+            },
+            "description": "Read-only result",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or duplicate parameter"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or no longer live credential"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Wrong purpose, mode, scope or tenant boundary"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Object not in the approved boundary"
+          },
+          "405": {
+            "description": "Only GET is accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Admission rejected"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Dependency unavailable"
+          }
+        },
+        "security": [
+          {
+            "queryAgent": []
+          }
+        ],
+        "summary": "Query configuration",
+        "tags": [
+          "queries"
+        ],
+        "x-required-scope": "authova.query.configuration"
+      }
+    },
+    "/api/v1/apps/{app_id}/query/context": {
+      "get": {
+        "description": "Requires authova.query.context, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Tenant-bound credentials are restricted to their authoritative tenant.",
+        "operationId": "queryQueryPrincipal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryPrincipal"
+                }
+              }
+            },
+            "description": "Read-only result",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or duplicate parameter"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or no longer live credential"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Wrong purpose, mode, scope or tenant boundary"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Object not in the approved boundary"
+          },
+          "405": {
+            "description": "Only GET is accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Admission rejected"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Dependency unavailable"
+          }
+        },
+        "security": [
+          {
+            "queryAgent": []
+          }
+        ],
+        "summary": "Query context",
+        "tags": [
+          "queries"
+        ],
+        "x-required-scope": "authova.query.context"
+      }
+    },
+    "/api/v1/apps/{app_id}/query/grants": {
+      "get": {
+        "description": "Requires authova.query.grants, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Tenant-bound credentials are restricted to their authoritative tenant.",
+        "operationId": "queryAgentGrantPage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "agent_id",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tenant_id",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "installation_id",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentGrantPage"
+                }
+              }
+            },
+            "description": "Read-only result",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or duplicate parameter"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or no longer live credential"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Wrong purpose, mode, scope or tenant boundary"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Object not in the approved boundary"
+          },
+          "405": {
+            "description": "Only GET is accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Admission rejected"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Dependency unavailable"
+          }
+        },
+        "security": [
+          {
+            "queryAgent": []
+          }
+        ],
+        "summary": "Query grants",
+        "tags": [
+          "queries"
+        ],
+        "x-required-scope": "authova.query.grants"
+      }
+    },
+    "/api/v1/apps/{app_id}/query/grants/{id}": {
+      "get": {
+        "description": "Requires authova.query.grants, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Tenant-bound credentials are restricted to their authoritative tenant.",
+        "operationId": "queryAgentGrant",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentGrant"
+                }
+              }
+            },
+            "description": "Read-only result",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or duplicate parameter"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or no longer live credential"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Wrong purpose, mode, scope or tenant boundary"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Object not in the approved boundary"
+          },
+          "405": {
+            "description": "Only GET is accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Admission rejected"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Dependency unavailable"
+          }
+        },
+        "security": [
+          {
+            "queryAgent": []
+          }
+        ],
+        "summary": "Query grants/{id}",
+        "tags": [
+          "queries"
+        ],
+        "x-required-scope": "authova.query.grants"
+      }
+    },
+    "/api/v1/apps/{app_id}/query/installations": {
+      "get": {
+        "description": "Requires authova.query.installations, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Tenant-bound credentials are restricted to their authoritative tenant.",
+        "operationId": "queryAgentInstallationPage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "agent_id",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tenant_id",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentInstallationPage"
+                }
+              }
+            },
+            "description": "Read-only result",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or duplicate parameter"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or no longer live credential"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Wrong purpose, mode, scope or tenant boundary"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Object not in the approved boundary"
+          },
+          "405": {
+            "description": "Only GET is accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Admission rejected"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Dependency unavailable"
+          }
+        },
+        "security": [
+          {
+            "queryAgent": []
+          }
+        ],
+        "summary": "Query installations",
+        "tags": [
+          "queries"
+        ],
+        "x-required-scope": "authova.query.installations"
+      }
+    },
+    "/api/v1/apps/{app_id}/query/installations/{id}": {
+      "get": {
+        "description": "Requires authova.query.installations, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Tenant-bound credentials are restricted to their authoritative tenant.",
+        "operationId": "queryAgentInstallation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentInstallation"
+                }
+              }
+            },
+            "description": "Read-only result",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or duplicate parameter"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or no longer live credential"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Wrong purpose, mode, scope or tenant boundary"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Object not in the approved boundary"
+          },
+          "405": {
+            "description": "Only GET is accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Admission rejected"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Dependency unavailable"
+          }
+        },
+        "security": [
+          {
+            "queryAgent": []
+          }
+        ],
+        "summary": "Query installations/{id}",
+        "tags": [
+          "queries"
+        ],
+        "x-required-scope": "authova.query.installations"
+      }
+    },
+    "/api/v1/apps/{app_id}/query/users": {
+      "get": {
+        "description": "Requires authova.query.users, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.",
+        "operationId": "queryQueryUserPage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryUserPage"
+                }
+              }
+            },
+            "description": "Read-only result",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or duplicate parameter"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or no longer live credential"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Wrong purpose, mode, scope or tenant boundary"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Object not in the approved boundary"
+          },
+          "405": {
+            "description": "Only GET is accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Admission rejected"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Dependency unavailable"
+          }
+        },
+        "security": [
+          {
+            "queryAgent": []
+          }
+        ],
+        "summary": "Query users",
+        "tags": [
+          "queries"
+        ],
+        "x-required-scope": "authova.query.users"
+      }
+    },
+    "/api/v1/apps/{app_id}/query/users/{id}": {
+      "get": {
+        "description": "Requires authova.query.users, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.",
+        "operationId": "queryQueryUser",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryUser"
+                }
+              }
+            },
+            "description": "Read-only result",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or duplicate parameter"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or no longer live credential"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Wrong purpose, mode, scope or tenant boundary"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Object not in the approved boundary"
+          },
+          "405": {
+            "description": "Only GET is accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Admission rejected"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Dependency unavailable"
+          }
+        },
+        "security": [
+          {
+            "queryAgent": []
+          }
+        ],
+        "summary": "Query users/{id}",
+        "tags": [
+          "queries"
+        ],
+        "x-required-scope": "authova.query.users"
+      }
+    },
+    "/api/v1/apps/{app_id}/query/users/{user_id}/sessions": {
+      "get": {
+        "description": "Requires authova.query.sessions, a single urn:authova:query:APP_ID audience and a live autonomous Agent grant. Requires an App-wide installation; tenant-bound credentials are denied even with this scope.",
+        "operationId": "querySessionPage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionPage"
+                }
+              }
+            },
+            "description": "Read-only result",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              },
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or duplicate parameter"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid or no longer live credential"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Wrong purpose, mode, scope or tenant boundary"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Object not in the approved boundary"
+          },
+          "405": {
+            "description": "Only GET is accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Admission rejected"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Dependency unavailable"
+          }
+        },
+        "security": [
+          {
+            "queryAgent": []
+          }
+        ],
+        "summary": "Query users/{user_id}/sessions",
+        "tags": [
+          "queries"
+        ],
+        "x-required-scope": "authova.query.sessions"
+      }
+    }
+  },
+  "security": [
+    {
+      "queryAgent": []
+    }
+  ],
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "description": "Read-only App and tenant facts",
+      "name": "queries"
+    }
+  ]
+}

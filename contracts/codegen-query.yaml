@@ -1,0 +1,7 @@
+package: query
+generate:
+  models: true
+  client: true
+output: generated/query/client.gen.go
+output-options:
+  client-type-name: QueryAPIClient

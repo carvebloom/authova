@@ -1,0 +1,14 @@
+.git
+.git/**
+.migration
+.dev
+.env
+.env.*
+**/.env
+**/.env.*
+bin
+**/node_modules
+console/web/dist
+output
+release
+**/*.log

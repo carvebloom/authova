@@ -1,0 +1,142 @@
+{
+  "status": "engineering capability completed and locally verified",
+  "date": "2026-11-06",
+  "implementation": {
+    "command": "cmd/schema-plan",
+    "ent_entities": 28,
+    "composed_product_tables": 30,
+    "generator": "ent v0.14.6 with quoted expression-default template",
+    "atlas": "OSS v0.36.2-0.20250730182955-2c6300d0a3e1",
+    "schema_version": 8,
+    "new_product_migration_added": false,
+    "automatic_ddl_application": false,
+    "ordinary_column_authority": "Ent Schema",
+    "compound_constraints_and_special_objects": "explicit physical extension + versioned SQL",
+    "production_schema_create": false
+  },
+  "model": {
+    "postgres": {
+      "tables": 30,
+      "foreign_keys": 39,
+      "indexes": 32,
+      "checks": 4,
+      "sha256": "f6f0f190c6a1472adc67955160e555f66acdb7a9bd35c9c5104ff97589f0df75"
+    },
+    "mysql": {
+      "tables": 30,
+      "foreign_keys": 39,
+      "indexes": 45,
+      "checks": 4,
+      "sha256": "8b7a5d851e3a8871ec1fa9cfcdd87d5ff79a777af8610ed3ab0363cd76a9cd7e"
+    }
+  },
+  "gates": {
+    "engineering-planning-final": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-focused",
+        "exit_code": 0
+      }
+    ],
+    "engineering-security-final": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-focused",
+        "exit_code": 0
+      }
+    ],
+    "engineering-new-table-final": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-focused",
+        "exit_code": 0
+      }
+    ],
+    "engineering-full": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-final",
+        "exit_code": 0
+      },
+      {
+        "gate": "contract-combination-final",
+        "exit_code": 0
+      }
+    ],
+    "engineering-qualified-final": [
+      {
+        "gate": "migrate-postgres",
+        "exit_code": 0
+      },
+      {
+        "gate": "migrate-mysql",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-race-focused",
+        "exit_code": 0
+      }
+    ]
+  },
+  "evidence_scope": "Full race includes new runtime Ent metadata and migration catalog. Subsequent planner-only protection refinements and additional tests are covered by the latest dedicated planning/security gates and unit tests.",
+  "unchanged_release_limits": "Capacity/soak, backup/restore campaigns, live vendors, browser hardware Passkey and production TLS remain as documented in VALIDATION.md.",
+  "full_race": {
+    "passed_packages": 28,
+    "passed_test_nodes": 691,
+    "failed_events": 0,
+    "integration_seconds": 560.341,
+    "log_sha256": "3bc4cd5b9e61167de3d94ca3e996d22494e35a9b7b5f212d87d423e6f507ed0e"
+  },
+  "generation_checks": {
+    "ent_files": 207,
+    "proto_http_openapi_go_ts_console": "passed"
+  },
+  "static_checks": {
+    "go_vet": "passed",
+    "staticcheck_v0.8.2": "passed",
+    "safety_unit_tests": "passed",
+    "govulncheck_v1.1.4": {
+      "reachable": 0,
+      "imported_packages": 0,
+      "unused_required_module_advisories": 3
+    }
+  },
+  "source_files_unchanged": 1163,
+  "protected_objects": [
+    "PG RLS and exact policies",
+    "routine/view/trigger fingerprints",
+    "externally owned tables",
+    "PG public-qualified SQL",
+    "MySQL metadata visibility guard"
+  ],
+  "remote_ci": "configured; not run remotely",
+  "baseline_context": "Historical pre-consolidation verification; current v1 initialization and runtime results are in v1-validation.json."
+}

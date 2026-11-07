@@ -1,0 +1,5 @@
+# Replace each placeholder with the SHA-256 of a different strong password.
+# Default user is disabled. Do not grant +@all, ~*, ACL, CONFIG or FLUSH*.
+user default reset off
+user authova_core reset on #REPLACE_CORE_PASSWORD_SHA256 ~authova:limit:* +hello +ping +client|setinfo +cluster|shards +cluster|slots +eval +incr +pexpire
+user authova_console reset on #REPLACE_CONSOLE_PASSWORD_SHA256 ~authova:console:* +hello +ping +client|setinfo +cluster|shards +cluster|slots +get +getdel +set +del +eval

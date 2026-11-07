@@ -1,0 +1,25 @@
+name: authova-observability
+services:
+  prometheus:
+    image: prom/prometheus@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e
+    command: [--config.file=/etc/authova/prometheus.yaml, --storage.tsdb.path=/prometheus, --storage.tsdb.retention.time=7d]
+    volumes: ["./:/etc/authova:ro", "prometheus-data:/prometheus"]
+    ports: ["127.0.0.1:19091:9090"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    mem_limit: 512m
+    cpus: 1
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  collector:
+    image: otel/opentelemetry-collector@sha256:310a800ad69ee430e7c541796852a242c9c7db97aaad4daa5ccf843c525fbdb2
+    command: [--config=/etc/authova.yaml]
+    volumes: ["./collector.yaml:/etc/authova.yaml:ro"]
+    ports: ["127.0.0.1:14318:4318"]
+    mem_limit: 256m
+    cpus: 0.5
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+volumes:
+  prometheus-data:

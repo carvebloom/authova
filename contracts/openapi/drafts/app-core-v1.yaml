@@ -1,0 +1,415 @@
+openapi: 3.1.2
+info:
+  title: Authova App Core API
+  license:
+    name: Apache 2.0
+    identifier: Apache-2.0
+  version: 0.4.0-draft
+  description: >-
+    Review-only App identity administration API. Not implemented
+    or published. Standard OAuth/OIDC protocol endpoints are specified separately.
+servers:
+  - url: /
+security:
+  - managementBearer: []
+tags:
+  - name: Clients
+    description: App-owned OAuth/OIDC client configuration.
+  - name: Users
+    description: App user state and session management.
+paths:
+  /api/v1/apps/{app_id}/clients:
+    parameters:
+      - $ref: '#/components/parameters/AppId'
+    get:
+      tags: [Clients]
+      operationId: listClients
+      summary: List Clients in the App
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: One page of Clients without secrets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientPage'
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [Clients]
+      operationId: createClient
+      summary: Register one Client in the App
+      description: >-
+        Client secret, if issued, is returned at creation. The same principal
+        and idempotency key may receive the encrypted stored response again
+        within five minutes; normal GET never exposes a secret.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClientRequest'
+      responses:
+        '201':
+          description: Client created. Secret is present only for confidential clients.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateClientResponse'
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/apps/{app_id}/clients/{client_id}:
+    parameters:
+      - $ref: '#/components/parameters/AppId'
+      - $ref: '#/components/parameters/ClientId'
+    get:
+      tags: [Clients]
+      operationId: getClient
+      summary: Read one Client without secrets
+      responses:
+        '200':
+          description: Client and version for conditional updates.
+          headers:
+            ETag:
+              schema: { type: string }
+              description: Strong ETag derived from the Client config version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [Clients]
+      operationId: updateClient
+      summary: Update Client configuration with an expected version
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateClientRequest' }
+      responses:
+        '200':
+          description: Updated Client.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '412': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/apps/{app_id}/users/{user_id}:
+    parameters:
+      - $ref: '#/components/parameters/AppId'
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Users]
+      operationId: getUser
+      summary: Read App user state and masked identifiers
+      responses:
+        '200':
+          description: User without credentials or unmasked identifiers.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/apps/{app_id}/users/{user_id}/disable:
+    parameters:
+      - $ref: '#/components/parameters/AppId'
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [Users]
+      operationId: disableUser
+      summary: Disable a User and revoke Sessions and refresh families
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ActionReason' }
+      responses:
+        '200':
+          description: Disabled User. Offline JWTs may remain usable until expiry. Disabling the last available App owner is rejected.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/apps/{app_id}/users/{user_id}/sessions:
+    parameters:
+      - $ref: '#/components/parameters/AppId'
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Users]
+      operationId: listUserSessions
+      summary: List User Sessions and limited device metadata
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: One page of Sessions.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionPage' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/apps/{app_id}/users/{user_id}/sessions/{session_id}:
+    parameters:
+      - $ref: '#/components/parameters/AppId'
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/SessionId'
+    delete:
+      tags: [Users]
+      operationId: revokeUserSession
+      summary: Revoke a Session and its refresh families
+      responses:
+        '204':
+          description: Session revoked or already revoked.
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+components:
+  securitySchemes:
+    managementBearer:
+      type: http
+      scheme: bearer
+      description: Platform or App management token, scoped to the target App.
+  parameters:
+    AppId:
+      name: app_id
+      in: path
+      required: true
+      description: Stable App ID; never grants access by itself.
+      schema: { type: string, format: uuid }
+    ClientId:
+      name: client_id
+      in: path
+      required: true
+      description: Globally unique OAuth client_id string.
+      schema: { type: string, pattern: '^avc_[a-z0-9]{26}$' }
+    UserId:
+      name: user_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    SessionId:
+      name: session_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: UUID scoped to caller, App, and operation.
+      schema: { type: string, format: uuid }
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Strong ETag returned by a prior read.
+      schema: { type: string }
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    PageSize:
+      name: page_size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+  responses:
+    Problem:
+      description: Authova Problem Details error with matching HTTP status.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string }
+        code: { type: string }
+        request_id: { type: string }
+    User:
+      type: object
+      additionalProperties: false
+      required: [id, app_id, status, verified_identifiers, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        app_id: { type: string, format: uuid }
+        status: { type: string, enum: [active, disabled] }
+        verified_identifiers:
+          type: array
+          items: { $ref: '#/components/schemas/MaskedIdentifier' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    MaskedIdentifier:
+      type: object
+      additionalProperties: false
+      required: [kind, masked_value, verified_at]
+      properties:
+        kind: { type: string, enum: [email, phone] }
+        masked_value: { type: string }
+        verified_at: { type: string, format: date-time }
+    Session:
+      type: object
+      additionalProperties: false
+      required: [id, created_at, auth_time, expires_at, status]
+      properties:
+        id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+        auth_time: { type: string, format: date-time }
+        expires_at: { type: string, format: date-time }
+        status: { type: string, enum: [active, revoked, expired] }
+        device_label: { type: string }
+    SessionPage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Session' }
+        next_cursor: { type: string }
+    ActionReason:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 500 }
+    Client:
+      type: object
+      additionalProperties: false
+      required: [id, app_id, client_id, display_name, is_system, kind, status, token_endpoint_auth_method, require_pkce, redirect_uris, allowed_grants, allowed_scopes, allowed_audiences, allowed_introspection_audiences, config_version, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        app_id: { type: string, format: uuid }
+        client_id: { type: string, pattern: '^avc_[a-z0-9]{26}$' }
+        display_name: { type: string }
+        is_system:
+          type: boolean
+          description: Server-owned first-party Console Client. Never writable by App admins.
+        kind: { type: string, enum: [public, confidential] }
+        status: { type: string, enum: [active, disabled] }
+        token_endpoint_auth_method: { type: string, enum: [none, client_secret_basic] }
+        require_pkce: { type: boolean }
+        redirect_uris:
+          type: array
+          items: { type: string, format: uri }
+        allowed_grants:
+          type: array
+          items: { type: string }
+        allowed_scopes:
+          type: array
+          items: { type: string }
+        allowed_audiences:
+          type: array
+          items: { type: string, format: uri }
+        allowed_introspection_audiences:
+          type: array
+          default: []
+          description: Audiences this confidential resource Client may introspect. Public Clients must keep this empty.
+          items: { type: string, format: uri }
+        config_version: { type: integer, format: int64, minimum: 1 }
+        created_at: { type: string, format: date-time }
+    ClientPage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Client' }
+        next_cursor: { type: string }
+    CreateClientRequest:
+      type: object
+      additionalProperties: false
+      required: [display_name, kind, token_endpoint_auth_method, redirect_uris, allowed_grants, allowed_scopes, allowed_audiences]
+      properties:
+        display_name: { type: string, minLength: 1, maxLength: 128 }
+        kind: { type: string, enum: [public, confidential] }
+        token_endpoint_auth_method: { type: string, enum: [none, client_secret_basic] }
+        redirect_uris:
+          type: array
+          minItems: 1
+          items: { type: string, format: uri }
+        allowed_grants:
+          type: array
+          minItems: 1
+          items: { type: string, enum: [authorization_code, refresh_token, client_credentials] }
+        allowed_scopes:
+          type: array
+          items: { type: string }
+        allowed_audiences:
+          type: array
+          items: { type: string, format: uri }
+        allowed_introspection_audiences:
+          type: array
+          default: []
+          description: Audiences this confidential resource Client may introspect. Public Clients must keep this empty.
+          items: { type: string, format: uri }
+    CreateClientResponse:
+      type: object
+      additionalProperties: false
+      required: [client]
+      properties:
+        client: { $ref: '#/components/schemas/Client' }
+        client_secret:
+          type: string
+          description: Only on creation or a same-key five-minute retry; never in GET.
+        secret_replay_expired:
+          type: boolean
+          description: Same resource was created earlier; the secret is no longer retrievable.
+    UpdateClientRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        display_name: { type: string, minLength: 1, maxLength: 128 }
+        status: { type: string, enum: [active, disabled] }
+        redirect_uris:
+          type: array
+          minItems: 1
+          items: { type: string, format: uri }
+        allowed_scopes:
+          type: array
+          items: { type: string }
+        allowed_audiences:
+          type: array
+          items: { type: string, format: uri }
+        allowed_introspection_audiences:
+          type: array
+          default: []
+          description: Audiences this confidential resource Client may introspect. Public Clients must keep this empty.
+          items: { type: string, format: uri }

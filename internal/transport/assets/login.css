@@ -1,0 +1,410 @@
+/* Authova 托管登录页：居中单列卡片，中性表面 + 单一靛蓝强调。
+   严格 CSP（style-src 'self'）：只允许本文件；不使用内联样式、外链字体或图片。
+   本文件同时被账号安全页（account 模板）复用，仅依赖两处模板共有的结构性 class。 */
+
+:root {
+  color-scheme: light;
+  --font: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #fafafb;
+  --surface-3: #eef0f3;
+  --text: #1b1e26;
+  --text-2: #4d5562;
+  --text-3: #657083;
+  --border: #e3e5ea;
+  --border-strong: #cfd3da;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-soft: #eeeffc;
+  --on-accent: #ffffff;
+  --bad: #c02a2a;
+  --bad-soft: #fbeaea;
+  --radius: 8px;
+  --shadow: 0 1px 2px rgb(16 24 40 / 0.05), 0 8px 24px rgb(16 24 40 / 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #0f1114;
+    --surface: #16181d;
+    --surface-2: #1b1e24;
+    --surface-3: #22262e;
+    --text: #e7e9ee;
+    --text-2: #a7adba;
+    --text-3: #9aa4b6;
+    --border: #262a33;
+    --border-strong: #363b47;
+    --accent: #818cf8;
+    --accent-hover: #9aa4fa;
+    --accent-soft: #232645;
+    --on-accent: #101223;
+    --bad: #f17c7c;
+    --bad-soft: #301a1a;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { font-synthesis: none; }
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  width: min(400px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 36px 32px 28px;
+}
+
+/* 头部：品牌字标 + 应用名 + 步骤标题，居中收敛 */
+.brand {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  text-decoration: none;
+  text-align: center;
+}
+
+a.brand { display: block; }
+a.brand:hover { text-decoration: none; }
+
+.eyebrow {
+  margin: 14px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  text-align: center;
+}
+
+h1 {
+  margin: 6px 0 8px;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.intro {
+  margin: 0 0 22px;
+  font-size: 13px;
+  color: var(--text-3);
+  text-align: center;
+}
+
+.step-lead { margin: 0 0 16px; color: var(--text-2); }
+
+.help { color: var(--text-3); font-size: 12.5px; margin: 0; }
+
+/* 表单 */
+.auth-form, details form { display: grid; gap: 14px; }
+
+label { display: grid; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text-2); }
+
+input, select {
+  font: inherit;
+  font-size: 14px;
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+input::placeholder { color: var(--text-3); }
+
+input:hover:not(:disabled), select:hover:not(:disabled) { border-color: var(--text-3); }
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+button {
+  cursor: pointer;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 600;
+  transition: background 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+.secondary {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.secondary:hover { background: var(--surface-3); border-color: var(--border-strong); }
+
+/* 授权页并列的主/次动作 */
+main > form + form { margin-top: 10px; }
+
+/* 次级流程入口：注册 / 验证码登录 / 找回密码、恢复码 */
+details { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-2);
+  border-radius: 6px;
+}
+
+summary:hover { color: var(--text); }
+
+summary::marker { color: var(--text-3); }
+
+details form { margin-top: 14px; }
+
+/* details 内的说明段落 */
+details p {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+/* 第三方登录：与本地方式分区；社交登录为唯一方式时即为主内容 */
+.fed { margin-top: 20px; display: grid; gap: 10px; }
+
+.fed-lead { margin: 0; font-size: 13px; color: var(--text-3); }
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.divider::before, .divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
+/* 无任何可用登录方式：如实说明，不留空白表单 */
+.unavailable {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 18px 16px;
+  text-align: center;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.unavailable-title { margin: 0 0 4px; font-weight: 600; color: var(--text); }
+.unavailable p { margin: 0; }
+
+/* 错误与一次性秘密 */
+.error {
+  border: 1px solid color-mix(in srgb, var(--bad) 30%, transparent);
+  border-left: 3px solid var(--bad);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  background: var(--bad-soft);
+  color: var(--bad);
+  font-size: 13px;
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+}
+
+.secret {
+  display: block;
+  overflow-wrap: anywhere;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin: 0 0 16px;
+  font-family: var(--mono);
+  font-size: 14px;
+  user-select: all;
+}
+
+/* 恢复码列表（只展示一次） */
+.recovery {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 14px 16px;
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.recovery p { margin: 0 0 10px; }
+
+.recovery ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.recovery code {
+  display: block;
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  user-select: all;
+}
+
+/* 授权 scope 列表：紧凑徽章 */
+.scopes {
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.scopes li {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+footer {
+  margin-top: 26px;
+  font-size: 12px;
+  color: var(--text-3);
+  text-align: center;
+}
+
+main a { color: var(--accent); }
+
+/* 账号安全页：身份信息与外部身份绑定行 */
+.account-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.account-contact {
+  margin: 4px 0 10px;
+  text-align: center;
+}
+
+.account-exit {
+  margin: 22px 0 0;
+  text-align: center;
+  font-size: 13px;
+}
+
+.conn-row {
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.conn-meta {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+
+.conn-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.conn-actions form {
+  display: block;
+  margin-top: 0;
+}
+
+.conn-actions button {
+  width: auto;
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 13px;
+  margin-top: 0;
+}
+
+/* 联邦跳转页：无 JS 时的手动继续入口呈现为主按钮 */
+.continue-wrap {
+  margin: 0;
+}
+
+.continue-link {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+.continue-link:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  text-decoration: none;
+}
+
+/* 焦点：键盘可达的统一焦点环 */
+button:focus-visible, summary:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 窄屏：卡片近全宽，保持内边距与触控高度 */
+@media (max-width: 480px) {
+  body { padding: 16px 12px; place-items: start center; }
+  main { padding: 28px 20px 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+.passkey-panel{margin:24px 0;padding:20px 0;border-top:1px solid var(--line,#e1e5eb)}.passkey-panel h2{font-size:18px;margin:0 0 8px}.passkey-list{list-style:none;padding:0}.passkey-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid #e5e7eb}.passkey-row button{width:auto;margin:0}.passkey-row small{font-size:12px}.text-button{background:transparent;color:#475569;border:0;width:auto;padding:8px 0;text-decoration:underline;font-size:13px}button:disabled{opacity:.55;cursor:not-allowed}

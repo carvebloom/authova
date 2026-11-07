@@ -1,0 +1,76 @@
+{
+  "date": "2026-11-06",
+  "source_files_unchanged": 1163,
+  "ent_generation_files": 207,
+  "proto_active_operations": 63,
+  "management_operations": 51,
+  "query_operations": 12,
+  "valkey_tls_acl": [
+    {
+      "gate": "core-tls-acl",
+      "exit_code": 0,
+      "log_sha256": "954ae9007765fb019cc87e1c5405609a4b8d77e6cc1103d4f091e2ad24fbeb40"
+    },
+    {
+      "gate": "console-tls-acl-sessions",
+      "exit_code": 0,
+      "log_sha256": "4db22a919cd5ab930eb5519a826a5b08370cde5293a80dca0986f48be7f1970e"
+    },
+    {
+      "gate": "core-tls-outage",
+      "exit_code": 0,
+      "log_sha256": "58cb112a2250fc26e6b383a328add3bc26c03e27d436422adb25f67a3298ae2a"
+    },
+    {
+      "gate": "console-tls-outage",
+      "exit_code": 0,
+      "log_sha256": "604855cd89a0362bd9face4f42591915ed1807037d76f82d99b51f8de38718bd"
+    }
+  ],
+  "oci": {
+    "production_mode": true,
+    "valkey_mtls_acl": true,
+    "ingress_tls_verified": false,
+    "database_tls_verified": false,
+    "checks": {
+      "core_nonroot_readonly_health": true,
+      "console_nonroot_readonly_health": true,
+      "console_no_core_credentials": true,
+      "core_ready": 200,
+      "core_auth": 401,
+      "console_static": 200,
+      "console_auth": 401,
+      "console_origin": 403
+    },
+    "images": {
+      "core": "sha256:fb2bb8f61fa2d76f2301def3b6349867de356b690b0f2a10198db1d3b486fe1e",
+      "console": "sha256:c285e76af7f846a964f7d0dccbbee5b66856b5fd042113efee5f0c85f17336c1"
+    }
+  },
+  "frontend": {
+    "test_files": 33,
+    "tests": 245,
+    "typecheck": true,
+    "lint": true,
+    "format": true,
+    "build": true,
+    "audit_vulnerabilities": 0
+  },
+  "go": {
+    "version": "1.27.3",
+    "vet": true,
+    "staticcheck": "v0.8.2",
+    "reachable_vulnerabilities": 0,
+    "imported_package_vulnerabilities": 0,
+    "unused_required_module_advisories": [
+      "GO-2026-6866",
+      "GO-2026-6860",
+      "GO-2026-5932"
+    ]
+  },
+  "sbom": {
+    "go_modules": 254,
+    "upstream_notice_files": 267
+  },
+  "baseline_context": "Historical pre-consolidation verification; current v1 initialization and runtime results are in v1-validation.json."
+}
