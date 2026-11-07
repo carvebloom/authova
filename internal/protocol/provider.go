@@ -67,6 +67,9 @@ func (p *Provider) ServeApp(w http.ResponseWriter, r *http.Request, app domain.A
 		r = r.Clone(r.Context())
 		r.URL.Path = prefix + relative
 	}
+	if p.browserCORS(w, r, app, relative) {
+		return
+	}
 	if relative != "/.well-known/openid-configuration" && relative != "/keys" && relative != "/userinfo" && relative != "/oauth/token" && relative != "/oauth/introspect" && relative != "/revoke" && relative != "/authorize" && relative != "/authorize/callback" {
 		failure(w, 404, "invalid_request")
 		return
@@ -149,7 +152,7 @@ func (p *Provider) ServeApp(w http.ResponseWriter, r *http.Request, app domain.A
 		return
 	}
 	for key, values := range record.Header() {
-		if key == "Content-Length" {
+		if key == "Content-Length" || strings.HasPrefix(strings.ToLower(key), "access-control-") {
 			continue
 		}
 		for _, value := range values {
