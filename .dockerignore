@@ -12,3 +12,4 @@ console/web/dist
 output
 release
 **/*.log
+.local-test

@@ -1,0 +1,156 @@
+name: ${COMPOSE_PROJECT_NAME:-authova-test}
+x-core-env: &core-env
+  AUTHOVA_MODE: ${AUTHOVA_MODE:-development}
+  AUTHOVA_BASE_URL: ${AUTHOVA_BASE_URL:-http://127.0.0.1:42100}
+  AUTHOVA_CONSOLE_URL: ${AUTHOVA_CONSOLE_URL:-http://127.0.0.1:42101}
+  AUTHOVA_LISTEN: 0.0.0.0:8080
+  AUTHOVA_DATABASE_DRIVER: postgres
+  AUTHOVA_DATABASE_URL: postgres://authova_runtime:${DB_RUNTIME_PASSWORD:?run init}@postgres:5432/authova_test?sslmode=disable
+  AUTHOVA_MASTER_KEY_FILE: /run/authova/master.key
+  AUTHOVA_VALKEY_ADDRESS: valkey:6379
+  AUTHOVA_VALKEY_TLS: 'true'
+  AUTHOVA_VALKEY_USERNAME: authova_core
+  AUTHOVA_VALKEY_PASSWORD_FILE: /run/authova/core.password
+  AUTHOVA_VALKEY_TLS_CA_FILE: /run/authova/ca.crt
+  AUTHOVA_VALKEY_TLS_CERT_FILE: /run/authova/core.crt
+  AUTHOVA_VALKEY_TLS_KEY_FILE: /run/authova/core.key
+  AUTHOVA_SMTP_ADDRESS: mailpit:1025
+  AUTHOVA_SMTP_FROM: local-test@example.invalid
+  SSL_CERT_FILE: ${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
+x-core: &core
+  image: authova-test-core:local
+  build: {context: ., dockerfile: Dockerfile}
+  user: '${LOCAL_UID:?run init}:${LOCAL_GID:?run init}'
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  environment: *core-env
+  volumes:
+    - ./.local-test/core:/run/authova:ro
+  depends_on:
+    bootstrap: {condition: service_completed_successfully}
+    valkey: {condition: service_healthy}
+  restart: unless-stopped
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: authova_migrator
+      POSTGRES_PASSWORD: ${DB_MIGRATOR_PASSWORD:?run init}
+      POSTGRES_DB: authova_test
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U authova_migrator -d authova_test']
+      interval: 2s
+      timeout: 3s
+      retries: 45
+    restart: unless-stopped
+  roles:
+    image: postgres:17-alpine
+    user: '${LOCAL_UID}:${LOCAL_GID}'
+    environment:
+      PGPASSWORD: ${DB_MIGRATOR_PASSWORD}
+    volumes: ['./.local-test/roles.sql:/run/roles.sql:ro']
+    entrypoint: [psql, -h, postgres, -U, authova_migrator, -d, authova_test, -v, ON_ERROR_STOP=1, -f, /run/roles.sql]
+    depends_on:
+      postgres: {condition: service_healthy}
+    restart: 'no'
+  migrate:
+    <<: *core
+    command: [migrate]
+    environment:
+      <<: *core-env
+      AUTHOVA_MIGRATION_DATABASE_URL: postgres://authova_migrator:${DB_MIGRATOR_PASSWORD}@postgres:5432/authova_test?sslmode=disable
+    depends_on:
+      roles: {condition: service_completed_successfully}
+    restart: 'no'
+  bootstrap-check:
+    image: postgres:17-alpine
+    user: '${LOCAL_UID}:${LOCAL_GID}'
+    environment:
+      PGPASSWORD: ${DB_MIGRATOR_PASSWORD}
+    volumes: ['./.local-test/bootstrap:/state']
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - |
+        n=$$(psql -h postgres -U authova_migrator -d authova_test -At -v ON_ERROR_STOP=1 -c 'SELECT count(*) FROM operators')
+        if [ "$$n" = 0 ]; then rm -f /state/bootstrap.done; else touch /state/bootstrap.done; fi
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    restart: 'no'
+  bootstrap:
+    <<: *core
+    entrypoint: [/bin/sh, -ec]
+    command: ['if [ ! -f /state/bootstrap.done ]; then authova bootstrap < /state/bootstrap.json; touch /state/bootstrap.done; fi']
+    volumes:
+      - ./.local-test/core:/run/authova:ro
+      - ./.local-test/bootstrap:/state
+    depends_on:
+      bootstrap-check: {condition: service_completed_successfully}
+    restart: 'no'
+  core:
+    <<: *core
+    command: [serve]
+    ports: ['127.0.0.1:${CORE_PORT:-42100}:8080']
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://127.0.0.1:8080/readyz']
+      interval: 3s
+      timeout: 3s
+      retries: 45
+  worker:
+    <<: *core
+    command: [worker]
+  console:
+    image: authova-test-console:local
+    build: {context: ., dockerfile: console/Dockerfile}
+    user: '${LOCAL_UID}:${LOCAL_GID}'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      AUTHOVA_MODE: ${AUTHOVA_MODE:-development}
+      AUTHOVA_BASE_URL: ${AUTHOVA_CONSOLE_CORE_URL:-http://core:8080}
+      AUTHOVA_CONSOLE_URL: ${AUTHOVA_CONSOLE_URL:-http://127.0.0.1:42101}
+      AUTHOVA_CONSOLE_LISTEN: 0.0.0.0:8090
+      AUTHOVA_CONSOLE_KEY_FILE: /run/authova/session.key
+      AUTHOVA_VALKEY_ADDRESS: valkey:6379
+      AUTHOVA_VALKEY_TLS: 'true'
+      AUTHOVA_VALKEY_USERNAME: authova_console
+      AUTHOVA_VALKEY_PASSWORD_FILE: /run/authova/console.password
+      AUTHOVA_VALKEY_TLS_CA_FILE: /run/authova/ca.crt
+      AUTHOVA_VALKEY_TLS_CERT_FILE: /run/authova/console.crt
+      AUTHOVA_VALKEY_TLS_KEY_FILE: /run/authova/console.key
+      SSL_CERT_FILE: ${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
+    volumes: ['./.local-test/console:/run/authova:ro']
+    ports: ['127.0.0.1:${CONSOLE_PORT:-42101}:8090']
+    depends_on:
+      core: {condition: service_healthy}
+      valkey: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://127.0.0.1:8090/healthz']
+      interval: 3s
+      timeout: 3s
+      retries: 45
+    restart: unless-stopped
+  valkey:
+    image: valkey/valkey:9.1-alpine
+    user: '${LOCAL_UID}:${LOCAL_GID}'
+    read_only: true
+    command: [valkey-server, /tls/valkey.conf]
+    volumes: ['./.local-test/valkey:/tls:ro']
+    tmpfs: ['/data:mode=1777']
+    healthcheck:
+      test: [CMD-SHELL, 'VALKEYCLI_AUTH=$$(cat /tls/health.password) valkey-cli --tls --cacert /tls/ca.crt --cert /tls/health.crt --key /tls/health.key --user authova_health -h valkey ping | grep -q PONG']
+      interval: 3s
+      timeout: 3s
+      retries: 45
+    restart: unless-stopped
+  mailpit:
+    image: axllent/mailpit:v1.28
+    ports: ['127.0.0.1:${MAILPIT_PORT:-42102}:8025']
+    environment: {MP_DATABASE: /data/mailpit.db}
+    volumes: [mailpit-data:/data]
+    restart: unless-stopped
+volumes:
+  postgres-data:
+  mailpit-data:
