@@ -43,3 +43,16 @@ runtimehttp race；checks 和 Console/生成作业也成功。但最后契约组
 步骤前准备好。没有依赖另一个job的文件，也没有跳过组合脚本的生成检查。
 工具准备移至数据库初始化之前，以便配置缺失立即失败；本地同命令和YAML/
 shell检查通过。最终全部作业结论以新Actions为准，原失败保留。
+
+run42454405815 的 Console 单测出现 245/246：已登录后401虽然回到登录页，
+但偶发丢失“会话已过期”。本地新增确定性时序回归，在 ready 首次提交的
+layout 阶段调用真正注册的401边界，旧实现稳定得到 anonymous:false。
+原因是会话已建立的事实依赖 passive effect 更新 statusRef。现在
+applySession/clearSession 同步记录已建立会话，再依据该事实决定过期提示，
+不等待渲染后的 effect。保留初次401不报过期、凭据401、退出结果未知、新旧
+认证generation隔离等断言；未增加timeout/retry/skip。此新增回归的初次红灯
+保留为证据，修复后的实际检查及新CI见组织最终记录。
+
+此修复本地 `SessionContext.test.tsx` 9/9、完整前端247/247、typecheck、
+lint、format:check及production build通过。构建只改变SBOM的UUID/时间，
+依赖未变，已恢复该次生成的时间性噪音；源代码及回归精确暂存，未带入制品。

@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { useLayoutEffect } from 'react'
+import * as client from '../../api/client'
+import { useSession } from './useSession'
 import { apiFetch, getCsrfToken } from '../../api/client'
 import { errorResponse, jsonResponse, stubFetch } from '../../test/utils'
 import { SessionProvider } from './SessionContext'
@@ -21,6 +24,7 @@ function renderApp(initialPath: string) {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe('SessionProvider 会话引导与失效语义', () => {
@@ -88,6 +92,34 @@ describe('SessionProvider 会话引导与失效语义', () => {
     })
     expect(await screen.findByText('会话已过期，请重新登录。')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '平台管理' })).toBeInTheDocument()
+  })
+
+  it('引导成功提交后立即收到 401，即使 passive effect 尚未运行也提示会话过期', async () => {
+    const registration = vi.spyOn(client, 'setUnauthorizedHandler')
+    stubFetch(() => jsonResponse({ operator: admin, csrf_token: 'tok' }))
+    function ImmediateUnauthorized() {
+      const { status, sessionExpired } = useSession()
+      useLayoutEffect(() => {
+        if (status !== 'ready') return
+        // Trigger the actual registered 401 boundary in the first ready commit,
+        // before the provider's passive effects can synchronize render state.
+        const handler = registration.mock.calls.find(([handler]) => handler !== null)?.[0]
+        expect(handler).toBeTypeOf('function')
+        handler?.()
+      }, [status])
+      return (
+        <p>
+          {status}:{String(sessionExpired)}
+        </p>
+      )
+    }
+    render(
+      <SessionProvider>
+        <ImmediateUnauthorized />
+      </SessionProvider>,
+    )
+    expect(await screen.findByText('anonymous:true')).toBeInTheDocument()
+    expect(getCsrfToken()).toBeNull()
   })
 
   it('登录凭据错误的 401：只展示凭据错误，不提示会话已过期', async () => {

@@ -17,12 +17,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [sessionExpired, setSessionExpired] = useState(false)
   const [bootstrapError, setBootstrapError] = useState<ApiError | null>(null)
   const [tick, setTick] = useState(0)
-  const statusRef = useRef(status)
-  useEffect(() => {
-    statusRef.current = status
-  }, [status])
+  // A 401 may arrive before the passive effect for the ready render. Record
+  // established-session ownership in the transition itself, not after paint.
+  const hasSessionRef = useRef(false)
 
   const applySession = useCallback((info: { operator: Operator; csrf_token: string }) => {
+    hasSessionRef.current = true
     setCsrfToken(info.csrf_token)
     setOperator(info.operator)
     setBootstrapError(null)
@@ -30,6 +30,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const clearSession = useCallback(() => {
+    hasSessionRef.current = false
     setCsrfToken(null)
     setOperator(null)
     setStatus('anonymous')
@@ -45,7 +46,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       // 只有已建立的会话被 401 终止才算“会话过期”；首次访问或故障期的 401 不误导。
       // 推进 generation：同一事件后的其余迟到 401 不再重复触发，也不误杀新会话。
       advanceAuthGeneration()
-      if (statusRef.current === 'ready') setSessionExpired(true)
+      if (hasSessionRef.current) setSessionExpired(true)
       clearSession()
     })
     api
