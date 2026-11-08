@@ -1,7 +1,7 @@
 # Validation report — 2026-11-06
 
-> Historical baseline evidence. Current code uses schema v2 for delivery
-> diagnostics; new error-handling checks and explicit remaining skips are in
+> Historical baseline evidence. Current code consolidates delivery diagnostics into an unpublished v1
+> baseline under explicit user authorization; new error-handling checks and explicit remaining skips are in
 > [the 2026-11-08 report](../go-errors-validation.md). No existing instance was
 > upgraded by those checks.
 

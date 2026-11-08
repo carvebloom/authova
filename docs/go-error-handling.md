@@ -26,7 +26,7 @@ HTTP 应用恢复位于实际 handler/decoder 内侧；没有启用 Kratos 默�
 
 ## 投递持久化与 v1.0.1 例外
 
-新增 schema **v2 / 002_delivery_diagnostics.sql**（PG/MySQL各自 Atlas checksum），不改历史001或payload v1。四列：failure_phase varchar(16)、failure_code varchar(32)、delivery_state varchar(16)、outcome_unknown smallint。旧记录默认 unknown/unknown/unknown/0。Ent 生成实体同步。运行时不自动迁移。
+当前 schema **v1 / 001_initial.sql**（PG/MySQL各自 Atlas checksum）包含四列安全投递诊断。用户在首次发布前明确授权将临时002并回001；这是上线前迁移例外，冻结规范v1.0.1及payload v1不改。原c014110的v2升级仅保留历史证据。四列：failure_phase varchar(16)、failure_code varchar(32)、delivery_state varchar(16)、outcome_unknown smallint。新记录省略诊断列时默认 unknown/unknown/unknown/0。Ent 生成实体同步。运行时不自动迁移。
 
 worker 使用新增可选 DiagnosticDeliveryQueue 接口，原 DeliveryQueue/FinishMessage 保留供现有适配器兼容；正式 Store 实现严格的 FinishMessageWithFailure。phase/code/state 都按枚举验证（包括 provider_missing/provider_rejected/transport 与取消/超时等稳定类），绝不保存原始 error。strict API 零匹配返回 ErrLeaseLost；旧兼容API保持既有幂等 no-op 约定。新生产Worker不会把stale ack当成功。
 
@@ -34,7 +34,7 @@ worker 使用新增可选 DiagnosticDeliveryQueue 接口，原 DeliveryQueue/Fin
 
 **至少一次投递例外**：provider已接收但本地ack失败后，租约仍可恢复再投递；即便SMTP没有幂等保障，也保持原来预算内的可能重复行为，不改为至多一次、不静默丢弃、不宣称恰好一次。未知业务事务commit、DDL cutover不因该例外获准重放。
 
-部署以后需先备份并显式 migrate 到v2，再启动新binary。旧binary会按既有版本检查拒绝v2，不承诺直接降级；回滚需匹配版本/备份方案。新增列允许旧SQL读写保留默认值，但不绕过版本保护。本轮不部署或触碰Lab/原迁移实例。
+新空库显式 migrate 初始化当前v1，再启动binary。既有Lab旧v1的001 checksum不同，新binary会拒绝，不能将此次源码归并理解为自动升级/重建/改写版本许可。任何已有实例切换需独立实例/数据方案。本轮不部署或触碰Lab/原迁移实例。
 
 ## R01—R12 对照与验收
 
@@ -48,11 +48,11 @@ worker 使用新增可选 DiagnosticDeliveryQueue 接口，原 DeliveryQueue/Fin
 | R06 | 白名单日志/树上限/来源；不把cause转字符串 | canary SQL/密码/URL/body不进HTTP/log/trace；框架logger过滤 |
 | R07 | server ID→context→诊断；SDK先header后body；UI header兜底 | raw Kratos handler、SDK截断body、BFF错误投影、前端单测 |
 | R08 | 受控frames、recorded_at区分；Core/raw/BFF/CLI/MCP/worker恢复 | 带秘密panic/请求、ErrAbortHandler、partial response、MCP tool panic |
-| R09 | v2有界持久列、strict lease lost、ack首因次因、恢复 | 双库ReadAfterReopen、stale fencing、旧v1记录默认unknown |
+| R09 | v1有界持久列、strict lease lost、ack首因次因、恢复 | 双库ReadAfterReopen、stale fencing、省略诊断列的新v1记录默认unknown |
 | R10 | rollback/trace与安全事件shutdown诊断；ack独立有界completion ctx | 组合错误和监督、cancel drain；正常ErrTxDone/只读Close/固定序列化合理忽略 |
-| R11 | 001 checksum不动；002双库；Console SDK按源重新生成；不改既有HTTP码/CLI退出 | archived v1 binary升级、重复migrate、Ent/Atlas对齐、契约组合 |
+| R11 | 用户授权首次发布前并回001；双库checksum更新；Console SDK按源重新生成；不改既有HTTP码/CLI退出 | 当前空库v1初始化、重复migrate、Ent/Atlas对齐、契约组合 |
 | R12 | 安全与有用诊断双断言，隔离fixture不附着旧项目 | scripts/tests/go-errors.py、make check、生成检查与Console检查 |
 
-可重复 DB 门禁：`python3 scripts/tests/go-errors.py`。创建随机 Compose project、回环随机端口与随机凭据，PG/MySQL/Valkey为本轮独立容器；从基线归档构建v1 binary，实测旧库初始化与v2升级/默认值、重复迁移，再执行真实双库race/契约组合。现有outbox fixture另建随机空库验证v2初始化与持久分类，均退出清理自己资源。日志/结果保存在Git忽略的 `.migration/go-errors/`，不可拿无DSN的Skip代替通过。
+可重复 DB 门禁：`python3 scripts/tests/go-errors.py`。创建随机 Compose project、回环随机端口与随机凭据，PG/MySQL/Valkey为本轮独立容器；构建当前v1 binary，实测空库初始化/默认值、重复迁移，再执行真实双库race/契约组合。现有outbox fixture另建随机空库验证v1初始化与持久分类，均退出清理自己资源。日志/结果保存在Git忽略的 `.migration/go-errors-v1/`，不可拿无DSN的Skip代替通过。
 
 实际运行结果、Skip和未覆盖项见[本轮验证报告](go-errors-validation.md)。不是全项目每层都包栈/日志；第三方远端原始栈、所有平台/外部供应商故障、完整浏览器登录以及真实生产部署均不在本轮成绩中。demo/benchmark程序的显示/错误方式没有机械统一；SDK未知网络原因的具体实现类型不作为长期契约。

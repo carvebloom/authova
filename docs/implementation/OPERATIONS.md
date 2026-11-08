@@ -1,6 +1,6 @@
 # 当前运行与迁移说明
 
-新仓库尚未发布，数据库初始化基线为 **v1**：`001_initial.sql`。当前代码增加 **v2 / 002_delivery_diagnostics.sql** 保存安全投递诊断；后续从003连续编号。历史001不改；[本轮验证](../go-errors-validation.md)采用新隔离库，没有升级既有实例。
+新仓库尚未发布，经用户明确授权，四列安全投递诊断已并入 **v1 / 001_initial.sql**，当前schema版本为1，后续从002连续编号。原v2验收只作历史证据，当前以[本轮验证](../go-errors-validation.md)为准。已运行Lab旧v1的001 checksum不同，新binary会拒绝；不得自动重建、改写版本/历史或替换实例。本轮未操作既有实例。
 
 Core、Worker、Console 分别运行；Console 只通过 Core API 访问身份能力。迁移使用独立凭据，运行账号保持受限。PostgreSQL 保留 App scope、24 张表的 FORCE RLS 和复合约束；MySQL 不宣称具有 RLS。
 

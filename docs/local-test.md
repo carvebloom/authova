@@ -34,10 +34,14 @@ fixture directory. Use a separate checkout for independent keys/accounts too.
 `roles`, `migrate`, `bootstrap-check`, `bootstrap` are one-shot setup services;
 exit 0 is expected. `bootstrap-check` reads the migrated database before deciding
 whether bootstrap is needed, rather than trusting a stale local marker.
-Migration retains the **v1** baseline, `001_initial.sql`, and adds **v2**
-`002_delivery_diagnostics.sql`; no historical v8
+Migration initializes the current unpublished **v1** baseline, `001_initial.sql`,
+including delivery diagnostics; no historical v8
 metadata is adopted or renumbered. Core/Worker use a restricted NOSUPERUSER,
 NOBYPASSRLS DML role. Only migration/setup receive elevated database credentials.
+
+Existing pre-consolidation Lab v1 databases have a different 001 checksum. New binaries
+will reject them; this work does not rebuild, renumber or migrate those instances.
+Use a separately reviewed instance/data plan before switching existing services.
 
 Private files are in `.local-test/`, ignored by Git AND Docker build context.
 Directories use 0700, files 0600. `init` preserves existing keys/config/passwords;

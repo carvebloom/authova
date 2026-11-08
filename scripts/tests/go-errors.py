@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Disposable error-handling gates; never attaches to migration/Lab resources."""
-import argparse,json,os,secrets,subprocess,tempfile,time,tarfile
+import argparse,json,os,secrets,subprocess,tempfile,time
 from pathlib import Path
 os.umask(0o077)
 ROOT=Path(__file__).resolve().parents[2]
 parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--focused',action='store_true',help='Current delivery/storage and transaction gates only');parser.add_argument('--delivery-only',action='store_true',help='Fast final persistence and mapping gate');args=parser.parse_args()
-OUT=ROOT/('.migration/go-errors-delivery' if args.delivery_only else '.migration/go-errors-focused' if args.focused else '.migration/go-errors');OUT.mkdir(parents=True,exist_ok=True);OUT.chmod(0o700)
+OUT=ROOT/('.migration/go-errors-v1-delivery' if args.delivery_only else '.migration/go-errors-v1-focused' if args.focused else '.migration/go-errors-v1');OUT.mkdir(parents=True,exist_ok=True);OUT.chmod(0o700)
 project='authova-errors-'+secrets.token_hex(5)
 password=secrets.token_hex(24)
 database='authova_quality_'+secrets.token_hex(6)
@@ -41,19 +41,16 @@ with tempfile.TemporaryDirectory(prefix='authova-errors-') as directory:
   env={k:v for k,v in os.environ.items() if not k.startswith('AUTHOVA_') and not k.startswith('COMPOSE_')}
   env.update(AUTHOVA_MODE='development',AUTHOVA_MASTER_KEY_FILE=str(key),AUTHOVA_BASE_URL='http://127.0.0.1:18080',AUTHOVA_CONSOLE_URL='http://127.0.0.1:18090',AUTHOVA_TEST_DISPOSABLE_DATABASE=database,AUTHOVA_TEST_VALKEY_ADDRESS='127.0.0.1:'+port('cache',6379))
   admin={'postgres':f'postgres://postgres:{password}@127.0.0.1:{port("pg",5432)}/{database}?sslmode=disable','mysql':f'root:{password}@tcp(127.0.0.1:{port("my",3306)})/{database}?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin'}
-  archive=d/'old.tar'
-  with archive.open('wb') as a:subprocess.run(['git','archive','8f4f01e17477deeb1e982eb8202e8988162e4804'],cwd=ROOT,stdout=a,check=True)
-  old=d/'old';old.mkdir()
-  with tarfile.open(archive) as a:a.extractall(old)
-  gate('build-v1',['go','build','-o',str(d/'old-core'),'./cmd/authova'],env,old)
   gate('build-current',['go','build','-o',str(d/'core'),'./cmd/authova'],env)
   for dialect,s in [('postgres','pg'),('mysql','my')]:
    e=env|{'AUTHOVA_DATABASE_DRIVER':dialect,'AUTHOVA_DATABASE_URL':admin[dialect]}
-   gate('v1-init-'+dialect,[str(d/'old-core'),'migrate'],e)
-   # A real pre-upgrade row: migration must preserve it and apply unknown defaults.
+   gate('v1-init-'+dialect,[str(d/'core'),'migrate'],e)
+   # Fresh v1 baseline supplies bounded defaults, and repeated migrate preserves rows.
    insert="INSERT INTO apps(id,app_key,slug,name,status,config_version,created_at) VALUES('old','old','old','old','active',1,0); INSERT INTO outbox(id,app_id,available_at,attempts,completed,payload) VALUES('legacy','old',0,0,0,"+("decode('00','hex')" if s=='pg' else "X'00'")+");"
    assert sql(s,insert).returncode==0
-   gate('v1-to-v2-'+dialect,[str(d/'core'),'migrate'],e)
+   gate('v1-rerun-with-row-'+dialect,[str(d/'core'),'migrate'],e)
+   version=sql(s,'SELECT version FROM authova_schema WHERE singleton=1;')
+   assert version.returncode==0 and version.stdout.strip()=='1'
    check=sql(s,"SELECT failure_phase,failure_code,delivery_state,outcome_unknown FROM outbox WHERE id='legacy';")
    assert check.returncode==0 and check.stdout.strip().replace('|','\t').split()==['unknown','unknown','unknown','0']
    assert sql(s,"DELETE FROM outbox WHERE id='legacy'; DELETE FROM apps WHERE id='old';").returncode==0
