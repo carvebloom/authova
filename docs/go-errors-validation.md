@@ -56,3 +56,10 @@ applySession/clearSession 同步记录已建立会话，再依据该事实决定
 此修复本地 `SessionContext.test.tsx` 9/9、完整前端247/247、typecheck、
 lint、format:check及production build通过。构建只改变SBOM的UUID/时间，
 依赖未变，已恢复该次生成的时间性噪音；源代码及回归精确暂存，未带入制品。
+
+另外，f34cb31 的 checks 作业曾在旧 govulncheck v1.1.4 自身的
+x/tools v0.29.0 SSA 构建中 panic（`unexpected expr: *ast.KeyValueExpr`），
+不是已完成的漏洞扫描，也不是应用panic。后续同工具一次成功不能消除该
+不稳定性。CI扫描器固定为v1.9.0（同组织库舟已在Go1.27.3真实CI使用），
+保留完整 `./...` 扫描及非零失败，不改应用依赖或豁免漏洞；历史审计及旧
+工具报告不追溯改写。本地当前工具完整扫描通过：可达0、导入包0，另有3项required模块未调用发现，不能宣称依赖库全部无漏洞；后续CI记录最终结果。
