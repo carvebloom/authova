@@ -34,3 +34,12 @@
 固定 service 初始库仅用于创建新库及健康检查。配置生成/名称与 DSN 匹配、
 YAML 和 shell 语法、恢复保护单测在本地验证；完整数据库执行结果以新
 Actions 为准。未连接本机现有数据库、Lab 或旧迁移实例。
+
+run42453575807 在随机双库上通过完整 integration 及 sqlstore/delivery/
+runtimehttp race；checks 和 Console/生成作业也成功。但最后契约组合脚本
+在调用生成校验时发现数据库 job 未安装 protoc，因此整次 run 仍失败。
+现在数据库 job 自己安装与独立生成作业一致的 protoc36.2，执行已有
+`generate-api.py --install-tools --check` 安装并校验固定插件，Node也在此
+步骤前准备好。没有依赖另一个job的文件，也没有跳过组合脚本的生成检查。
+工具准备移至数据库初始化之前，以便配置缺失立即失败；本地同命令和YAML/
+shell检查通过。最终全部作业结论以新Actions为准，原失败保留。

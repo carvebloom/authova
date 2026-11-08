@@ -40,6 +40,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with: {go-version-file: go.mod, cache: true}
+      - uses: actions/setup-node@v4
+        with: {node-version: '26'}
+      - uses: arduino/setup-protoc@v3
+        with: {version: '36.2', repo-token: '${{ secrets.GITHUB_TOKEN }}'}
+      - run: python3 scripts/generate-api.py --install-tools --check
       - name: Prepare owned disposable database configuration
         run: |
           python3 - <<'PYTHON'
@@ -69,8 +74,6 @@ jobs:
           AUTHOVA_DATABASE_DRIVER=mysql AUTHOVA_DATABASE_URL="$AUTHOVA_TEST_MIGRATOR_MYSQL_DSN" go run ./cmd/authova migrate
       - run: go test -race -count=1 -v ./internal/integration
       - run: go test -race -count=1 -v ./internal/storage/sqlstore ./internal/delivery ./internal/runtimehttp
-      - uses: actions/setup-node@v4
-        with: {node-version: '26'}
       - run: python3 scripts/verify-contract-combination.py
   console-and-generation:
     runs-on: ubuntu-latest
