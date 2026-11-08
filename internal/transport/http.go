@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/carvebloom/authova/internal/diagnostic"
 	"io"
-	"log/slog"
 	"mime"
 	"net"
 	"net/http"
@@ -63,8 +63,8 @@ func (s *Server) Handler() http.Handler {
 	m.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
-		if s.Service.Store.Health(ctx) != nil {
-			problem(w, r, domain.ErrUnavailable)
+		if e := s.Service.Store.Health(ctx); e != nil {
+			problem(w, r, diagnostic.Wrap(errors.Join(domain.ErrUnavailable, e), "storage", "connect"))
 			return
 		}
 		jsonReply(w, 200, map[string]string{"status": "ready"})
@@ -93,9 +93,11 @@ func (s *Server) wrapHTTP(m http.Handler) http.Handler {
 		w = recorded
 		s.requests.Add(1)
 		concurrency := s.inflight.Add(1)
+		defer s.inflight.Add(-1)
 		id := application.ID()
 		w.Header().Set("X-Request-ID", id)
 		span.SetAttributes(attribute.String("authova.request_id", id))
+		r = r.WithContext(diagnostic.WithRequest(r.Context(), id))
 		if span.SpanContext().IsValid() {
 			w.Header().Set("X-Trace-ID", span.SpanContext().TraceID().String())
 		}
@@ -106,10 +108,17 @@ func (s *Server) wrapHTTP(m http.Handler) http.Handler {
 		w.Header().Set("Cache-Control", "no-store")
 		r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
 		defer func() {
-			panicked := recover() != nil
+			panicValue := recover()
+			panicked := panicValue != nil
 			if panicked {
+				if panicValue == http.ErrAbortHandler {
+					panic(http.ErrAbortHandler)
+				}
 				s.panics.Add(1)
-				slog.Error("request panic", "request_id", id)
+				diagnostic.Panic(r.Context(), "http", panicValue)
+				if recorded.status != 0 {
+					panic(http.ErrAbortHandler)
+				}
 				problem(w, r, domain.ErrUnavailable)
 			}
 			status := recorded.status
@@ -130,7 +139,6 @@ func (s *Server) wrapHTTP(m http.Handler) http.Handler {
 			}
 			s.completed.Add(1)
 			s.durationNanos.Add(uint64(time.Since(started)))
-			s.inflight.Add(-1)
 		}()
 		maximum := s.MaxInflight
 		if maximum <= 0 {
@@ -150,31 +158,34 @@ func jsonReply(w http.ResponseWriter, status int, v any) {
 	json.NewEncoder(w).Encode(v)
 }
 func problem(w http.ResponseWriter, r *http.Request, e error) {
+	switch diagnostic.Inspect(e).Kind {
+	case "internal", "dependency", "cancelled", "deadline", "outcome_unknown":
+		diagnostic.Log(r.Context(), "http", "request", e)
+	}
 	if meta := securityMeta(r); meta != nil {
 		meta.Reason = securityFailure(e)
 	}
 	status, code := 503, "dependency_unavailable"
 	switch {
-	case errors.Is(e, domain.ErrNotFound):
-		status, code = 404, "not_found"
-	case errors.Is(e, domain.ErrInvalid):
-		status, code = 400, "invalid_request"
-	case errors.Is(e, domain.ErrForbidden):
-		status, code = 403, "forbidden"
-	case errors.Is(e, domain.ErrUnauthenticated):
-		status, code = 401, "authentication_required"
-	case errors.Is(e, domain.ErrConflict):
-		status, code = 409, "conflict"
-	case errors.Is(e, domain.ErrExpired):
-		status, code = 410, "flow_expired"
-	case errors.Is(e, domain.ErrRateLimit):
-		status, code = 429, "rate_limited"
-		var quota *domain.RateLimitError
-		if errors.As(e, &quota) && w.Header().Get("Retry-After") == "" {
-			w.Header().Set("Retry-After", strconv.Itoa(min(3600, max(1, quota.RetryAfterSeconds))))
-		}
-	case errors.Is(e, domain.ErrCommitUnknown):
+	case diagnostic.Has(e, domain.ErrCommitUnknown):
 		status, code = 503, "outcome_unknown"
+	case diagnostic.Has(e, domain.ErrNotFound):
+		status, code = 404, "not_found"
+	case diagnostic.Has(e, domain.ErrInvalid):
+		status, code = 400, "invalid_request"
+	case diagnostic.Has(e, domain.ErrForbidden):
+		status, code = 403, "forbidden"
+	case diagnostic.Has(e, domain.ErrUnauthenticated):
+		status, code = 401, "authentication_required"
+	case diagnostic.Has(e, domain.ErrConflict):
+		status, code = 409, "conflict"
+	case diagnostic.Has(e, domain.ErrExpired):
+		status, code = 410, "flow_expired"
+	case diagnostic.Has(e, domain.ErrRateLimit):
+		status, code = 429, "rate_limited"
+		if hint := diagnostic.Inspect(e).RetryAfter; hint > 0 && w.Header().Get("Retry-After") == "" {
+			w.Header().Set("Retry-After", strconv.Itoa(hint))
+		}
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(status)
@@ -210,7 +221,7 @@ func (s *Server) limit(w http.ResponseWriter, r *http.Request, key string, maxim
 	}
 	ok, e := s.Limiter.Allow(r.Context(), key, maximum, window)
 	if e != nil {
-		problem(w, r, domain.ErrUnavailable)
+		problem(w, r, diagnostic.Wrap(errors.Join(domain.ErrUnavailable, e), "http", "upstream"))
 		return false
 	}
 	if !ok {

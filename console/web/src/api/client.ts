@@ -108,7 +108,7 @@ interface ErrorBody {
   request_id?: unknown
 }
 
-function toApiError(status: number, body: unknown): ApiError {
+function toApiError(status: number, body: unknown, headerId: string | null = null): ApiError {
   const fallback = `请求失败（HTTP ${status}）`
   if (body && typeof body === 'object') {
     const b = body as ErrorBody
@@ -116,9 +116,15 @@ function toApiError(status: number, body: unknown): ApiError {
     const title = typeof b.title === 'string' && b.title ? b.title : fallback
     const code = typeof b.code === 'string' && b.code ? b.code : null
     const requestId = typeof b.request_id === 'string' && b.request_id ? b.request_id : null
-    return new ApiError({ status, title, detail, code: code ?? undefined, requestId })
+    return new ApiError({
+      status,
+      title,
+      detail,
+      code: code ?? undefined,
+      requestId: requestId ?? headerId,
+    })
   }
-  return new ApiError({ status, title: fallback })
+  return new ApiError({ status, title: fallback, requestId: headerId })
 }
 
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -149,13 +155,18 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   if (res.status === 401 && !options.skipUnauthorizedHandler && authGeneration === authGen) {
     unauthorizedHandler?.()
   }
+  const headerId = res.headers.get('X-Request-ID')
   let text: string
   try {
     text = await res.text()
   } catch {
     // Headers can arrive after a write committed; a lost body is still unknown.
-    if (!res.ok && res.status < 500) throw toApiError(res.status, null)
-    throw new ApiError({ status: 0, detail: '响应中断，提交结果未知，请核实后重试。' })
+    if (!res.ok && res.status < 500) throw toApiError(res.status, null, headerId)
+    throw new ApiError({
+      status: 0,
+      detail: '响应中断，提交结果未知，请核实后重试。',
+      requestId: headerId,
+    })
   }
   let data: unknown = null
   if (text) {
@@ -166,6 +177,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
         throw new ApiError({
           status: res.status,
           code: 'outcome_unknown',
+          requestId: headerId,
           detail: '响应格式异常，提交结果未知。',
         })
       }
@@ -174,7 +186,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   }
 
   if (!res.ok) {
-    throw toApiError(res.status, data)
+    throw toApiError(res.status, data, headerId)
   }
   if (
     (options.expectedStatus !== undefined && res.status !== options.expectedStatus) ||
@@ -183,6 +195,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     throw new ApiError({
       status: res.status,
       code: 'outcome_unknown',
+      requestId: headerId,
       detail: '响应不符合接口契约，请核实提交结果。',
     })
   }

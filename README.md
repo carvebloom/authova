@@ -39,4 +39,6 @@ issuers, identities and keys are outside this repository migration.
 
 Schema engineering: [Ent → Atlas review planning](docs/migration/SCHEMA-PLANNING.md), including compound constraints, protected-object fingerprints and dual-dialect upgrade rehearsals.
 
-Database schema starts at the unpublished **v1** baseline (`001_initial.sql`); the next migration is 002. [Versioning and prior test instances](docs/migration/VERSIONING.md).
+Database schema starts at the unpublished **v1** baseline (`001_initial.sql`). Current schema **v2** adds reviewed delivery diagnostics in `002_delivery_diagnostics.sql`; the next migration is 003. [Versioning and prior test instances](docs/migration/VERSIONING.md).
+
+Error handling: [organization v1.0.1 mappings and exceptions](docs/go-error-handling.md), [validation](docs/go-errors-validation.md).

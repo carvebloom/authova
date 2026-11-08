@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/carvebloom/authova/internal/diagnostic"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -41,14 +42,14 @@ func run() error {
 	}
 	db, err := sql.Open(driver, dsn)
 	if err != nil {
-		return fmt.Errorf("cannot open source connection")
+		return diagnostic.Wrap(err, "storage", "connect")
 	}
 	defer db.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true, Isolation: sql.LevelRepeatableRead})
 	if err != nil {
-		return fmt.Errorf("cannot start read-only planning transaction")
+		return diagnostic.Wrap(err, "storage", "begin")
 	}
 	defer tx.Rollback()
 	schemaName := "public"
@@ -132,7 +133,8 @@ func run() error {
 }
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintln(os.Stderr, "schema-plan:", err)
+		diagnostic.Log(context.Background(), "storage", "query", err)
+		fmt.Fprintln(os.Stderr, "schema-plan: operation failed")
 		os.Exit(1)
 	}
 }

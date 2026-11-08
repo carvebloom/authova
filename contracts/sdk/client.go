@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -38,6 +39,48 @@ type Problem struct {
 
 func (p *Problem) Error() string { return p.Code + ": " + p.Title }
 
+// DependencyError preserves transport causes without exposing credential-bearing URLs.
+type DependencyError struct {
+	cause error
+	line  int
+	id    string
+}
+
+func (e *DependencyError) Error() string { return "Authova dependency unavailable" }
+func (e *DependencyError) Unwrap() error { return e.cause }
+
+// ProjectProblem treats upstream message/metadata as untrusted, even for familiar codes.
+func ProjectProblem(status int, body []byte, requestID string) *Problem {
+	code := "dependency_unavailable"
+	switch status {
+	case 400:
+		code = "invalid_request"
+	case 401:
+		code = "authentication_required"
+	case 403:
+		code = "forbidden"
+	case 404:
+		code = "not_found"
+	case 405:
+		code = "method_not_allowed"
+	case 409:
+		code = "conflict"
+	case 410:
+		code = "flow_expired"
+	case 429:
+		code = "rate_limited"
+	}
+	var raw struct {
+		Code string `json:"code"`
+	}
+	_ = json.Unmarshal(body, &raw)
+	if status == 503 && raw.Code == "outcome_unknown" {
+		code = raw.Code
+	}
+	requestID = correlationID(requestID)
+	return &Problem{Type: "urn:authova:problem:" + code, Detail: "The request could not be completed.", Title: http.StatusText(status), Status: status, Code: code, RequestID: requestID}
+}
+
 type Response struct {
 	Status      int
 	Body        []byte
@@ -61,7 +104,7 @@ func (c *Client) Request(ctx context.Context, method, path, token, idempotency s
 	}
 	r, e := http.NewRequestWithContext(ctx, method, c.BaseURL+path, input)
 	if e != nil {
-		return out, e
+		return out, dependency(e)
 	}
 	if len(body) > 0 {
 		r.ContentLength = int64(len(body))
@@ -78,15 +121,16 @@ func (c *Client) Request(ctx context.Context, method, path, token, idempotency s
 	}
 	resp, e := c.HTTP.Do(r)
 	if e != nil {
-		return out, e
+		return out, dependency(e)
 	}
 	defer resp.Body.Close()
+	out.Status, out.ContentType, out.RequestID = resp.StatusCode, resp.Header.Get("Content-Type"), resp.Header.Get("X-Request-ID")
 	out.Body, e = io.ReadAll(io.LimitReader(resp.Body, 4*1024*1024+1))
 	if e != nil {
-		return out, e
+		return out, dependency(e, out.RequestID)
 	}
 	if len(out.Body) > 4*1024*1024 {
-		return out, errors.New("API response too large")
+		return out, dependency(errors.New("API response too large"), out.RequestID)
 	}
 	out.Status, out.ContentType, out.RequestID = resp.StatusCode, resp.Header.Get("Content-Type"), resp.Header.Get("X-Request-ID")
 	return out, nil
@@ -113,18 +157,37 @@ func (c *Client) Login(ctx context.Context, email, password, totp string) (Login
 		return out, e
 	}
 	if resp.Status != 201 {
-		var p Problem
-		if json.Unmarshal(resp.Body, &p) != nil {
-			return out, errors.New("invalid login response")
-		}
-		// The HTTP status is authoritative; an inconsistent body must not turn
-		// an upstream rejection into a successful BFF response.
-		p.Status = resp.Status
-		return out, &p
+		return out, ProjectProblem(resp.Status, resp.Body, resp.RequestID)
 	}
 	e = json.Unmarshal(resp.Body, &out)
 	if e == nil && (out.Token == "" || out.Operator.ID == "" || !out.ExpiresAt.After(time.Now())) {
 		return Login{}, errors.New("invalid login response")
 	}
-	return out, e
+	if e != nil {
+		return out, dependency(e, resp.RequestID)
+	}
+	return out, nil
+}
+
+func dependency(cause error, ids ...string) error {
+	_, _, line, _ := runtime.Caller(1)
+	id := ""
+	if len(ids) > 0 {
+		id = correlationID(ids[0])
+	}
+	return &DependencyError{cause: cause, line: line, id: id}
+}
+func (e *DependencyError) DiagnosticContact() (string, int) { return "client.go", e.line }
+func (e *DependencyError) DiagnosticRequestID() string      { return e.id }
+
+func correlationID(id string) string {
+	if len(id) > 128 {
+		return ""
+	}
+	for _, r := range id {
+		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '_' || r == '-') {
+			return ""
+		}
+	}
+	return id
 }

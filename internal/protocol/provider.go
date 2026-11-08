@@ -6,7 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
-	"log/slog"
+	"github.com/carvebloom/authova/internal/diagnostic"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -146,11 +146,12 @@ func (p *Provider) ServeApp(w http.ResponseWriter, r *http.Request, app domain.A
 			failure(w, 429, "rate_limited")
 			return
 		}
-		p.logTransactionFailure(relative, err)
+		p.logTransactionFailure(r.Context(), relative, err)
 		w.Header().Set("Retry-After", "1")
 		failure(w, 503, "server_error")
 		return
 	}
+	projectProtocolError(record)
 	for key, values := range record.Header() {
 		if key == "Content-Length" || strings.HasPrefix(strings.ToLower(key), "access-control-") {
 			continue
@@ -166,12 +167,12 @@ func (p *Provider) ServeApp(w http.ResponseWriter, r *http.Request, app domain.A
 
 // Keep outage logs bounded while HTTP metrics retain every failed request.
 // Audit facts are stored separately and are never sampled here.
-func (p *Provider) logTransactionFailure(path string, err error) {
+func (p *Provider) logTransactionFailure(ctx context.Context, path string, err error) {
 	p.failureCount.Add(1)
 	now := time.Now().UnixNano()
 	previous := p.lastFailureLog.Load()
 	if now-previous >= int64(time.Second) && p.lastFailureLog.CompareAndSwap(previous, now) {
-		slog.Error("protocol transaction failed", "path", path, "error", err, "failures_since_log", p.failureCount.Swap(0))
+		diagnostic.Log(diagnostic.WithFailureCount(ctx, p.failureCount.Swap(0)), "protocol", "request", err)
 	}
 }
 func (p *Provider) discovery(a domain.App, rec *httptest.ResponseRecorder) {
@@ -513,4 +514,47 @@ func (p *Provider) revoke(w http.ResponseWriter, r *http.Request) {
 		p.storage.RevokeToken(ctx, token, "", id)
 	}
 	w.WriteHeader(200)
+}
+
+// Human-readable upstream messages and parent/metadata are not a public trust boundary.
+// Standard OAuth codes, status, redirect target and caller-bound state stay intact.
+func projectProtocolError(rec *httptest.ResponseRecorder) {
+	if location := rec.Header().Get("Location"); location != "" {
+		if u, e := url.Parse(location); e == nil {
+			q := u.Query()
+			if q.Get("error") != "" {
+				q.Set("error", publicOAuthCode(q.Get("error")))
+				if q.Has("error_description") {
+					q.Set("error_description", "The request could not be completed.")
+				}
+				q.Del("error_uri")
+				u.RawQuery = q.Encode()
+				rec.Header().Set("Location", u.String())
+			}
+		}
+	}
+	if rec.Code < 400 {
+		return
+	}
+	var fields map[string]json.RawMessage
+	if json.Unmarshal(rec.Body.Bytes(), &fields) != nil {
+		return
+	}
+	var code string
+	if json.Unmarshal(fields["error"], &code) != nil {
+		return
+	}
+	out := map[string]string{"error": publicOAuthCode(code)}
+	if _, ok := fields["error_description"]; ok {
+		out["error_description"] = "The request could not be completed."
+	}
+	rec.Body.Reset()
+	_ = json.NewEncoder(rec.Body).Encode(out)
+}
+func publicOAuthCode(code string) string {
+	switch code {
+	case "invalid_request", "invalid_client", "invalid_grant", "invalid_scope", "unauthorized_client", "unsupported_grant_type", "unsupported_response_type", "access_denied", "server_error", "temporarily_unavailable", "interaction_required", "login_required", "consent_required", "account_selection_required", "invalid_token", "insufficient_scope", "invalid_target", "rate_limited", "request_not_supported", "request_uri_not_supported", "registration_not_supported", "authorization_pending", "slow_down", "expired_token":
+		return code
+	}
+	return "server_error"
 }

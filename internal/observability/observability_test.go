@@ -3,7 +3,11 @@ package observability
 import (
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"errors"
+	"github.com/carvebloom/authova/internal/diagnostic"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"io"
 	"math"
 	"net/http"
@@ -198,4 +202,20 @@ func TestExporterValidationAndUnavailableCollectorDoesNotBlockSpanProduction(t *
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 	_ = shutdown(ctx)
+}
+
+func TestSafeCauseTraceAttributesAndEvents(t *testing.T) {
+	recorder := tracetest.NewSpanRecorder()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	defer provider.Shutdown(context.Background())
+	_, span := provider.Tracer("authova-test").Start(context.Background(), "operation")
+	End(span, diagnostic.Wrap(errors.New("CANARY-TOKEN-DSN-SQL"), "storage", "query"))
+	spans := recorder.Ended()
+	if len(spans) != 1 {
+		t.Fatal("missing span")
+	}
+	raw, _ := json.Marshal(tracetest.SpanStubFromReadOnlySpan(spans[0]))
+	if strings.Contains(string(raw), "CANARY") || !strings.Contains(string(raw), "operation.failed") || !strings.Contains(string(raw), "first_application_contact") || !strings.Contains(string(raw), "query") {
+		t.Fatal("trace unsafe or nondiagnostic", string(raw))
+	}
 }

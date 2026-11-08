@@ -1,0 +1,12 @@
+{
+  "source_repository": "github.com/carvebloom/kitarbor",
+  "source_directory": "docs/standards",
+  "current_version": "1.0.1",
+  "current": "go-errors-v1.0.1.md",
+  "historical": "go-errors-v1.md",
+  "sha256": {
+    "go-errors-v1.0.1.md": "10e29e102ee1e7c7fc9d61ffad0e1b9458990f765be3c49491fc7a46399e6d05",
+    "go-errors-v1.md": "6c63c9312611dd3a780d432a5d6bd550ba10b43acb3bbd0b2b9d8de9024350f1",
+    "go-errors-research.md": "0e1c02d13518088815f6ada23ec4606a1ce3d0d3247664b289bdc15cc40fd35e"
+  }
+}

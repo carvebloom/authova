@@ -15,6 +15,7 @@ var (
 	ErrExpired         = errors.New("expired")
 	ErrRateLimit       = errors.New("rate limit")
 	ErrUnavailable     = errors.New("dependency unavailable")
+	ErrLeaseLost       = errors.New("delivery lease lost")
 	ErrCommitUnknown   = errors.New("commit outcome unknown")
 )
 

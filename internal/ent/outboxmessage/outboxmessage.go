@@ -11,6 +11,14 @@ const (
 	Label = "outbox_message"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldDeliveryState holds the string denoting the delivery_state field in the database.
+	FieldDeliveryState = "delivery_state"
+	// FieldFailurePhase holds the string denoting the failure_phase field in the database.
+	FieldFailurePhase = "failure_phase"
+	// FieldFailureCode holds the string denoting the failure_code field in the database.
+	FieldFailureCode = "failure_code"
+	// FieldOutcomeUnknown holds the string denoting the outcome_unknown field in the database.
+	FieldOutcomeUnknown = "outcome_unknown"
 	// FieldAppID holds the string denoting the app_id field in the database.
 	FieldAppID = "app_id"
 	// FieldAvailableAt holds the string denoting the available_at field in the database.
@@ -28,6 +36,10 @@ const (
 // Columns holds all SQL columns for outboxmessage fields.
 var Columns = []string{
 	FieldID,
+	FieldDeliveryState,
+	FieldFailurePhase,
+	FieldFailureCode,
+	FieldOutcomeUnknown,
 	FieldAppID,
 	FieldAvailableAt,
 	FieldAttempts,
@@ -46,6 +58,20 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultDeliveryState holds the default value on creation for the "delivery_state" field.
+	DefaultDeliveryState string
+	// DeliveryStateValidator is a validator for the "delivery_state" field. It is called by the builders before save.
+	DeliveryStateValidator func(string) error
+	// DefaultFailurePhase holds the default value on creation for the "failure_phase" field.
+	DefaultFailurePhase string
+	// FailurePhaseValidator is a validator for the "failure_phase" field. It is called by the builders before save.
+	FailurePhaseValidator func(string) error
+	// DefaultFailureCode holds the default value on creation for the "failure_code" field.
+	DefaultFailureCode string
+	// FailureCodeValidator is a validator for the "failure_code" field. It is called by the builders before save.
+	FailureCodeValidator func(string) error
+	// DefaultOutcomeUnknown holds the default value on creation for the "outcome_unknown" field.
+	DefaultOutcomeUnknown int16
 	// AppIDValidator is a validator for the "app_id" field. It is called by the builders before save.
 	AppIDValidator func(string) error
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
@@ -58,6 +84,26 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByDeliveryState orders the results by the delivery_state field.
+func ByDeliveryState(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeliveryState, opts...).ToFunc()
+}
+
+// ByFailurePhase orders the results by the failure_phase field.
+func ByFailurePhase(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFailurePhase, opts...).ToFunc()
+}
+
+// ByFailureCode orders the results by the failure_code field.
+func ByFailureCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFailureCode, opts...).ToFunc()
+}
+
+// ByOutcomeUnknown orders the results by the outcome_unknown field.
+func ByOutcomeUnknown(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOutcomeUnknown, opts...).ToFunc()
 }
 
 // ByAppID orders the results by the app_id field.

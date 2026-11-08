@@ -1,10 +1,17 @@
-# Unpublished v1 baseline
+# Database versions: current v2, retained v1 baseline
+
+Current schema is **v2**: the new PG/MySQL `002_delivery_diagnostics.sql` adds
+bounded outbox failure classification. The original 001 files/checksums and
+payload v1 stay unchanged. See [error-handling implementation](../go-error-handling.md)
+and [current validation](../go-errors-validation.md). The next migration is 003.
+Existing Lab instances were not upgraded by this work. The original consolidation
+record below describes creation of the retained v1 baseline.
 
 The former **v8** meant the source database's eighth schema migration. It was
 not an Authova product release number. Because this repository is unpublished,
 its complete current structure is consolidated into one reviewed initial
 migration per dialect: `internal/migrations/sql/{postgres,mysql}/001_initial.sql`.
-The new compiled database schema version is **1**. The public API was already
+At consolidation the compiled database schema version was **1**. The public API was already
 `/api/v1` and stays there. Product/package build labels and encrypted payload
 format versions are separate version domains and are not renumbered here.
 
@@ -15,8 +22,8 @@ history or its data backfills. Encryption, AAD, legacy gob readers and persisted
 payload formats remain unchanged. The Ent-to-Atlas model has zero diff on fresh
 PostgreSQL and MySQL v1 databases.
 
-After a reviewed future Ent change, `schema-plan` now emits
-`002_<name>.sql`. Later migrations continue 003, 004, etc.; runtime and migrator
+The first subsequent reviewed change is 002 delivery diagnostics. `schema-plan`
+now emits `003_<name>.sql`. Later migrations continue 004, 005, etc.; runtime and migrator
 both read the same checksum-validated contiguous catalog. There is no hardcoded
 version-eight startup list or special version-two legacy backfill branch.
 

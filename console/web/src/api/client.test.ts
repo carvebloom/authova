@@ -197,3 +197,19 @@ describe('apiFetch', () => {
     expect(calls[0]?.url).toBe('/bff/apps/app-1/users?q=alice&limit=20')
   })
 })
+
+describe('response header correlation', () => {
+  afterEach(() => vi.unstubAllGlobals())
+  it('keeps the header request ID when a response body is truncated', async () => {
+    const response = new Response('', {
+      status: 200,
+      headers: { 'X-Request-ID': 'core-request-123' },
+    })
+    vi.spyOn(response, 'text').mockRejectedValue(new Error('private body transport'))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response))
+    await expect(apiFetch('/apps', { method: 'POST' })).rejects.toMatchObject({
+      status: 0,
+      requestId: 'core-request-123',
+    })
+  })
+})

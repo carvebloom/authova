@@ -34,7 +34,8 @@ fixture directory. Use a separate checkout for independent keys/accounts too.
 `roles`, `migrate`, `bootstrap-check`, `bootstrap` are one-shot setup services;
 exit 0 is expected. `bootstrap-check` reads the migrated database before deciding
 whether bootstrap is needed, rather than trusting a stale local marker.
-Migration uses the current **v1** history, `001_initial.sql`; no historical v8
+Migration retains the **v1** baseline, `001_initial.sql`, and adds **v2**
+`002_delivery_diagnostics.sql`; no historical v8
 metadata is adopted or renumbered. Core/Worker use a restricted NOSUPERUSER,
 NOBYPASSRLS DML role. Only migration/setup receive elevated database credentials.
 

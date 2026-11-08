@@ -9,3 +9,8 @@ Use idiomatic Go and strict TypeScript. Keep SQL and driver errors out of domain
 Report vulnerabilities privately to the deployment owner or project maintainer. Before public release the maintainer must enable private vulnerability reporting on the repository. Do not put exploit credentials or private data in public issues.
 
 Public API changes originate in authova-contracts; implementation and Console changes include compatibility checks. Use forward-compatible migrations with an explicit maintenance/rollback plan. Benchmark results include hardware, dataset, distribution, request type, duration, errors and percentiles.
+
+Go error handling follows the frozen organization standard v1.0.1; see
+[Authova mappings, diagnostics and exceptions](docs/go-error-handling.md).
+Keep safe public projection separate from inspectable causes. Changes must preserve
+unknown-write outcomes and include secret-canary plus useful-diagnostic regressions.

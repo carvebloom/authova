@@ -2,6 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	sdk "github.com/carvebloom/authova/console/internal/coreapi"
+	"github.com/carvebloom/authova/console/internal/diagnostic"
 	"io"
 	"mime"
 	"net/http"
@@ -47,6 +50,7 @@ func (b *bff) proxyManagement(w http.ResponseWriter, r *http.Request, s session,
 	}
 	resp, err := b.api.Request(r.Context(), r.Method, path, s.Token, idempotency, body)
 	if err != nil {
+		diagnostic.Log(diagnostic.WithUpstream(r.Context(), resp.RequestID), "console", "upstream", err)
 		b.proxyFailure(w, r)
 		return
 	}
@@ -54,8 +58,12 @@ func (b *bff) proxyManagement(w http.ResponseWriter, r *http.Request, s session,
 	// response. A mutation may already have committed, so its outcome is unknown.
 	kind, _, mimeErr := mime.ParseMediaType(resp.ContentType)
 	if resp.Status != http.StatusNoContent && (resp.Status < 200 || resp.Status >= 300 && resp.Status < 400 || mimeErr != nil || kind != "application/json" && kind != "application/problem+json" || !json.Valid(resp.Body)) {
+		diagnostic.Log(diagnostic.WithUpstream(r.Context(), resp.RequestID), "console", "response", diagnostic.Wrap(errors.New("invalid upstream response"), "console", "response"))
 		b.proxyFailure(w, r)
 		return
+	}
+	if resp.Status >= 500 {
+		diagnostic.Log(diagnostic.WithUpstream(r.Context(), resp.RequestID), "console", "upstream", diagnostic.Wrap(errors.New("upstream unavailable"), "console", "upstream"))
 	}
 	if resp.Status == http.StatusUnauthorized {
 		_ = b.invalidateRejectedSession(r.Context(), sessionID, s)
@@ -65,7 +73,11 @@ func (b *bff) proxyManagement(w http.ResponseWriter, r *http.Request, s session,
 		w.Header().Set("X-Request-ID", resp.RequestID)
 	}
 	w.WriteHeader(resp.Status)
-	w.Write(resp.Body)
+	if resp.Status >= 400 {
+		json.NewEncoder(w).Encode(sdk.ProjectProblem(resp.Status, resp.Body, resp.RequestID))
+	} else {
+		w.Write(resp.Body)
+	}
 }
 
 func (b *bff) proxyFailure(w http.ResponseWriter, r *http.Request) {

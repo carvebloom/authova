@@ -264,12 +264,12 @@ func (_q *OutboxMessageQuery) Clone() *OutboxMessageQuery {
 // Example:
 //
 //	var v []struct {
-//		AppID string `json:"app_id,omitempty"`
+//		DeliveryState string `json:"delivery_state,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.OutboxMessage.Query().
-//		GroupBy(outboxmessage.FieldAppID).
+//		GroupBy(outboxmessage.FieldDeliveryState).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *OutboxMessageQuery) GroupBy(field string, fields ...string) *OutboxMessageGroupBy {
@@ -287,11 +287,11 @@ func (_q *OutboxMessageQuery) GroupBy(field string, fields ...string) *OutboxMes
 // Example:
 //
 //	var v []struct {
-//		AppID string `json:"app_id,omitempty"`
+//		DeliveryState string `json:"delivery_state,omitempty"`
 //	}
 //
 //	client.OutboxMessage.Query().
-//		Select(outboxmessage.FieldAppID).
+//		Select(outboxmessage.FieldDeliveryState).
 //		Scan(ctx, &v)
 func (_q *OutboxMessageQuery) Select(fields ...string) *OutboxMessageSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

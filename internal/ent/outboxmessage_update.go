@@ -27,6 +27,69 @@ func (_u *OutboxMessageUpdate) Where(ps ...predicate.OutboxMessage) *OutboxMessa
 	return _u
 }
 
+// SetDeliveryState sets the "delivery_state" field.
+func (_u *OutboxMessageUpdate) SetDeliveryState(v string) *OutboxMessageUpdate {
+	_u.mutation.SetDeliveryState(v)
+	return _u
+}
+
+// SetNillableDeliveryState sets the "delivery_state" field if the given value is not nil.
+func (_u *OutboxMessageUpdate) SetNillableDeliveryState(v *string) *OutboxMessageUpdate {
+	if v != nil {
+		_u.SetDeliveryState(*v)
+	}
+	return _u
+}
+
+// SetFailurePhase sets the "failure_phase" field.
+func (_u *OutboxMessageUpdate) SetFailurePhase(v string) *OutboxMessageUpdate {
+	_u.mutation.SetFailurePhase(v)
+	return _u
+}
+
+// SetNillableFailurePhase sets the "failure_phase" field if the given value is not nil.
+func (_u *OutboxMessageUpdate) SetNillableFailurePhase(v *string) *OutboxMessageUpdate {
+	if v != nil {
+		_u.SetFailurePhase(*v)
+	}
+	return _u
+}
+
+// SetFailureCode sets the "failure_code" field.
+func (_u *OutboxMessageUpdate) SetFailureCode(v string) *OutboxMessageUpdate {
+	_u.mutation.SetFailureCode(v)
+	return _u
+}
+
+// SetNillableFailureCode sets the "failure_code" field if the given value is not nil.
+func (_u *OutboxMessageUpdate) SetNillableFailureCode(v *string) *OutboxMessageUpdate {
+	if v != nil {
+		_u.SetFailureCode(*v)
+	}
+	return _u
+}
+
+// SetOutcomeUnknown sets the "outcome_unknown" field.
+func (_u *OutboxMessageUpdate) SetOutcomeUnknown(v int16) *OutboxMessageUpdate {
+	_u.mutation.ResetOutcomeUnknown()
+	_u.mutation.SetOutcomeUnknown(v)
+	return _u
+}
+
+// SetNillableOutcomeUnknown sets the "outcome_unknown" field if the given value is not nil.
+func (_u *OutboxMessageUpdate) SetNillableOutcomeUnknown(v *int16) *OutboxMessageUpdate {
+	if v != nil {
+		_u.SetOutcomeUnknown(*v)
+	}
+	return _u
+}
+
+// AddOutcomeUnknown adds value to the "outcome_unknown" field.
+func (_u *OutboxMessageUpdate) AddOutcomeUnknown(v int16) *OutboxMessageUpdate {
+	_u.mutation.AddOutcomeUnknown(v)
+	return _u
+}
+
 // SetAppID sets the "app_id" field.
 func (_u *OutboxMessageUpdate) SetAppID(v string) *OutboxMessageUpdate {
 	_u.mutation.SetAppID(v)
@@ -144,6 +207,21 @@ func (_u *OutboxMessageUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *OutboxMessageUpdate) check() error {
+	if v, ok := _u.mutation.DeliveryState(); ok {
+		if err := outboxmessage.DeliveryStateValidator(v); err != nil {
+			return &ValidationError{Name: "delivery_state", err: fmt.Errorf(`ent: validator failed for field "OutboxMessage.delivery_state": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.FailurePhase(); ok {
+		if err := outboxmessage.FailurePhaseValidator(v); err != nil {
+			return &ValidationError{Name: "failure_phase", err: fmt.Errorf(`ent: validator failed for field "OutboxMessage.failure_phase": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.FailureCode(); ok {
+		if err := outboxmessage.FailureCodeValidator(v); err != nil {
+			return &ValidationError{Name: "failure_code", err: fmt.Errorf(`ent: validator failed for field "OutboxMessage.failure_code": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.AppID(); ok {
 		if err := outboxmessage.AppIDValidator(v); err != nil {
 			return &ValidationError{Name: "app_id", err: fmt.Errorf(`ent: validator failed for field "OutboxMessage.app_id": %w`, err)}
@@ -163,6 +241,21 @@ func (_u *OutboxMessageUpdate) sqlSave(ctx context.Context) (_node int, err erro
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.DeliveryState(); ok {
+		_spec.SetField(outboxmessage.FieldDeliveryState, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.FailurePhase(); ok {
+		_spec.SetField(outboxmessage.FieldFailurePhase, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.FailureCode(); ok {
+		_spec.SetField(outboxmessage.FieldFailureCode, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.OutcomeUnknown(); ok {
+		_spec.SetField(outboxmessage.FieldOutcomeUnknown, field.TypeInt16, value)
+	}
+	if value, ok := _u.mutation.AddedOutcomeUnknown(); ok {
+		_spec.AddField(outboxmessage.FieldOutcomeUnknown, field.TypeInt16, value)
 	}
 	if value, ok := _u.mutation.AppID(); ok {
 		_spec.SetField(outboxmessage.FieldAppID, field.TypeString, value)
@@ -206,6 +299,69 @@ type OutboxMessageUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *OutboxMessageMutation
+}
+
+// SetDeliveryState sets the "delivery_state" field.
+func (_u *OutboxMessageUpdateOne) SetDeliveryState(v string) *OutboxMessageUpdateOne {
+	_u.mutation.SetDeliveryState(v)
+	return _u
+}
+
+// SetNillableDeliveryState sets the "delivery_state" field if the given value is not nil.
+func (_u *OutboxMessageUpdateOne) SetNillableDeliveryState(v *string) *OutboxMessageUpdateOne {
+	if v != nil {
+		_u.SetDeliveryState(*v)
+	}
+	return _u
+}
+
+// SetFailurePhase sets the "failure_phase" field.
+func (_u *OutboxMessageUpdateOne) SetFailurePhase(v string) *OutboxMessageUpdateOne {
+	_u.mutation.SetFailurePhase(v)
+	return _u
+}
+
+// SetNillableFailurePhase sets the "failure_phase" field if the given value is not nil.
+func (_u *OutboxMessageUpdateOne) SetNillableFailurePhase(v *string) *OutboxMessageUpdateOne {
+	if v != nil {
+		_u.SetFailurePhase(*v)
+	}
+	return _u
+}
+
+// SetFailureCode sets the "failure_code" field.
+func (_u *OutboxMessageUpdateOne) SetFailureCode(v string) *OutboxMessageUpdateOne {
+	_u.mutation.SetFailureCode(v)
+	return _u
+}
+
+// SetNillableFailureCode sets the "failure_code" field if the given value is not nil.
+func (_u *OutboxMessageUpdateOne) SetNillableFailureCode(v *string) *OutboxMessageUpdateOne {
+	if v != nil {
+		_u.SetFailureCode(*v)
+	}
+	return _u
+}
+
+// SetOutcomeUnknown sets the "outcome_unknown" field.
+func (_u *OutboxMessageUpdateOne) SetOutcomeUnknown(v int16) *OutboxMessageUpdateOne {
+	_u.mutation.ResetOutcomeUnknown()
+	_u.mutation.SetOutcomeUnknown(v)
+	return _u
+}
+
+// SetNillableOutcomeUnknown sets the "outcome_unknown" field if the given value is not nil.
+func (_u *OutboxMessageUpdateOne) SetNillableOutcomeUnknown(v *int16) *OutboxMessageUpdateOne {
+	if v != nil {
+		_u.SetOutcomeUnknown(*v)
+	}
+	return _u
+}
+
+// AddOutcomeUnknown adds value to the "outcome_unknown" field.
+func (_u *OutboxMessageUpdateOne) AddOutcomeUnknown(v int16) *OutboxMessageUpdateOne {
+	_u.mutation.AddOutcomeUnknown(v)
+	return _u
 }
 
 // SetAppID sets the "app_id" field.
@@ -338,6 +494,21 @@ func (_u *OutboxMessageUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *OutboxMessageUpdateOne) check() error {
+	if v, ok := _u.mutation.DeliveryState(); ok {
+		if err := outboxmessage.DeliveryStateValidator(v); err != nil {
+			return &ValidationError{Name: "delivery_state", err: fmt.Errorf(`ent: validator failed for field "OutboxMessage.delivery_state": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.FailurePhase(); ok {
+		if err := outboxmessage.FailurePhaseValidator(v); err != nil {
+			return &ValidationError{Name: "failure_phase", err: fmt.Errorf(`ent: validator failed for field "OutboxMessage.failure_phase": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.FailureCode(); ok {
+		if err := outboxmessage.FailureCodeValidator(v); err != nil {
+			return &ValidationError{Name: "failure_code", err: fmt.Errorf(`ent: validator failed for field "OutboxMessage.failure_code": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.AppID(); ok {
 		if err := outboxmessage.AppIDValidator(v); err != nil {
 			return &ValidationError{Name: "app_id", err: fmt.Errorf(`ent: validator failed for field "OutboxMessage.app_id": %w`, err)}
@@ -374,6 +545,21 @@ func (_u *OutboxMessageUpdateOne) sqlSave(ctx context.Context) (_node *OutboxMes
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.DeliveryState(); ok {
+		_spec.SetField(outboxmessage.FieldDeliveryState, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.FailurePhase(); ok {
+		_spec.SetField(outboxmessage.FieldFailurePhase, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.FailureCode(); ok {
+		_spec.SetField(outboxmessage.FieldFailureCode, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.OutcomeUnknown(); ok {
+		_spec.SetField(outboxmessage.FieldOutcomeUnknown, field.TypeInt16, value)
+	}
+	if value, ok := _u.mutation.AddedOutcomeUnknown(); ok {
+		_spec.AddField(outboxmessage.FieldOutcomeUnknown, field.TypeInt16, value)
 	}
 	if value, ok := _u.mutation.AppID(); ok {
 		_spec.SetField(outboxmessage.FieldAppID, field.TypeString, value)

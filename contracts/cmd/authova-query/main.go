@@ -20,7 +20,7 @@ import (
 
 func run(ctx context.Context, args []string, out io.Writer) error {
 	flags := flag.NewFlagSet("authova-query", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
+	flags.SetOutput(io.Discard)
 	config := flags.String("config", "", "path to private 0600 query-identity JSON")
 	stdio := flags.Bool("mcp", false, "serve the read-only tools over MCP stdio")
 	q := query.Request{}
@@ -34,6 +34,8 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	flags.IntVar(&q.Limit, "limit", 0, "page size, 1-100 (default 20 for lists)")
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
+			flags.SetOutput(os.Stderr)
+			flags.PrintDefaults()
 			return nil
 		}
 		return err
@@ -60,10 +62,18 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 }
 
 func main() {
+	defer func() {
+		if v := recover(); v != nil {
+			_ = mcpquery.RecoveredPanic(context.Background(), v)
+			fmt.Fprintln(os.Stderr, "Authova query failed")
+			os.Exit(1)
+		}
+	}()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if err := run(ctx, os.Args[1:], os.Stdout); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		mcpquery.LogFailure(ctx, err)
+		fmt.Fprintln(os.Stderr, query.PublicError(err))
 		os.Exit(1)
 	}
 }

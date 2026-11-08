@@ -143,7 +143,7 @@ func (s *Store) LeaseMessages(ctx context.Context, request ports.DeliveryLeaseRe
 				continue
 			}
 			for _, message := range messages {
-				if err = t.exec("UPDATE outbox SET available_at=?,attempts=? WHERE app_id=? AND id=? AND completed=0 AND attempts=?", now/1000000+outboxLeaseSeconds, message.Attempts, app.app, message.ID, message.Attempts-1); err != nil {
+				if err = t.exec("UPDATE outbox SET available_at=?,attempts=?,failure_phase='send',failure_code='unknown',delivery_state='unknown',outcome_unknown=1 WHERE app_id=? AND id=? AND completed=0 AND attempts=?", now/1000000+outboxLeaseSeconds, message.Attempts, app.app, message.ID, message.Attempts-1); err != nil {
 					return err
 				}
 			}
@@ -220,10 +220,38 @@ func (s *Store) FinishMessage(ctx context.Context, id string, attempt, outcome i
 	if id == "" || attempt < 1 || outcome < 0 || outcome > 2 || next < 0 || next > math.MaxInt64/1000000 {
 		return domain.ErrInvalid
 	}
+	return s.finishMessage(ctx, id, attempt, outcome, next, ports.DeliveryFailure{Phase: "unknown", Code: "unknown", DeliveryState: "unknown"}, false)
+}
+
+func (s *Store) FinishMessageWithFailure(ctx context.Context, id string, attempt, outcome int, next int64, f ports.DeliveryFailure) error {
+	if id == "" || attempt < 1 || outcome < 0 || outcome > 2 || next < 0 || next > math.MaxInt64/1000000 {
+		return domain.ErrInvalid
+	}
+	switch f.DeliveryState {
+	case "unknown", "not_sent", "accepted":
+	default:
+		return domain.ErrInvalid
+	}
+	switch f.Phase {
+	case "send", "ack", "unknown":
+	default:
+		return domain.ErrInvalid
+	}
+	switch f.Code {
+	case "unknown", "dependency", "internal", "cancelled", "deadline", "outcome_unknown", "expired", "accepted", "lease_lost", "committed_cleanup", "invalid", "not_found", "conflict", "forbidden", "authentication", "rate_limited", "provider_missing", "provider_rejected", "transport":
+	default:
+		return domain.ErrInvalid
+	}
+	return s.finishMessage(ctx, id, attempt, outcome, next, f, true)
+}
+func (s *Store) finishMessage(ctx context.Context, id string, attempt, outcome int, next int64, f ports.DeliveryFailure, strict bool) error {
 	return s.transaction(ctx, "", true, func(t *tx) error {
 		var app string
 		err := t.one("SELECT app_id FROM outbox WHERE id=? AND attempts=? AND completed=0", id, attempt).Scan(&app)
 		if errors.Is(err, sql.ErrNoRows) {
+			if strict {
+				return domain.ErrLeaseLost
+			}
 			return nil
 		}
 		if err != nil {
@@ -233,7 +261,7 @@ func (s *Store) FinishMessage(ctx context.Context, id string, attempt, outcome i
 		if err = t.one("SELECT last_dispatch_at FROM outbox_dispatch WHERE app_id=? FOR UPDATE", app).Scan(&last); err != nil {
 			return classify(err)
 		}
-		result, err := t.sql.ExecContext(t.ctx, t.store.bind("UPDATE outbox SET completed=?,available_at=? WHERE app_id=? AND id=? AND attempts=? AND completed=0"), outcome, next, app, id, attempt)
+		result, err := t.sql.ExecContext(t.ctx, t.store.bind("UPDATE outbox SET completed=?,available_at=?,failure_phase=?,failure_code=?,outcome_unknown=?,delivery_state=? WHERE app_id=? AND id=? AND attempts=? AND completed=0"), outcome, next, f.Phase, f.Code, boolInt(f.OutcomeUnknown), f.DeliveryState, app, id, attempt)
 		if err != nil {
 			return classify(err)
 		}
@@ -242,6 +270,9 @@ func (s *Store) FinishMessage(ctx context.Context, id string, attempt, outcome i
 			return classify(err)
 		}
 		if changed == 0 {
+			if strict {
+				return domain.ErrLeaseLost
+			}
 			return nil
 		}
 		return t.scheduleOutbox(app, last)

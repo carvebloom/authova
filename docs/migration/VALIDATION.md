@@ -1,6 +1,12 @@
 # Validation report — 2026-11-06
 
-Current database schema is the unpublished **v1** baseline. The latest fresh-v1
+> Historical baseline evidence. Current code uses schema v2 for delivery
+> diagnostics; new error-handling checks and explicit remaining skips are in
+> [the 2026-11-08 report](../go-errors-validation.md). No existing instance was
+> upgraded by those checks.
+
+
+At this report date the database schema was the unpublished **v1** baseline. The latest fresh-v1
 full race run passed 693 test nodes across 29 test-bearing packages (integration
 542.278 seconds), followed by compiled SDK/CLI/MCP combination tests. Genuine
 v1→v2 upgrade and production-mode OCI gates also passed. Current evidence is in

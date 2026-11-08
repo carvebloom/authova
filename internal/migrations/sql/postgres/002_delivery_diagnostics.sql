@@ -1,0 +1,1 @@
+ALTER TABLE outbox ADD COLUMN delivery_state varchar(16) NOT NULL DEFAULT 'unknown', ADD COLUMN failure_phase varchar(16) NOT NULL DEFAULT 'unknown', ADD COLUMN failure_code varchar(32) NOT NULL DEFAULT 'unknown', ADD COLUMN outcome_unknown smallint NOT NULL DEFAULT 0;

@@ -419,3 +419,57 @@ func TestOutboxWorkerAppIsolation(t *testing.T) {
 		})
 	}
 }
+
+func TestDeliveryFailurePersistsAcrossReopen(t *testing.T) {
+	for _, dialect := range []string{"postgres", "mysql"} {
+		t.Run(dialect, func(t *testing.T) {
+			s, dsn := outboxFixture(t, dialect)
+			ctx := context.Background()
+			if _, e := s.db.ExecContext(ctx, "INSERT INTO apps(id,app_key,slug,name,status,config_version,created_at) VALUES('diagnostic','diagnostic','diagnostic','diagnostic','active',1,0)"); e != nil {
+				t.Fatal(e)
+			}
+			now := time.Now().Unix()
+			if e := s.transaction(ctx, "diagnostic", true, func(tx *tx) error {
+				return tx.Enqueue(domain.Message{ID: "error-fixture", AppID: "diagnostic", Kind: "email", Created: now, Available: now, Expires: now + 600})
+			}); e != nil {
+				t.Fatal(e)
+			}
+			items, e := s.LeaseMessages(ctx, ports.DeliveryLeaseRequest{Limit: 1, AppLimit: 1})
+			if e != nil || len(items) != 1 {
+				t.Fatal("lease failed", e)
+			}
+			f := ports.DeliveryFailure{Phase: "send", Code: "deadline", DeliveryState: "unknown", OutcomeUnknown: true}
+			if e = s.FinishMessageWithFailure(ctx, items[0].ID, items[0].Attempts, 0, now+60, f); e != nil {
+				t.Fatal(e)
+			}
+			vault, _ := secure.NewVault(bytes.Repeat([]byte{9}, 32))
+			reopened, e := Open(ctx, dialect, dsn, "https://identity.example", vault, 2)
+			if e != nil {
+				t.Fatal(e)
+			}
+			defer reopened.Close()
+			var phase, code, state string
+			var unknown int
+			if e = reopened.db.QueryRowContext(ctx, "SELECT failure_phase,failure_code,delivery_state,outcome_unknown FROM outbox WHERE id='error-fixture'").Scan(&phase, &code, &state, &unknown); e != nil || phase != "send" || code != "deadline" || state != "unknown" || unknown != 1 {
+				t.Fatal("lost durable classification", e)
+			}
+			if e = reopened.FinishMessageWithFailure(ctx, items[0].ID, items[0].Attempts+1, 1, now, f); !errors.Is(e, domain.ErrLeaseLost) {
+				t.Fatal("stale ack falsely succeeded", e)
+			}
+			for _, code := range []string{"provider_missing", "provider_rejected", "transport"} {
+				f.Code = code
+				if e = reopened.FinishMessageWithFailure(ctx, items[0].ID, items[0].Attempts, 0, now+60, f); e != nil {
+					t.Fatal("registered provider class rejected", e)
+				}
+				var saved string
+				if e = reopened.db.QueryRowContext(ctx, "SELECT failure_code FROM outbox WHERE id='error-fixture'").Scan(&saved); e != nil || saved != code {
+					t.Fatal("provider classification not persisted", e)
+				}
+			}
+			f.Code = "CANARY-SQL"
+			if e = reopened.FinishMessageWithFailure(ctx, items[0].ID, items[0].Attempts, 0, now, f); !errors.Is(e, domain.ErrInvalid) {
+				t.Fatal("unbounded classification accepted")
+			}
+		})
+	}
+}

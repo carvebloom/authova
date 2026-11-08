@@ -161,8 +161,8 @@ func TestWaitingTokenCallerCanCancel(t *testing.T) {
 	go func() { _, err := c.Query(ctx, Request{Operation: "context"}); returned <- err }()
 	select {
 	case err := <-returned:
-		if err == nil {
-			t.Fatal("cancelled query accepted")
+		if !errors.Is(err, context.Canceled) {
+			t.Fatal("cancelled query lost context cause")
 		}
 	case <-time.After(time.Second):
 		close(release)
@@ -195,5 +195,14 @@ func TestMalformedDependencyDoesNotBecomeSuccessfulQuery(t *testing.T) {
 		if _, err = c.Query(context.Background(), Request{Operation: "context"}); err == nil {
 			t.Fatal("malformed dependency response reported as success")
 		}
+	}
+}
+
+func TestForeignErrorsAreNotPublicMessages(t *testing.T) {
+	if strings.Contains(PublicError(errors.New("CANARY")), "CANARY") {
+		t.Fatal("foreign public message")
+	}
+	if PublicError(validationError("invalid query configuration")) != "invalid query configuration" {
+		t.Fatal("registered validation message changed")
 	}
 }

@@ -3,6 +3,7 @@ package observability
 import (
 	"context"
 	"errors"
+	"github.com/carvebloom/authova/internal/diagnostic"
 	"math"
 	"net/url"
 	"time"
@@ -41,6 +42,9 @@ func Start(ctx context.Context, name string, attrs ...attribute.KeyValue) (conte
 func End(span trace.Span, err error) {
 	if err != nil {
 		span.SetStatus(codes.Error, "operation_failed")
+		d := diagnostic.Inspect(err)
+		span.AddEvent("operation.failed", trace.WithAttributes(attribute.String("error.type", d.Kind), attribute.String("authova.first_operation", d.Operation), attribute.String("authova.first_phase", d.Phase)))
+		span.SetAttributes(attribute.String("error.type", d.Kind), attribute.String("authova.cause_type", d.Type), attribute.String("authova.error_source", d.Source))
 	}
 	span.End()
 }
