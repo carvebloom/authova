@@ -4,8 +4,8 @@ import argparse,json,os,secrets,subprocess,tempfile,time
 from pathlib import Path
 os.umask(0o077)
 ROOT=Path(__file__).resolve().parents[2]
-parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--focused',action='store_true',help='Current delivery/storage and transaction gates only');parser.add_argument('--delivery-only',action='store_true',help='Fast final persistence and mapping gate');args=parser.parse_args()
-OUT=ROOT/('.migration/go-errors-v1-delivery' if args.delivery_only else '.migration/go-errors-v1-focused' if args.focused else '.migration/go-errors-v1');OUT.mkdir(parents=True,exist_ok=True);OUT.chmod(0o700)
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--focused',action='store_true',help='Current delivery/storage and transaction gates only');parser.add_argument('--delivery-only',action='store_true',help='Fast final persistence and mapping gate');parser.add_argument('--dialect',choices=['mysql','postgres','both'],default='mysql',help='MySQL primary; PostgreSQL/both only for explicit compatibility gates');args=parser.parse_args()
+OUT=ROOT/('.migration/go-errors-v1-'+args.dialect+('-delivery' if args.delivery_only else '-focused' if args.focused else ''));OUT.mkdir(parents=True,exist_ok=True);OUT.chmod(0o700)
 project='authova-errors-'+secrets.token_hex(5)
 password=secrets.token_hex(24)
 database='authova_quality_'+secrets.token_hex(6)
@@ -19,11 +19,17 @@ def gate(name,cmd,env=None,cwd=ROOT):
  if r.returncode:raise RuntimeError(name+' failed; inspect local evidence log')
 with tempfile.TemporaryDirectory(prefix='authova-errors-') as directory:
  d=Path(directory)
- cfg={'services':{'pg':{'image':'postgres:17-alpine','environment':{'POSTGRES_PASSWORD':password,'POSTGRES_DB':database},'ports':['127.0.0.1::5432']},'my':{'image':'mysql:8.4','environment':{'MYSQL_ROOT_PASSWORD':password,'MYSQL_DATABASE':database},'ports':['127.0.0.1::3306']},'cache':{'image':'valkey/valkey:9.1-alpine','ports':['127.0.0.1::6379']}}}
+ cfg={'services':{'pg':{'image':'postgres:17-alpine','environment':{'POSTGRES_PASSWORD':password,'POSTGRES_DB':database},'ports':['127.0.0.1::5432']},'my':{'image':'mysql:8.4.11@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70','environment':{'MYSQL_ROOT_PASSWORD':password,'MYSQL_DATABASE':database},'ports':['127.0.0.1::3306']},'cache':{'image':'valkey/valkey:9.1-alpine','ports':['127.0.0.1::6379']}}}
  cfg['volumes']={'pg-data':{},'my-data':{}}
  cfg['services']['pg']['volumes']=['pg-data:/var/lib/postgresql/data']
  cfg['services']['my']['volumes']=['my-data:/var/lib/mysql']
  cfg['services']['cache']['tmpfs']=['/data:rw,noexec,nosuid,size=32m']
+ if args.dialect=='mysql':
+  del cfg['services']['pg'];del cfg['volumes']['pg-data']
+ if args.dialect=='postgres':
+  del cfg['services']['my'];del cfg['volumes']['my-data']
+ for service in cfg['services'].values():service['mem_limit']='1g' if service['image'].startswith('mysql:') else '384m'
+ engines=[(dialect,service) for dialect,service in [('mysql','my'),('postgres','pg')] if service in cfg['services']]
  f=d/'compose.json';f.write_text(json.dumps(cfg));f.chmod(0o600)
  c=compose+['-p',project,'-f',str(f)]
  def port(s,p):return subprocess.check_output(c+['port',s,str(p)],text=True).strip().rsplit(':',1)[1]
@@ -34,15 +40,18 @@ with tempfile.TemporaryDirectory(prefix='authova-errors-') as directory:
   gate('containers-up',c+['up','-d','--pull','never'])
   deadline=time.monotonic()+180
   while True:
-   if all(sql(s,'SELECT 1;').returncode==0 for s in ['pg','my']):break
+   if all(sql(s,'SELECT 1;').returncode==0 for _,s in engines):break
    if time.monotonic()>deadline:raise RuntimeError('disposable databases not ready')
    time.sleep(2)
   key=d/'master';key.write_bytes(secrets.token_bytes(32));key.chmod(0o600)
   env={k:v for k,v in os.environ.items() if not k.startswith('AUTHOVA_') and not k.startswith('COMPOSE_')}
   env.update(AUTHOVA_MODE='development',AUTHOVA_MASTER_KEY_FILE=str(key),AUTHOVA_BASE_URL='http://127.0.0.1:18080',AUTHOVA_CONSOLE_URL='http://127.0.0.1:18090',AUTHOVA_TEST_DISPOSABLE_DATABASE=database,AUTHOVA_TEST_VALKEY_ADDRESS='127.0.0.1:'+port('cache',6379))
-  admin={'postgres':f'postgres://postgres:{password}@127.0.0.1:{port("pg",5432)}/{database}?sslmode=disable','mysql':f'root:{password}@tcp(127.0.0.1:{port("my",3306)})/{database}?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin'}
+  admin={}
+  for dialect,service in engines:
+   admin[dialect]=(f'postgres://postgres:{password}@127.0.0.1:{port("pg",5432)}/{database}?sslmode=disable' if dialect=='postgres' else f'root:{password}@tcp(127.0.0.1:{port("my",3306)})/{database}?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin')
+  env.update(GOMAXPROCS='2',GOFLAGS='-p=2',AUTHOVA_TEST_DATABASE_DIALECT=args.dialect)
   gate('build-current',['go','build','-o',str(d/'core'),'./cmd/authova'],env)
-  for dialect,s in [('postgres','pg'),('mysql','my')]:
+  for dialect,s in engines:
    e=env|{'AUTHOVA_DATABASE_DRIVER':dialect,'AUTHOVA_DATABASE_URL':admin[dialect]}
    gate('v1-init-'+dialect,[str(d/'core'),'migrate'],e)
    # Fresh v1 baseline supplies bounded defaults, and repeated migrate preserves rows.
@@ -55,13 +64,16 @@ with tempfile.TemporaryDirectory(prefix='authova-errors-') as directory:
    assert check.returncode==0 and check.stdout.strip().replace('|','\t').split()==['unknown','unknown','unknown','0']
    assert sql(s,"DELETE FROM outbox WHERE id='legacy'; DELETE FROM apps WHERE id='old';").returncode==0
    gate('repeat-migrate-'+dialect,[str(d/'core'),'migrate'],e)
-  pggrant="CREATE ROLE authova_runtime LOGIN PASSWORD '"+password+"' NOSUPERUSER NOBYPASSRLS; GRANT CONNECT ON DATABASE authova_errors TO authova_runtime; GRANT USAGE ON SCHEMA public TO authova_runtime; GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO authova_runtime;"
-  assert sql('pg',pggrant).returncode==0
-  assert sql('my',"CREATE USER 'authova_runtime'@'%' IDENTIFIED BY '"+password+"'; GRANT SELECT,INSERT,UPDATE,DELETE ON authova_errors.* TO 'authova_runtime'@'%';").returncode==0
-  env.update(AUTHOVA_TEST_POSTGRES_DSN=admin['postgres'].replace('postgres:'+password,'authova_runtime:'+password),AUTHOVA_TEST_MYSQL_DSN=admin['mysql'].replace('root:'+password,'authova_runtime:'+password),AUTHOVA_TEST_MIGRATOR_POSTGRES_DSN=admin['postgres'],AUTHOVA_TEST_MIGRATOR_MYSQL_DSN=admin['mysql'])
-  command=['go','test','-race','-count=1','-json','-timeout=25m']
+  if 'postgres' in admin:
+   pggrant="CREATE ROLE authova_runtime LOGIN PASSWORD '"+password+"' NOSUPERUSER NOBYPASSRLS; GRANT CONNECT ON DATABASE authova_errors TO authova_runtime; GRANT USAGE ON SCHEMA public TO authova_runtime; GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO authova_runtime;"
+   assert sql('pg',pggrant).returncode==0
+   env.update(AUTHOVA_TEST_POSTGRES_DSN=admin['postgres'].replace('postgres:'+password,'authova_runtime:'+password),AUTHOVA_TEST_MIGRATOR_POSTGRES_DSN=admin['postgres'])
+  if 'mysql' in admin:
+   assert sql('my',"CREATE USER 'authova_runtime'@'%' IDENTIFIED BY '"+password+"'; GRANT SELECT,INSERT,UPDATE,DELETE ON authova_errors.* TO 'authova_runtime'@'%';").returncode==0
+   env.update(AUTHOVA_TEST_MYSQL_DSN=admin['mysql'].replace('root:'+password,'authova_runtime:'+password),AUTHOVA_TEST_MIGRATOR_MYSQL_DSN=admin['mysql'])
+  command=['go','test','-parallel=2','-race','-count=1','-json','-timeout=25m']
   if args.delivery_only:command+=['-run','Test(DeliveryFailurePersistsAcrossReopen|EntPhysicalMapping|FailedUnlock|CommitUnknownDiagnostic|ForgedStorage|ClassifiedErrors)','./internal/storage/sqlstore']
-  elif args.focused:command+=['-run','Test(DeliveryFailurePersistsAcrossReopen|EntPhysicalMapping|Outbox|Atlas|Maintenance|FailedUnlock|CommitUnknownDiagnostic|ForgedStorage|ClassifiedErrors|ProtoHTTPWaitsForCommit|Databases)','./internal/storage/sqlstore','./internal/integration']
+  elif args.focused:command+=['-run','Test(DeliveryFailurePersistsAcrossReopen|EntPhysicalMapping|Outbox|Atlas|Maintenance|FailedUnlock|CommitUnknownDiagnostic|ForgedStorage|ClassifiedErrors|ProtoHTTPWaitsForCommit|Databases|RealDatabaseNetworkFailure|UnknownWriteCommitNeverReplays|CallbackFailureNeverCommits)','./internal/storage/sqlstore','./internal/integration']
   else:command+=['./...']
   gate('dual-db-race',command,env)
   gate('contract-combination',['python3','scripts/verify-contract-combination.py'],env)
@@ -73,4 +85,4 @@ with tempfile.TemporaryDirectory(prefix='authova-errors-') as directory:
    item=json.loads(subprocess.check_output(['docker','volume','inspect',volume],text=True))[0]
    assert item.get('Labels',{}).get('com.docker.compose.project')==project and volume.startswith(project+'_')
    gate('owned-volume-cleanup',['docker','volume','rm',volume])
-print('Disposable dual-database error gates passed; evidence '+str(OUT.relative_to(ROOT)/'results.json'))
+print('Disposable '+args.dialect+' error gates passed; evidence '+str(OUT.relative_to(ROOT)/'results.json'))

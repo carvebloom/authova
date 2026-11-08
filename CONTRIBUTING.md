@@ -14,3 +14,6 @@ Go error handling follows the frozen organization standard v1.0.1; see
 [Authova mappings, diagnostics and exceptions](docs/go-error-handling.md).
 Keep safe public projection separate from inspectable causes. Changes must preserve
 unknown-write outcomes and include secret-canary plus useful-diagnostic regressions.
+
+New server deployments follow the organization MySQL-first v1 decision; see
+[database defaults, compatibility and acceptance](docs/mysql-first.md).

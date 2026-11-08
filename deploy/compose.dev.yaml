@@ -1,6 +1,7 @@
 name: authova-dev
 services:
   postgres:
+    profiles: ["postgres-compat"]
     image: postgres:17-alpine
     command: ["postgres", "-c", "shared_buffers=512MB", "-c", "max_connections=160"]
     environment:
@@ -17,10 +18,9 @@ services:
       timeout: 2s
       retries: 30
   mysql:
-    image: mysql:8.4.6
+    image: mysql:8.4.11@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70
     mem_limit: 3g
     command: ["mysqld", "--innodb-buffer-pool-size=536870912"]
-    profiles: ["mysql"]
     environment:
       MYSQL_ROOT_PASSWORD: authova-local-database-only
       MYSQL_DATABASE: authova

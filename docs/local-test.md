@@ -18,7 +18,7 @@ It never uses `down -v`. No existing migration/demo/personal resources are reuse
 Default Compose project: `authova-test`; `COMPOSE_PROJECT_NAME` overrides it.
 Do not use the names `authova` or `authova-migration` for this environment.
 A project override creates separate volumes; it shares this checkout's private
-fixture directory. Use a separate checkout for independent keys/accounts too.
+fixture directory. Use a new ignored absolute `AUTHOVA_LOCAL_TEST_STATE_DIR` (or a separate checkout) for independent keys/accounts too.
 
 ## Ports and services
 
@@ -27,7 +27,7 @@ fixture directory. Use a separate checkout for independent keys/accounts too.
 | core | 8080 | 127.0.0.1:42100 | /readyz, /healthz |
 | console | 8090 | 127.0.0.1:42101 | /healthz |
 | mailpit | SMTP 1025, UI 8025 | UI 127.0.0.1:42102 | /api/v1/messages |
-| postgres | 5432 | none | pg_isready |
+| mysql | 3306 | none | mysqladmin ping |
 | valkey | TLS 6379 | none | authenticated mTLS PING |
 | worker | none | none | independent worker process |
 
@@ -36,8 +36,7 @@ exit 0 is expected. `bootstrap-check` reads the migrated database before decidin
 whether bootstrap is needed, rather than trusting a stale local marker.
 Migration initializes the current unpublished **v1** baseline, `001_initial.sql`,
 including delivery diagnostics; no historical v8
-metadata is adopted or renumbered. Core/Worker use a restricted NOSUPERUSER,
-NOBYPASSRLS DML role. Only migration/setup receive elevated database credentials.
+metadata is adopted or renumbered. Core/Worker use a restricted MySQL DML-only role (no global/DDL/grant privileges). PostgreSQL compatibility retains NOSUPERUSER/NOBYPASSRLS and FORCE RLS. Only migration/setup receive elevated database credentials.
 
 Existing pre-consolidation Lab v1 databases have a different 001 checksum. New binaries
 will reject them; this work does not rebuild, renumber or migrate those instances.
@@ -47,21 +46,21 @@ Private files are in `.local-test/`, ignored by Git AND Docker build context.
 Directories use 0700, files 0600. `init` preserves existing keys/config/passwords;
 partial TLS issuance fails rather than replacing an existing key. Containers
 using bind-mounted secrets run with the generating user's UID/GID, without root,
-with a read-only root filesystem. PostgreSQL/Mailpit retain their own volume
+with a read-only root filesystem. MySQL/Mailpit retain their own volume
 ownership. TLS fixtures expire after 365 days; renewal requires deliberate local
 maintenance, not automatic key replacement. Never share this disposable PKI.
 
 The fresh synthetic owner/password/TOTP seed is in
 `.local-test/bootstrap/bootstrap.json` (inspect locally; do not post its contents).
 Console supports this operator login. Smoke generates the current TOTP in memory,
-creates/reuses a synthetic App, restarts PostgreSQL/Valkey/Core/Worker/Console,
+creates/reuses a synthetic App, restarts MySQL/Valkey/Core/Worker/Console,
 then verifies the same App and management session remain usable. It also tests
 Console password/TOTP login, encrypted Cookie session, unauthorized requests,
 CSRF rejection and successful CSRF logout, Mailpit, and v1 version metadata.
 No credentials/tokens are printed. Evidence: `.local-test/last-smoke.json`.
 Valkey intentionally has no disk persistence: restarting it invalidates Console
 sessions and rate counters; smoke logs in again after restart. Product records
-and Core management sessions persist in PostgreSQL. Mailpit messages persist in
+and Core management sessions persist in MySQL. Mailpit messages persist in
 its own volume. Never delete keys independently of their encrypted database.
 
 ## Environment and external HTTPS integration
@@ -103,3 +102,10 @@ DB port, use a separate project-owned optional overlay/profile with a loopback
 binding; no such port is enabled here. `docker-compose --project-name authova-test
 --env-file .local-test/.env -f compose.test.yaml config --quiet` validates config;
 avoid printing full config because it includes generated database passwords.
+
+MySQL-first policy and explicit PostgreSQL compatibility: [mapping](mysql-first.md).
+Existing `.env` without `LOCAL_TEST_DATABASE_DRIVER` is never rewritten: explicitly
+set `AUTHOVA_LOCAL_TEST_DATABASE_DRIVER=postgres` to select the preserved
+`compose.test.postgres.yaml`. New MySQL fixtures must use a separate state directory
+(`AUTHOVA_LOCAL_TEST_STATE_DIR`) and unique `COMPOSE_PROJECT_NAME`. Do not switch
+an existing engine marker. Both Compose files preserve Console database/key isolation.

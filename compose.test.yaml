@@ -4,8 +4,8 @@ x-core-env: &core-env
   AUTHOVA_BASE_URL: ${AUTHOVA_BASE_URL:-http://127.0.0.1:42100}
   AUTHOVA_CONSOLE_URL: ${AUTHOVA_CONSOLE_URL:-http://127.0.0.1:42101}
   AUTHOVA_LISTEN: 0.0.0.0:8080
-  AUTHOVA_DATABASE_DRIVER: postgres
-  AUTHOVA_DATABASE_URL: postgres://authova_runtime:${DB_RUNTIME_PASSWORD:?run init}@postgres:5432/authova_test?sslmode=disable
+  AUTHOVA_DATABASE_DRIVER: mysql
+  AUTHOVA_DATABASE_URL: authova_runtime:${DB_RUNTIME_PASSWORD:?run init}@tcp(mysql:3306)/authova_test?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin
   AUTHOVA_MASTER_KEY_FILE: /run/authova/master.key
   AUTHOVA_VALKEY_ADDRESS: valkey:6379
   AUTHOVA_VALKEY_TLS: 'true'
@@ -18,62 +18,66 @@ x-core-env: &core-env
   AUTHOVA_SMTP_FROM: local-test@example.invalid
   SSL_CERT_FILE: ${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
 x-core: &core
-  image: authova-test-core:local
+  image: ${AUTHOVA_CORE_IMAGE:-authova-test-core:mysql-first}
   build: {context: ., dockerfile: Dockerfile}
   user: '${LOCAL_UID:?run init}:${LOCAL_GID:?run init}'
+  mem_limit: 384m
   read_only: true
   cap_drop: [ALL]
   security_opt: [no-new-privileges:true]
   environment: *core-env
   volumes:
-    - ./.local-test/core:/run/authova:ro
+    - ${AUTHOVA_LOCAL_TEST_STATE_DIR:-./.local-test}/core:/run/authova:ro
   depends_on:
     bootstrap: {condition: service_completed_successfully}
     valkey: {condition: service_healthy}
   restart: unless-stopped
 services:
-  postgres:
-    image: postgres:17-alpine
+  mysql:
+    image: mysql:8.4.11@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70
     environment:
-      POSTGRES_USER: authova_migrator
-      POSTGRES_PASSWORD: ${DB_MIGRATOR_PASSWORD:?run init}
-      POSTGRES_DB: authova_test
-    volumes: [postgres-data:/var/lib/postgresql/data]
+      MYSQL_ROOT_PASSWORD: ${DB_MIGRATOR_PASSWORD:?run init}
+      MYSQL_DATABASE: authova_test
+    mem_limit: 1g
+    command: [mysqld, --innodb-buffer-pool-size=134217728, --max-connections=180, --character-set-server=utf8mb4, --collation-server=utf8mb4_bin]
+    volumes: [mysql-data:/var/lib/mysql]
     healthcheck:
-      test: [CMD-SHELL, 'pg_isready -U authova_migrator -d authova_test']
+      test: [CMD-SHELL, 'MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysqladmin ping -h127.0.0.1 --silent']
       interval: 2s
       timeout: 3s
-      retries: 45
+      retries: 60
     restart: unless-stopped
   roles:
-    image: postgres:17-alpine
+    mem_limit: 128m
+    image: mysql:8.4.11@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70
     user: '${LOCAL_UID}:${LOCAL_GID}'
     environment:
-      PGPASSWORD: ${DB_MIGRATOR_PASSWORD}
-    volumes: ['./.local-test/roles.sql:/run/roles.sql:ro']
-    entrypoint: [psql, -h, postgres, -U, authova_migrator, -d, authova_test, -v, ON_ERROR_STOP=1, -f, /run/roles.sql]
+      MYSQL_PWD: ${DB_MIGRATOR_PASSWORD}
+    volumes: ['${AUTHOVA_LOCAL_TEST_STATE_DIR:-./.local-test}/roles.sql:/run/roles.sql:ro']
+    entrypoint: [/bin/sh, -ec, 'mysql -h mysql -uroot authova_test < /run/roles.sql']
     depends_on:
-      postgres: {condition: service_healthy}
+      mysql: {condition: service_healthy}
     restart: 'no'
   migrate:
     <<: *core
     command: [migrate]
     environment:
       <<: *core-env
-      AUTHOVA_MIGRATION_DATABASE_URL: postgres://authova_migrator:${DB_MIGRATOR_PASSWORD}@postgres:5432/authova_test?sslmode=disable
+      AUTHOVA_MIGRATION_DATABASE_URL: root:${DB_MIGRATOR_PASSWORD}@tcp(mysql:3306)/authova_test?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin
     depends_on:
       roles: {condition: service_completed_successfully}
     restart: 'no'
   bootstrap-check:
-    image: postgres:17-alpine
+    mem_limit: 128m
+    image: mysql:8.4.11@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70
     user: '${LOCAL_UID}:${LOCAL_GID}'
     environment:
-      PGPASSWORD: ${DB_MIGRATOR_PASSWORD}
-    volumes: ['./.local-test/bootstrap:/state']
+      MYSQL_PWD: ${DB_MIGRATOR_PASSWORD}
+    volumes: ['${AUTHOVA_LOCAL_TEST_STATE_DIR:-./.local-test}/bootstrap:/state']
     entrypoint: [/bin/sh, -ec]
     command:
       - |
-        n=$$(psql -h postgres -U authova_migrator -d authova_test -At -v ON_ERROR_STOP=1 -c 'SELECT count(*) FROM operators')
+        n=$$(mysql -h mysql -uroot -N -B authova_test -e 'SELECT count(*) FROM operators')
         if [ "$$n" = 0 ]; then rm -f /state/bootstrap.done; else touch /state/bootstrap.done; fi
     depends_on:
       migrate: {condition: service_completed_successfully}
@@ -83,8 +87,8 @@ services:
     entrypoint: [/bin/sh, -ec]
     command: ['if [ ! -f /state/bootstrap.done ]; then authova bootstrap < /state/bootstrap.json; touch /state/bootstrap.done; fi']
     volumes:
-      - ./.local-test/core:/run/authova:ro
-      - ./.local-test/bootstrap:/state
+      - ${AUTHOVA_LOCAL_TEST_STATE_DIR:-./.local-test}/core:/run/authova:ro
+      - ${AUTHOVA_LOCAL_TEST_STATE_DIR:-./.local-test}/bootstrap:/state
     depends_on:
       bootstrap-check: {condition: service_completed_successfully}
     restart: 'no'
@@ -101,7 +105,8 @@ services:
     <<: *core
     command: [worker]
   console:
-    image: authova-test-console:local
+    mem_limit: 384m
+    image: ${AUTHOVA_CONSOLE_IMAGE:-authova-test-console:mysql-first}
     build: {context: ., dockerfile: console/Dockerfile}
     user: '${LOCAL_UID}:${LOCAL_GID}'
     read_only: true
@@ -121,7 +126,7 @@ services:
       AUTHOVA_VALKEY_TLS_CERT_FILE: /run/authova/console.crt
       AUTHOVA_VALKEY_TLS_KEY_FILE: /run/authova/console.key
       SSL_CERT_FILE: ${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
-    volumes: ['./.local-test/console:/run/authova:ro']
+    volumes: ['${AUTHOVA_LOCAL_TEST_STATE_DIR:-./.local-test}/console:/run/authova:ro']
     ports: ['127.0.0.1:${CONSOLE_PORT:-42101}:8090']
     depends_on:
       core: {condition: service_healthy}
@@ -133,11 +138,12 @@ services:
       retries: 45
     restart: unless-stopped
   valkey:
+    mem_limit: 128m
     image: valkey/valkey:9.1-alpine
     user: '${LOCAL_UID}:${LOCAL_GID}'
     read_only: true
     command: [valkey-server, /tls/valkey.conf]
-    volumes: ['./.local-test/valkey:/tls:ro']
+    volumes: ['${AUTHOVA_LOCAL_TEST_STATE_DIR:-./.local-test}/valkey:/tls:ro']
     tmpfs: ['/data:mode=1777']
     healthcheck:
       test: [CMD-SHELL, 'VALKEYCLI_AUTH=$$(cat /tls/health.password) valkey-cli --tls --cacert /tls/ca.crt --cert /tls/health.crt --key /tls/health.key --user authova_health -h valkey ping | grep -q PONG']
@@ -146,11 +152,12 @@ services:
       retries: 45
     restart: unless-stopped
   mailpit:
+    mem_limit: 128m
     image: axllent/mailpit:v1.28
     ports: ['127.0.0.1:${MAILPIT_PORT:-42102}:8025']
     environment: {MP_DATABASE: /data/mailpit.db}
     volumes: [mailpit-data:/data]
     restart: unless-stopped
 volumes:
-  postgres-data:
+  mysql-data:
   mailpit-data:

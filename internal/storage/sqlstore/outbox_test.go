@@ -473,3 +473,20 @@ func TestDeliveryFailurePersistsAcrossReopen(t *testing.T) {
 		})
 	}
 }
+
+// MySQL's server default must not collapse protocol key case in reviewed tables.
+func TestOutboxMySQLIdentifierCase(t *testing.T) {
+	s, _ := outboxFixture(t, "mysql")
+	ctx := context.Background()
+	for _, key := range []string{"case-key", "CASE-KEY"} {
+		if _, err := s.db.ExecContext(ctx, "INSERT INTO apps(id,app_key,slug,name,status,config_version,created_at) VALUES(?,?,?,?,'active',1,0)", key, key, key, "case fixture"); err != nil {
+			t.Fatal("case-distinct key rejected", err)
+		}
+	}
+	for _, key := range []string{"case-key", "CASE-KEY"} {
+		var id string
+		if err := s.db.QueryRowContext(ctx, "SELECT id FROM apps WHERE app_key=?", key).Scan(&id); err != nil || id != key {
+			t.Fatal("protocol key comparison collapsed case")
+		}
+	}
+}

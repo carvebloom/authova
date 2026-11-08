@@ -27,7 +27,9 @@ builds the frontend. Core: `bin/authova serve`; Worker: `bin/authova worker`;
 Console: `bin/authova-console`. Each needs its own explicit runtime configuration.
 Console communicates only through Core HTTP API and has no Core database/master key.
 
-Start with [isolated run instructions](docs/migration/RUN.md),
+New server deployments default to **MySQL 8.4/InnoDB**; PostgreSQL remains an explicit compatibility option, with no fallback or in-place engine/data conversion. Start with [independent MySQL test setup](docs/local-test.md) and [database policy mapping](docs/mysql-first.md).
+
+Historical local migration instance: [isolated run instructions](docs/migration/RUN.md),
 [implementation decisions and capability matrix](docs/migration/IMPLEMENTATION.md),
 and [current validation report](docs/migration/VALIDATION.md).
 The [previous Core README](docs/migration/LEGACY-CORE-README.md) is retained as

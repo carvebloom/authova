@@ -23,10 +23,18 @@ import (
 // selected sibling Contracts module. Ordinary Core builds stay independent.
 // It checks selected real HTTP use cases, not full OpenAPI conformance.
 func TestPinnedContractCombination(t *testing.T) {
-	for _, dialect := range []string{"postgres", "mysql"} {
+	dialects := []string{"mysql", "postgres"}
+	switch selected := os.Getenv("AUTHOVA_TEST_DATABASE_DIALECT"); selected {
+	case "", "both":
+	case "mysql", "postgres":
+		dialects = []string{selected}
+	default:
+		t.Fatal("invalid explicitly selected contract database dialect")
+	}
+	for _, dialect := range dialects {
 		dsn := os.Getenv("AUTHOVA_TEST_" + strings.ToUpper(dialect) + "_DSN")
 		if dsn == "" {
-			t.Fatal("combination gate requires both real DBs")
+			t.Fatal("combination gate requires every explicitly selected real database")
 		}
 		t.Run(dialect, func(t *testing.T) {
 			f := setup(t, dialect, dsn)

@@ -12,7 +12,7 @@ RUN go mod download
 COPY console ./console
 COPY internal ./internal
 COPY api ./api
-RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/authova-console ./console/cmd/authova-console
+RUN GOMAXPROCS=2 CGO_ENABLED=0 go build -p=2 -trimpath -ldflags='-s -w' -o /out/authova-console ./console/cmd/authova-console
 FROM alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8
 RUN apk add --no-cache ca-certificates && addgroup -g 10001 authova && adduser -D -u 10001 -G authova authova
 COPY --from=build /out/authova-console /usr/local/bin/authova-console

@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
-STATE = ROOT / '.local-test'
+STATE = Path(os.environ.get('AUTHOVA_LOCAL_TEST_STATE_DIR', str(ROOT / '.local-test'))).resolve()
 os.umask(0o077)
 
 
@@ -38,6 +38,7 @@ def init():
     write_once(STATE / '.env', defaults + '\nLOCAL_UID=' + str(os.getuid()) + '\nLOCAL_GID=' + str(os.getgid()) +
                '\nDB_MIGRATOR_PASSWORD=' + secrets.token_hex(24) + '\nDB_RUNTIME_PASSWORD=' + secrets.token_hex(24) + '\n')
     settings = env_values()
+    driver = database_driver(settings)
     write_once(STATE / 'core/master.key', secrets.token_bytes(32))
     write_once(STATE / 'console/session.key', secrets.token_bytes(32))
     write_once(STATE / 'bootstrap/bootstrap.json', json.dumps(dict(Email='owner@local-test.example.invalid',
@@ -46,10 +47,15 @@ def init():
     password = settings['DB_RUNTIME_PASSWORD']
     if not re.fullmatch('[a-f0-9]{48}', password):
         raise RuntimeError('Keep the generated hexadecimal runtime password')
-    write_once(STATE / 'roles.sql', "DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname='authova_runtime') THEN "
-               "CREATE ROLE authova_runtime LOGIN PASSWORD '" + password + "' NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOINHERIT; END IF; END $$;\n"
-               "GRANT CONNECT ON DATABASE authova_test TO authova_runtime; GRANT USAGE ON SCHEMA public TO authova_runtime;\n"
-               "ALTER DEFAULT PRIVILEGES FOR ROLE authova_migrator IN SCHEMA public GRANT SELECT,INSERT,UPDATE,DELETE ON TABLES TO authova_runtime;\n")
+    if driver == 'mysql':
+        roles = "CREATE USER IF NOT EXISTS 'authova_runtime'@'%' IDENTIFIED BY '" + password + "';\n" + \
+                "GRANT SELECT,INSERT,UPDATE,DELETE ON authova_test.* TO 'authova_runtime'@'%';\n"
+    else:
+        roles = "DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname='authova_runtime') THEN " + \
+                "CREATE ROLE authova_runtime LOGIN PASSWORD '" + password + "' NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOINHERIT; END IF; END $$;\n" + \
+                "GRANT CONNECT ON DATABASE authova_test TO authova_runtime; GRANT USAGE ON SCHEMA public TO authova_runtime;\n" + \
+                "ALTER DEFAULT PRIVILEGES FOR ROLE authova_migrator IN SCHEMA public GRANT SELECT,INSERT,UPDATE,DELETE ON TABLES TO authova_runtime;\n"
+    write_once(STATE / 'roles.sql', roles)
     pki = STATE / 'pki'
 
     def openssl(*args):
@@ -98,13 +104,26 @@ def env_values():
     return dict(line.split('=', 1) for line in (STATE / '.env').read_text().splitlines() if line and not line.startswith('#'))
 
 
+def database_driver(settings=None):
+    settings = env_values() if settings is None else settings
+    driver = os.environ.get('AUTHOVA_LOCAL_TEST_DATABASE_DRIVER', settings.get('LOCAL_TEST_DATABASE_DRIVER', ''))
+    if driver not in ('mysql', 'postgres'):
+        raise RuntimeError('Existing configuration has no database marker; explicitly select AUTHOVA_LOCAL_TEST_DATABASE_DRIVER=postgres for the preserved old instance. No automatic engine switch.')
+    recorded = settings.get('LOCAL_TEST_DATABASE_DRIVER')
+    if recorded and recorded != driver:
+        raise RuntimeError('Database marker and requested engine differ; use a new private state directory/project, not an in-place engine switch')
+    return driver
+
+
 def compose(*args, capture=False):
     cli = ['docker', 'compose'] if subprocess.run(['docker', 'compose', 'version'], capture_output=True).returncode == 0 else ['docker-compose']
     project = os.environ.get('COMPOSE_PROJECT_NAME', 'authova-test')
     if project in ['authova', 'authova-migration'] or not re.fullmatch('[a-z0-9][a-z0-9_-]+', project):
         raise RuntimeError('Choose an independent local-test project name')
-    p = subprocess.run(cli + ['--project-name', project, '--env-file', str(STATE / '.env'), '-f', str(ROOT / 'compose.test.yaml'), *args],
-                       cwd=ROOT, check=True, capture_output=capture, text=True)
+    file = ROOT / ('compose.test.yaml' if database_driver() == 'mysql' else 'compose.test.postgres.yaml')
+    child_env = os.environ | {'AUTHOVA_LOCAL_TEST_STATE_DIR': str(STATE)}
+    p = subprocess.run(cli + ['--project-name', project, '--env-file', str(STATE / '.env'), '-f', str(file), *args],
+                       cwd=ROOT, env=child_env, check=True, capture_output=capture, text=True)
     return p.stdout if capture else None
 
 
@@ -165,7 +184,7 @@ def smoke():
         write_once(marker, json.dumps({'app_id': app['id']}))
     app_id = json.loads(marker.read_text())['app_id']
     request(base, '/api/v1/apps/' + app_id, token=token)
-    compose('restart', 'postgres', 'valkey', 'core', 'worker', 'console', capture=True)
+    compose('restart', database_driver(), 'valkey', 'core', 'worker', 'console', capture=True)
     wait_ready()
     request(base, '/api/v1/apps/' + app_id, token=token)
     request(console, '/', expected=200)
@@ -180,8 +199,12 @@ def smoke():
             headers={'Origin': env['AUTHOVA_CONSOLE_URL']}, expected=403)
     request(console, '/bff/logout', 'POST', {}, opener=browser,
             headers={'Origin': env['AUTHOVA_CONSOLE_URL'], 'X-CSRF-Token': bff_login['csrf_token']}, expected=204)
-    version = compose('exec', '-T', 'postgres', 'psql', '-U', 'authova_migrator', '-d', 'authova_test',
-                      '-At', '-v', 'ON_ERROR_STOP=1', '-c', 'SELECT version FROM authova_schema WHERE dirty=0', capture=True).strip()
+    if database_driver() == 'mysql':
+        version = compose('exec', '-T', 'mysql', '/bin/sh', '-ec',
+                          'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot -N -B authova_test -e "SELECT version FROM authova_schema WHERE dirty=0"', capture=True).strip()
+    else:
+        version = compose('exec', '-T', 'postgres', 'psql', '-U', 'authova_migrator', '-d', 'authova_test',
+                          '-At', '-v', 'ON_ERROR_STOP=1', '-c', 'SELECT version FROM authova_schema WHERE dirty=0', capture=True).strip()
     assert version == '1', 'Unexpected migration baseline'
     request(console, '/bff/me', expected=401)
     request(console, '/bff/login', 'POST', {}, headers={'Origin': 'http://untrusted.invalid'}, expected=403)
@@ -192,7 +215,7 @@ def smoke():
     write_once(STATE / 'smoke-initialized', 'ok\n')
     (STATE / 'last-smoke.json').write_text(json.dumps({'passed': True, 'restart_persistence': True, 'console_csrf_rejection': True, 'console_password_totp_session': True,
               'valkey_mtls_acl': True, 'schema_baseline': 1, 'mode': env['AUTHOVA_MODE'], 'unix_time': int(time.time())}, indent=2) + '\n')
-    print('Smoke passed: operator password/TOTP, synthetic App, PostgreSQL/cache/application restart persistence, Console auth/CSRF, Mailpit.')
+    print('Smoke passed: operator password/TOTP, synthetic App, database/cache/application restart persistence, Console auth/CSRF, Mailpit.')
 
 
 def main():
@@ -213,7 +236,7 @@ def main():
     elif cmd == 'status':
         compose('ps', '-a')
     elif cmd == 'restart':
-        compose('restart', 'postgres', 'valkey', 'mailpit', 'core', 'worker', 'console')
+        compose('restart', database_driver(), 'valkey', 'mailpit', 'core', 'worker', 'console')
         wait_ready()
     else:
         smoke()

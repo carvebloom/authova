@@ -2,6 +2,9 @@ name: CI
 on: [push, pull_request]
 permissions:
   contents: read
+env:
+  GOMAXPROCS: "2"
+  GOFLAGS: -p=2
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -10,10 +13,65 @@ jobs:
       - uses: actions/setup-go@v5
         with: {go-version-file: go.mod, cache: true}
       - run: make check
+      - run: python3 scripts/tests/test_local_test.py
       - run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
       - run: go run honnef.co/go/tools/cmd/staticcheck@v0.8.2 ./...
       - run: go build -trimpath ./cmd/...
-  databases:
+  mysql-primary:
+    runs-on: ubuntu-latest
+    services:
+      valkey:
+        image: valkey/valkey:9.1-alpine
+        ports: ['6379:6379']
+        options: --health-cmd="valkey-cli ping" --health-interval=2s --health-retries=30
+      mysql:
+        image: mysql:8.4.11@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70
+        env: {MYSQL_ROOT_PASSWORD: integration-only, MYSQL_DATABASE: authova_quality_ci}
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=2s --health-retries=60
+    env:
+      AUTHOVA_TEST_DATABASE_DIALECT: mysql
+      AUTHOVA_MODE: development
+      AUTHOVA_BASE_URL: http://127.0.0.1:18080
+      AUTHOVA_CONSOLE_URL: http://127.0.0.1:18090
+      AUTHOVA_TEST_VALKEY_ADDRESS: 127.0.0.1:6379
+      AUTHOVA_MASTER_KEY_FILE: /tmp/authova_quality_ci-test-master
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod, cache: true}
+      - uses: actions/setup-node@v4
+        with: {node-version: '26'}
+      - uses: arduino/setup-protoc@v3
+        with: {version: '36.2', repo-token: '${{ secrets.GITHUB_TOKEN }}'}
+      - run: python3 scripts/generate-api.py --install-tools --check
+      - name: Prepare owned disposable database configuration
+        run: |
+          python3 - <<'PYTHON'
+          import os, secrets
+          from pathlib import Path
+          name = 'authova_quality_' + secrets.token_hex(6)
+          key = Path(os.environ['AUTHOVA_MASTER_KEY_FILE'])
+          key.write_bytes(secrets.token_bytes(32))
+          key.chmod(0o600)
+          values = {
+              'AUTHOVA_TEST_DISPOSABLE_DATABASE': name,
+              'AUTHOVA_TEST_MYSQL_DSN': f'authova_runtime:integration-runtime-only@tcp(127.0.0.1:3306)/{name}?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin',
+              'AUTHOVA_TEST_MIGRATOR_MYSQL_DSN': f'root:integration-only@tcp(127.0.0.1:3306)/{name}?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin',
+          }
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              for key, value in values.items():
+                  output.write(f'{key}={value}\n')
+          PYTHON
+      - name: Create and migrate owned disposable databases
+        run: |
+          MYSQL_PWD=integration-only mysql -h127.0.0.1 -uroot -e "CREATE DATABASE ${AUTHOVA_TEST_DISPOSABLE_DATABASE} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin; CREATE USER 'authova_runtime'@'%' IDENTIFIED BY 'integration-runtime-only'; GRANT SELECT,INSERT,UPDATE,DELETE ON ${AUTHOVA_TEST_DISPOSABLE_DATABASE}.* TO 'authova_runtime'@'%';"
+          AUTHOVA_DATABASE_DRIVER=mysql AUTHOVA_DATABASE_URL="$AUTHOVA_TEST_MIGRATOR_MYSQL_DSN" go run ./cmd/authova migrate
+      - run: go test -parallel=2 -race -count=1 -v ./internal/integration
+      - run: go test -parallel=2 -race -count=1 -v ./internal/storage/sqlstore ./internal/delivery ./internal/runtimehttp
+      - run: python3 scripts/verify-contract-combination.py
+  postgres-compatibility:
+    needs: mysql-primary
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -31,6 +89,7 @@ jobs:
         ports: ['3306:3306']
         options: --health-cmd="mysqladmin ping --silent" --health-interval=2s --health-retries=60
     env:
+      AUTHOVA_TEST_DATABASE_DIALECT: both
       AUTHOVA_MODE: development
       AUTHOVA_BASE_URL: http://127.0.0.1:18080
       AUTHOVA_CONSOLE_URL: http://127.0.0.1:18090
@@ -70,10 +129,10 @@ jobs:
           PGPASSWORD=integration-only psql -h127.0.0.1 -Uauthova_migrator -dauthova_quality_ci -v ON_ERROR_STOP=1 -c "CREATE DATABASE ${AUTHOVA_TEST_DISPOSABLE_DATABASE};"
           PGPASSWORD=integration-only psql -h127.0.0.1 -Uauthova_migrator -d"${AUTHOVA_TEST_DISPOSABLE_DATABASE}" -v ON_ERROR_STOP=1 -c "CREATE ROLE authova_runtime LOGIN PASSWORD 'integration-runtime-only' NOSUPERUSER NOBYPASSRLS; GRANT CONNECT ON DATABASE ${AUTHOVA_TEST_DISPOSABLE_DATABASE} TO authova_runtime; GRANT USAGE ON SCHEMA public TO authova_runtime; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT,INSERT,UPDATE,DELETE ON TABLES TO authova_runtime;"
           MYSQL_PWD=integration-only mysql -h127.0.0.1 -uroot -e "CREATE DATABASE ${AUTHOVA_TEST_DISPOSABLE_DATABASE} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin; CREATE USER 'authova_runtime'@'%' IDENTIFIED BY 'integration-runtime-only'; GRANT SELECT,INSERT,UPDATE,DELETE ON ${AUTHOVA_TEST_DISPOSABLE_DATABASE}.* TO 'authova_runtime'@'%';"
-          AUTHOVA_DATABASE_URL="$AUTHOVA_TEST_MIGRATOR_POSTGRES_DSN" go run ./cmd/authova migrate
+          AUTHOVA_DATABASE_DRIVER=postgres AUTHOVA_DATABASE_URL="$AUTHOVA_TEST_MIGRATOR_POSTGRES_DSN" go run ./cmd/authova migrate
           AUTHOVA_DATABASE_DRIVER=mysql AUTHOVA_DATABASE_URL="$AUTHOVA_TEST_MIGRATOR_MYSQL_DSN" go run ./cmd/authova migrate
-      - run: go test -race -count=1 -v ./internal/integration
-      - run: go test -race -count=1 -v ./internal/storage/sqlstore ./internal/delivery ./internal/runtimehttp
+      - run: go test -parallel=2 -race -count=1 -v ./internal/integration
+      - run: go test -parallel=2 -race -count=1 -v ./internal/storage/sqlstore ./internal/delivery ./internal/runtimehttp
       - run: python3 scripts/verify-contract-combination.py
   console-and-generation:
     runs-on: ubuntu-latest

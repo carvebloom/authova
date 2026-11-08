@@ -51,7 +51,7 @@
     "https": "external overlay mounts additional CA PEM bundle into Core and Console; set SSL_CERT_FILE"
   },
   "validation": {
-    "development_http": "actual containers tested; see local-test-validation.json",
+    "development_http": "MySQL Core/Worker/Console, restart and retained-volume down/up passed; docs/mysql-first-validation.json",
     "production_https": "not yet verified; requires external routing/certificates"
   },
   "setup_services": [
@@ -60,5 +60,23 @@
     "bootstrap-check",
     "bootstrap"
   ],
-  "worker_service": "worker"
+  "worker_service": "worker",
+  "database": {
+    "default": "mysql",
+    "version": "8.4",
+    "service": "mysql",
+    "internal_port": 3306,
+    "runtime_role": "authova_runtime; DML only",
+    "collation": "utf8mb4_bin",
+    "postgres_compatibility": {
+      "compose_file": "compose.test.postgres.yaml",
+      "selection": "AUTHOVA_LOCAL_TEST_DATABASE_DRIVER=postgres; existing marker must agree",
+      "service": "postgres",
+      "rls": "FORCE RLS retained; MySQL does not have RLS"
+    },
+    "existing_configuration": "never rewritten or automatically converted",
+    "state_dir_env": "AUTHOVA_LOCAL_TEST_STATE_DIR",
+    "existing_Lab": "old 001 checksum incompatible; no instance changes authorized by defaults"
+  },
+  "private_state_dir_env": "AUTHOVA_LOCAL_TEST_STATE_DIR (new ignored directory/project, never reuse another engine state)"
 }

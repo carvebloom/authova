@@ -7,24 +7,24 @@ check:
 	test -z "$$(gofmt -l cmd internal)"
 	go vet ./...
 	go test -race -count=1 ./...
-dev-env: build-all
-	python3 scripts/migration/instance.py init
+dev-env:
+	./scripts/local-test.sh init
 infrastructure:
-	docker-compose -p authova-migration -f deploy/migration/compose.yaml --profile mysql up -d --wait
+	./scripts/local-test.sh up
 migrate: build
 	bin/authova migrate
 bootstrap: build
 	bin/authova bootstrap
 integration:
-	python3 scripts/migration/quality.py --evidence .migration/integration
+	python3 scripts/tests/go-errors.py
 demo:
 	./scripts/demo.sh
 verify:
 	./scripts/verify.sh
 
-# Creates disposable PG/MySQL databases and a fresh shared test root, then cleans up.
+# Creates an owned disposable MySQL fixture; PostgreSQL is an explicit compatibility option.
 quality-local:
-	python3 scripts/migration/quality.py --evidence .migration/quality-local
+	python3 scripts/tests/go-errors.py
 contract-combination:
 	python3 scripts/verify-contract-combination.py
 
@@ -38,7 +38,7 @@ ent:
 migration-hash:
 	go run ./cmd/migration-hash
 migration-test:
-	python3 scripts/migration/quality.py --evidence .migration/acceptance
+	python3 scripts/tests/go-errors.py --focused
 
 .PHONY: boundaries
 boundaries:

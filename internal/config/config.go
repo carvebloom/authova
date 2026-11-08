@@ -53,7 +53,7 @@ func Load() (Config, error) {
 		Listen:                env("LISTEN", ":8080"),
 		BaseURL:               strings.TrimRight(env("BASE_URL", ""), "/"),
 		ConsoleOrigin:         env("CONSOLE_URL", "http://127.0.0.1:18090"),
-		Dialect:               env("DATABASE_DRIVER", "postgres"),
+		Dialect:               env("DATABASE_DRIVER", "mysql"),
 		DSN:                   env("DATABASE_URL", ""),
 		MigrationDSN:          env("MIGRATION_DATABASE_URL", ""),
 		SMTPAddress:           env("SMTP_ADDRESS", ""),
@@ -101,6 +101,12 @@ func Load() (Config, error) {
 		return c, errors.New("AUTHOVA_SMS_TOKEN requires AUTHOVA_SMS_URL")
 	}
 
+	if c.Dialect != "mysql" && c.Dialect != "postgres" {
+		return c, errors.New("AUTHOVA_DATABASE_DRIVER must be mysql or postgres")
+	}
+	if c.Dialect == "mysql" && (strings.HasPrefix(c.DSN, "postgres://") || strings.HasPrefix(c.DSN, "postgresql://")) {
+		return c, errors.New("PostgreSQL DSN requires explicit AUTHOVA_DATABASE_DRIVER=postgres; no engine fallback")
+	}
 	if c.DSN == "" {
 		return c, errors.New("AUTHOVA_DATABASE_URL required")
 	}
