@@ -18,3 +18,19 @@
 公共Problem/HTTP状态/OAuth机器码/CLI stdout与退出语义继续保留；不可信人类消息按安全投影规范化。commit_unknown优先于取消、主次cleanup事实、受控panic与ErrAbort、至少一次投递的预算/fencing约束保持。
 
 **既有Lab旧v1与当前001的checksum不同。新binary会拒绝；本轮没有也不得自动重建、重编号、修改history或升级这些实例。** 后续切换必须独立评估实例与数据方案，不能直接将当前基线视为旧v1的无损升级；旧v2同样不提供自动降级。
+
+## 远端 CI 跟进
+
+远端 run42450777972 在 service 初始化时因 health-cmd 单引号被 runner
+拆分而失败；8ed71f5 已将三个命令改用双引号。后续 run42452530625 实际
+运行双库集成后，仅 `TestIdentityRecoveryLifecycle` 的两个数据库分支被
+安全保护拒绝：旧 CI 固定库名 `authova_quality_ci` 不满足自有随机库名约束。
+不能将这两次失败记为验收通过。
+
+本次只修 CI 配置：每个 job 使用 `secrets.token_hex(6)` 生成
+`authova_quality_<12hex>`，显式创建 PG/MySQL 新库，通过 GITHUB_ENV 将
+同一精确库名、受限 runtime DSN 与 migrator DSN 交给后续步骤。
+恢复测试的所有权校验和破坏性操作保护不变，未关闭、跳过或放宽测试。
+固定 service 初始库仅用于创建新库及健康检查。配置生成/名称与 DSN 匹配、
+YAML 和 shell 语法、恢复保护单测在本地验证；完整数据库执行结果以新
+Actions 为准。未连接本机现有数据库、Lab 或旧迁移实例。
