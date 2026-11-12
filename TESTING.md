@@ -12,8 +12,13 @@
 - release-manifest.json SHA256：`8692da6e7cd0f110df8a023dff209074bc68ce4ea8f3b297be65983f4e4e2e46`。
 - POLICY.md SHA256：`4862382b5054b23ba6c3e6a93d73880284020c3484a4f18b9d8ca064a679bcba`。
 - 本轮已核 manifest 的 13 项来源；这不是器林 registry artifact digest。
-- 器林正式发布、精确版本安装、doctor 与安装后显式读取：**NOT_RUN，待组织交付安装计划**。
-  不手写受管 AGENTS 块，不将“参考固定源改造”称为“已安装接入”。
+- canonical 已正式发布 `engineering/project-testing@1.0.0`，artifact SHA256：
+  `090ea71a804eed82cad2b94f62ed2a3bf70653d29dfb0d976b1cd682f17a5c36`。
+  已只读核对发布回执 `Workbench/kitarbor/docs/evidence/project-testing-v1-canonical-release.json`，
+  文件 SHA256 `564aac6ded194300a32b9996c6427517032335c72cef4bcb5cdb5ef86a73f46c`。
+  回执范围为 canonical 发布/字节回读，不包含本项目安装。
+- 精确版本安装、doctor 与安装后显式读取：**NOT_RUN，待 publisher 正式精确安装计划**。
+  不手写受管 AGENTS 块，不将“已发布”称为“本项目已安装接入”。
 
 按规范 §1.1 选择最小充分集合：先查相邻覆盖，用行为断言保护真实风险。
 不机械测 getter、纯透传、静态文案或实现文本，不设统一覆盖率目标，不批量删测/改名。
@@ -195,16 +200,24 @@ Python 本地与 CI 使用同一 discovery，命名匹配但没有 TestCase 也�
 
 ## 本轮验收、调度与例外
 
-本轮只执行标准库源码/AST/JSON/入口发现及 Git whitespace 检查，**没有** Go/Node/npm、
-行为测试、生成器、网络、DB/OCI、HTTP、浏览器或现有服务操作。
+项目 owner 的源码阶段只执行标准库源码/AST/JSON/入口发现及 Git whitespace 检查，
+没有 Go/Node/npm、生成器、网络、DB/OCI、HTTP、浏览器或现有服务操作。
+随后 Root 在本仓串行执行了以下有限 Python 行为回归，owner 没有重跑：
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s scripts/tests -p 'test_test_profiles.py' -v
+```
+
+执行方 Root 回传：**6 tests / 0 skip / native exit 0**，工具 chunk `c3dece`；
+运行来源为源码提交 `6b2c308f4afdb072c8f7fc1eafc32f046d48b9b7`，仅新增结果 gate 的 6 个方法。
+本记录是执行方的有限回传，不是 owner 独立复跑或新 Go/Node/DB/CI 证据。
 新增结果 gate 的 6 个回归方法保护 native 失败被父 0 覆盖、空选集/缺包/缺必需 case、
-selected Skip 被父 PASS 掩盖、tagged 消费者遗漏、Python 空发现、方言精确 allowlist、缺失/错 fixture 配置；它们尚为 **NOT_RUN**。
+selected Skip 被父 PASS 掩盖、tagged 消费者遗漏、Python 空发现、方言精确 allowlist、缺失/错 fixture 配置；这 6 个方法由 Root 执行通过，其他集合仍为 **NOT_RUN**。
 数据库/Console CI 配置改造未推送、未运行，旧 55484837 的 CI success 仅是旧工程证据。
 
 建议组织串行排程（估算，不是已测峰值/时长）：
 
-1. 最窄新增 gate：`python3 -B -m unittest discover -s scripts/tests -p 'test_test_profiles.py'`，
-   6 个方法、无服务/下载，预算 30s / 128MiB。
+1. 最窄新增 gate 已由 Root 执行通过，见上方精确命令/producer；无相关源码变化无需重跑。
 2. `make test-python`：提交态 7 个方法；工作区可能另发现旧任务 16 个方法，需先核来源。
    不启动产品服务，预算 60s / 256MiB。
 3. 已有固定工具链与依赖后：`make test-unit`，再 `python3 -B scripts/test_profiles.py component`，
@@ -219,7 +232,7 @@ selected Skip 被父 PASS 掩盖、tagged 消费者遗漏、Python 空发现、�
 | 单库 Atlas CLI 和缺席库叶子允许 Skip | both 兼容 job 必须执行全部；未知/selected Skip 失败 | Authova owner；每次 DB/CI 变更 |
 | TLS/浏览器无常设 CI job | 保留独立真实门禁；普通 CI 不声称 production TLS/产品 E2E 全通过 | Authova owner；相关发布前，最晚 2026-12-13 复核 |
 | legacy check 的 gofmt 只查 cmd/internal | 保留旧合同；console/contracts 静态与生成分别登记，不推断已全量格式检查 | Authova owner；触及对应子树时 |
-| 器林安装/doctor 未到 | 等组织精确 artifact/安装计划，显式读完后另报接入状态 | Authova owner + 器林 owner；收到计划时 |
+| 器林已发布，安装/doctor 未执行 | 等 publisher 正式精确安装计划，显式读完后另报接入状态 | Authova owner + 器林 owner；收到计划时 |
 
 本地回退只 revert 本任务提交，恢复原 CI/Make/Vitest 的入口；无 schema/依赖/业务数据变化。
 这不回退或改写既有 MySQL/Go-error/登录任务成果，不删除失败证据或受管规则。
