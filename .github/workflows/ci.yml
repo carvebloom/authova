@@ -8,17 +8,21 @@ env:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with: {go-version-file: go.mod, cache: true}
+      - name: Prepare pinned Go dependencies (explicit network step)
+        run: go mod download
       - run: make check
-      - run: python3 scripts/tests/test_local_test.py
+      - run: make test-discover test-python
       - run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
       - run: go run honnef.co/go/tools/cmd/staticcheck@v0.8.2 ./...
       - run: go build -trimpath ./cmd/...
   mysql-primary:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     services:
       valkey:
         image: valkey/valkey:9.1-alpine
@@ -40,6 +44,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with: {go-version-file: go.mod, cache: true}
+      - name: Prepare pinned Go dependencies (explicit network step)
+        run: go mod download
       - uses: actions/setup-node@v4
         with: {node-version: '26'}
       - uses: arduino/setup-protoc@v3
@@ -67,12 +73,12 @@ jobs:
         run: |
           MYSQL_PWD=integration-only mysql -h127.0.0.1 -uroot -e "CREATE DATABASE ${AUTHOVA_TEST_DISPOSABLE_DATABASE} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin; CREATE USER 'authova_runtime'@'%' IDENTIFIED BY 'integration-runtime-only'; GRANT SELECT,INSERT,UPDATE,DELETE ON ${AUTHOVA_TEST_DISPOSABLE_DATABASE}.* TO 'authova_runtime'@'%';"
           AUTHOVA_DATABASE_DRIVER=mysql AUTHOVA_DATABASE_URL="$AUTHOVA_TEST_MIGRATOR_MYSQL_DSN" go run ./cmd/authova migrate
-      - run: go test -parallel=2 -race -count=1 -v ./internal/integration
-      - run: go test -parallel=2 -race -count=1 -v ./internal/storage/sqlstore ./internal/delivery ./internal/runtimehttp
+      - run: make test-integration TEST_DATABASE_DIALECT=mysql
       - run: python3 scripts/verify-contract-combination.py
   postgres-compatibility:
     needs: mysql-primary
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     services:
       postgres:
         image: postgres:17-alpine
@@ -99,6 +105,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with: {go-version-file: go.mod, cache: true}
+      - name: Prepare pinned Go dependencies (explicit network step)
+        run: go mod download
       - uses: actions/setup-node@v4
         with: {node-version: '26'}
       - uses: arduino/setup-protoc@v3
@@ -131,15 +139,17 @@ jobs:
           MYSQL_PWD=integration-only mysql -h127.0.0.1 -uroot -e "CREATE DATABASE ${AUTHOVA_TEST_DISPOSABLE_DATABASE} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin; CREATE USER 'authova_runtime'@'%' IDENTIFIED BY 'integration-runtime-only'; GRANT SELECT,INSERT,UPDATE,DELETE ON ${AUTHOVA_TEST_DISPOSABLE_DATABASE}.* TO 'authova_runtime'@'%';"
           AUTHOVA_DATABASE_DRIVER=postgres AUTHOVA_DATABASE_URL="$AUTHOVA_TEST_MIGRATOR_POSTGRES_DSN" go run ./cmd/authova migrate
           AUTHOVA_DATABASE_DRIVER=mysql AUTHOVA_DATABASE_URL="$AUTHOVA_TEST_MIGRATOR_MYSQL_DSN" go run ./cmd/authova migrate
-      - run: go test -parallel=2 -race -count=1 -v ./internal/integration
-      - run: go test -parallel=2 -race -count=1 -v ./internal/storage/sqlstore ./internal/delivery ./internal/runtimehttp
+      - run: make test-integration TEST_DATABASE_DIALECT=both
       - run: python3 scripts/verify-contract-combination.py
   console-and-generation:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with: {go-version-file: go.mod, cache: true}
+      - name: Prepare pinned Go dependencies (explicit network step)
+        run: go mod download
       - uses: actions/setup-node@v4
         with: {node-version: '26', cache: npm, cache-dependency-path: console/web/package-lock.json}
       - uses: arduino/setup-protoc@v3
@@ -152,5 +162,5 @@ jobs:
       - run: npm --prefix console/web run lint
       - run: npm --prefix console/web run format:check
       - run: npm --prefix console/web audit
-      - run: npm --prefix console/web test
+      - run: make test-web
       - run: npm --prefix console/web run build

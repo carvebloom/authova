@@ -11,5 +11,5 @@ for name,source in {'management.yaml':contracts/'openapi/v1/management.yaml','sd
 subprocess.run(['python3',str(contracts/'scripts/check-generated.py')],check=True)
 subprocess.run(['python3',str(console/'scripts/generate-contracts.py'),'--check'],check=True)
 env=os.environ.copy();env['GOWORK']='off'
-subprocess.run([str(root/'scripts/migration/go.sh'),'test','-race','-count=1','-tags','contractcombo','-run','TestPinnedContractCombination','-v','./internal/integration'],cwd=root,env=env,check=True)
+subprocess.run(['python3','-B',str(root/'scripts/test_profiles.py'),'contract','--race','--dialect',env.get('AUTHOVA_TEST_DATABASE_DIALECT') or 'both'],cwd=root,env=env,check=True)
 print('Local candidate combination verified; no remote release implied.')

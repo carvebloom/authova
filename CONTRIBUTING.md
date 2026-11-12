@@ -4,6 +4,11 @@ Authova uses Apache-2.0. Contributions must be licensed under Apache-2.0; do not
 
 Run the repository's check targets before submitting. A passing unit test does not replace real database, protocol, browser or performance evidence. Include the commands and environment for claims you make.
 
+Use [TESTING.md](TESTING.md) for the frozen organization testing policy, actual
+discovery rules, layered commands, required fixture configuration and CI mapping.
+Choose the smallest sufficient behavioral regression; do not add tests for trivial
+forwarding or coverage percentages. Missing required DB/TLS configuration is not PASS.
+
 Use idiomatic Go and strict TypeScript. Keep SQL and driver errors out of domain code; bind every App-owned operation to a verified scope. Public DTOs, secret serialization and transaction ownership must be reviewed. Never log passwords, OTPs, tokens, private keys or provider secrets. Unknown dependencies and unknown commit outcomes must remain explicit failures.
 
 Report vulnerabilities privately to the deployment owner or project maintainer. Before public release the maintainer must enable private vulnerability reporting on the repository. Do not put exploit credentials or private data in public issues.
