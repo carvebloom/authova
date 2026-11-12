@@ -5,9 +5,9 @@
 
 ## 固定规范与接入状态
 
-遵循组织测试规范 v1.0.0，目标器林引用 `engineering/project-testing@1.0.0`。
-当前依据组织固定源 `Workbench/docs/testing-policy/v1/` 的 POLICY、RESEARCH、ADOPTION
-和 PROJECT-TESTING.template；本仓执行不依赖这些 sibling 文件存在。
+遵循组织测试规范 v1.0.0，已精确安装器林 `engineering/project-testing@1.0.0`。
+本仓安装副本位于 `.agents/skills/project-testing/`，由官方 CLI 管理；项目运行不依赖 sibling 文件或 Skill 目录存在。
+源冻结资料为组织 `Workbench/docs/testing-policy/v1/` 的 POLICY、RESEARCH、ADOPTION 和 PROJECT-TESTING.template。
 
 - release-manifest.json SHA256：`8692da6e7cd0f110df8a023dff209074bc68ce4ea8f3b297be65983f4e4e2e46`。
 - POLICY.md SHA256：`4862382b5054b23ba6c3e6a93d73880284020c3484a4f18b9d8ca064a679bcba`。
@@ -17,8 +17,20 @@
   已只读核对发布回执 `Workbench/kitarbor/docs/evidence/project-testing-v1-canonical-release.json`，
   文件 SHA256 `564aac6ded194300a32b9996c6427517032335c72cef4bcb5cdb5ef86a73f46c`。
   回执范围为 canonical 发布/字节回读，不包含本项目安装。
-- 精确版本安装、doctor 与安装后显式读取：**NOT_RUN，待 publisher 正式精确安装计划**。
-  不手写受管 AGENTS 块，不将“已发布”称为“本项目已安装接入”。
+- 本仓精确安装、完整性核验、offline doctor、history committed 和安装后显式读取：**PASS**。
+  原 manager `/Users/chenhuanxiang/Workbench/.kitarbor-local-coordination`、target `authova-project-lead-v1` 复用，无 target add。
+  实际计划 `op-914a87e24165d17d3dfd88e4`，CAS plan digest
+  `303ad4f834960171fa9f772923fb43f27a09db966b314023fe0bee29844e74f7`；不与 artifact digest 混用。
+  17 个发布文件的 hash/size/mode 与 canonical 回执逐项一致，另有 1 份 CLI 安装 receipt。
+  `local list --target authova-project-lead-v1 --verify --json` 完整性 unchanged、无 findings；
+  使用真实 ENTRY_ID 的 `local inspect` 仅核来源/version（其 integrity=not_checked，不能当完整性证明）；
+  `doctor --offline --target authova-project-lead-v1 --json` native 0，history 为 committed。
+  remote named doctor 未实现，本轮没有调用。
+- 已显式读取本仓安装的 `SKILL.md`、`references/docs/testing-policy/v1/POLICY.md` 全文
+  （含 §1.1、§3.1–3.3）、`ADOPTION.md` 和 `PROJECT-TESTING.template.md`。
+  原 AGENTS/marker 完整 bytes/mode、原 target 和既有 profile-install history 均不变；没有改旧 immutable profile。
+  来源、ENTRY_ID、各命令退出与保原证据见 [本仓安装回执](docs/testing-install-v1.json)。
+  安装阶段仅执行获授权的 canonical HTTPS CLI 读取与本地安装，不执行产品行为测试。
 
 按规范 §1.1 选择最小充分集合：先查相邻覆盖，用行为断言保护真实风险。
 不机械测 getter、纯透传、静态文案或实现文本，不设统一覆盖率目标，不批量删测/改名。
@@ -232,7 +244,8 @@ selected Skip 被父 PASS 掩盖、tagged 消费者遗漏、Python 空发现、�
 | 单库 Atlas CLI 和缺席库叶子允许 Skip | both 兼容 job 必须执行全部；未知/selected Skip 失败 | Authova owner；每次 DB/CI 变更 |
 | TLS/浏览器无常设 CI job | 保留独立真实门禁；普通 CI 不声称 production TLS/产品 E2E 全通过 | Authova owner；相关发布前，最晚 2026-12-13 复核 |
 | legacy check 的 gofmt 只查 cmd/internal | 保留旧合同；console/contracts 静态与生成分别登记，不推断已全量格式检查 | Authova owner；触及对应子树时 |
-| 器林已发布，安装/doctor 未执行 | 等 publisher 正式精确安装计划，显式读完后另报接入状态 | Authova owner + 器林 owner；收到计划时 |
 
 本地回退只 revert 本任务提交，恢复原 CI/Make/Vitest 的入口；无 schema/依赖/业务数据变化。
 这不回退或改写既有 MySQL/Go-error/登录任务成果，不删除失败证据或受管规则。
+Git revert 不会卸载本地 Skill；受管安装回退必须另用官方 plan/CAS，不能手删目录或 marker。
+安装前的 NOT_RUN 状态保留在历史提交 `db58b35`；当前安装已完成，其他未验证集合不因此变绿。
