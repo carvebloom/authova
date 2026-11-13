@@ -21,7 +21,7 @@ and remaining acceptance limits.
 | `internal/migrations/sql` | reviewed PostgreSQL/MySQL migrations, RLS and Atlas sums |
 | `docs/migration` | provenance, decisions, compatibility and acceptance status |
 
-Requires Go 1.27.3; `make build-all` builds all three Go executables from this
+Requires Go 1.27.4; `make build-all` builds all three Go executables from this
 checkout alone. `npm --prefix console/web ci && npm --prefix console/web run build`
 builds the frontend. Core: `bin/authova serve`; Worker: `bin/authova worker`;
 Console: `bin/authova-console`. Each needs its own explicit runtime configuration.

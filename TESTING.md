@@ -94,7 +94,7 @@ profile 核对真实 Go JSON 完成事件。新增 package 默认归 component�
 ## 真实入口与 CI
 
 所有下列命令 cwd 为仓库根，除明确标注外。依赖必须先在获准环境准备，默认入口不安装工具。
-Go 按 `go.mod` 固定 1.27.3；CI setup-go 读取该文件。Node CI 固定 26，依赖由各 lockfile
+Go 按 `go.mod` 固定 1.27.4；CI setup-go 读取该文件。Node CI 固定 26，依赖由各 lockfile
 决定，Console Vitest 5.0.4，根 Playwright 1.64.0；Python 标准库入口要求 3.9+。
 这些是声明/配置版本，本轮没有启动工具核实际版本。
 
