@@ -1,8 +1,11 @@
 package mcpquery
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -77,5 +80,54 @@ func TestOfficialMCPToolsDiscoveryAndReadBoundary(t *testing.T) {
 	res, err = session.CallTool(ctx, &mcp.CallToolParams{Name: "authova_get_context", Arguments: map[string]any{}})
 	if err == nil && !res.IsError {
 		t.Fatal("MCP session cached authorization")
+	}
+}
+
+type panicTransport struct{}
+
+func (panicTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	panic("CANARY-TRANSPORT-PASSWORD")
+}
+func TestToolPanicIsSafeAndDoesNotCrashStdio(t *testing.T) {
+	var logs bytes.Buffer
+	old := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
+	defer slog.SetDefault(old)
+	q, e := query.New(query.Config{BaseURL: "https://core.example", Issuer: "https://core.example/a/" + strings.Repeat("a", 32), AppID: "app", ClientID: "client", ClientSecret: "CANARY", InstallationID: "install", Scopes: []string{"authova.query.context"}}, &http.Client{Transport: panicTransport{}})
+	if e != nil {
+		t.Fatal(e)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	st, ct := mcp.NewInMemoryTransports()
+	ss, e := New(q).Connect(ctx, st, nil)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer ss.Close()
+	client := mcp.NewClient(&mcp.Implementation{Name: "test", Version: "1"}, nil)
+	cs, e := client.Connect(ctx, ct, nil)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer cs.Close()
+	result, e := cs.CallTool(ctx, &mcp.CallToolParams{Name: "authova_get_context", Arguments: map[string]any{}})
+	if e != nil {
+		t.Fatal(e)
+	}
+	raw, _ := json.Marshal(result)
+	if !result.IsError || strings.Contains(string(raw), "CANARY") || strings.Contains(logs.String(), "CANARY") || !strings.Contains(logs.String(), "panic_unwind") {
+		t.Fatal("unsafe or missing MCP panic boundary")
+	}
+}
+
+func TestQueryFailureDiagnosticRetainsContactNotText(t *testing.T) {
+	var out bytes.Buffer
+	old := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&out, nil)))
+	defer slog.SetDefault(old)
+	LogFailure(context.Background(), fmt.Errorf("CANARY-TOKEN: %w", context.Canceled))
+	if strings.Contains(out.String(), "CANARY") || !strings.Contains(out.String(), "cancelled") || !strings.Contains(out.String(), "diagnostic_id") || !strings.Contains(out.String(), "recorded_at") {
+		t.Fatal("unsafe or empty CLI diagnostic")
 	}
 }

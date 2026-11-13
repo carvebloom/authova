@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/carvebloom/authova/internal/diagnostic"
 	"log/slog"
 	"strings"
 	"testing"
@@ -44,5 +45,27 @@ func TestClassifiedErrorsPreserveSafeDiagnostics(t *testing.T) {
 	err := storageError(context.Canceled, "commit", domain.ErrCommitUnknown)
 	if !errors.Is(err, domain.ErrCommitUnknown) || !errors.Is(err, context.Canceled) || errors.Is(err, domain.ErrUnavailable) {
 		t.Fatal("unknown commit became retryable failure")
+	}
+}
+
+func TestCommitUnknownDiagnosticOverridesCancelledCause(t *testing.T) {
+	for _, cause := range []error{context.Canceled, context.DeadlineExceeded, errors.Join(context.Canceled, context.DeadlineExceeded)} {
+		err := storageError(cause, "commit", domain.ErrCommitUnknown)
+		if !errors.Is(err, domain.ErrCommitUnknown) || diagnostic.Inspect(err).Kind != "outcome_unknown" {
+			t.Fatal("commit fact lost")
+		}
+		var typed *Error
+		if !errors.As(err, &typed) || !errors.Is(err, cause) {
+			t.Fatal("chain lost")
+		}
+	}
+}
+
+func TestForgedStorageFieldsCannotBypassSafeFormatting(t *testing.T) {
+	err := &Error{Operation: "CANARY-OP", Driver: "CANARY-DRIVER", Code: "CANARY-SQL", kind: errors.New("CANARY-CAUSE"), cause: errors.New("CANARY-CAUSE")}
+	var out bytes.Buffer
+	slog.New(slog.NewJSONHandler(&out, nil)).Error("failed", "error", err)
+	if strings.Contains(out.String()+fmt.Sprintf("%+v", err), "CANARY") {
+		t.Fatal("same type is not a trust boundary")
 	}
 }

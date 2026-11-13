@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/carvebloom/authova/internal/diagnostic"
 	"log/slog"
 	"net/http"
 	"os"
@@ -29,8 +30,15 @@ import (
 var version = "dev"
 
 func main() {
+	defer func() {
+		if v := recover(); v != nil {
+			diagnostic.Panic(context.Background(), "runtime", v)
+			os.Exit(1)
+		}
+	}()
+	slog.SetDefault(slog.New(diagnostic.Handler{Next: slog.NewJSONHandler(os.Stderr, nil)}))
 	if e := run(); e != nil {
-		slog.Error("Authova stopped", "error", e)
+		diagnostic.Log(context.Background(), "runtime", "serve", e)
 		os.Exit(1)
 	}
 }
@@ -59,7 +67,7 @@ func run() error {
 	}
 	store, e := sqlstore.Open(ctx, c.Dialect, dsn, c.BaseURL, vault, c.Connections)
 	if e != nil {
-		return errors.New("database unavailable")
+		return diagnostic.Wrap(e, "startup", "connect")
 	}
 	defer store.Close()
 	if command == "migrate" {
@@ -133,7 +141,7 @@ func run() error {
 	defer func() {
 		finish, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		_ = shutdownTrace(finish)
+		diagnostic.Log(finish, "runtime", "shutdown", shutdownTrace(finish))
 	}()
 	store.ObserveTransaction = metrics.ObserveDB
 	service.ObserveKDF = metrics.ObserveKDF
@@ -202,13 +210,40 @@ func run() error {
 	defer func() {
 		shutdown, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		_ = events.Shutdown(shutdown)
+		diagnostic.Log(shutdown, "runtime", "shutdown", events.Shutdown(shutdown))
 	}()
 	api := &transport.Server{Metrics: metrics, Resources: resources, SecurityEvents: events, Service: service, Provider: provider, Limiter: limiter, EmailConfigured: email != nil, PhoneConfigured: phone != nil, MaxInflight: int64(c.HTTPConcurrency)}
 	server := &http.Server{Addr: c.Listen, Handler: api.Handler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 20 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 * 1024}
 	if command == "all" {
-		go worker.Run(ctx)
+		return supervise(ctx, worker.Run, func(ctx context.Context) error { return runtimehttp.Serve(ctx, server) })
 	}
 	slog.Info("Authova listening", "address", c.Listen, "mode", c.Mode, "version", version)
 	return runtimehttp.Serve(ctx, server)
+}
+
+// Each process component is supervised; cancellation never silently loses its peer.
+func supervise(ctx context.Context, a, b func(context.Context) error) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	results := make(chan error, 2)
+	launch := func(fn func(context.Context) error) {
+		go func() {
+			defer func() {
+				if v := recover(); v != nil {
+					diagnostic.Panic(ctx, "runtime", v)
+					results <- diagnostic.Wrap(errors.New("component panic"), "runtime", "panic")
+				}
+			}()
+			results <- fn(ctx)
+		}()
+	}
+	launch(a)
+	launch(b)
+	first := <-results
+	cancel()
+	second := <-results
+	if first == nil {
+		return second
+	}
+	return diagnostic.Combine(first, second, false)
 }

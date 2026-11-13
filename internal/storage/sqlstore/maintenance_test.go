@@ -207,7 +207,7 @@ func TestMaintenanceGates(t *testing.T) {
 			if e = migrator.db.QueryRowContext(ctx, "SELECT version FROM authova_schema WHERE singleton=1").Scan(&preservedVersion); e != nil || preservedVersion != 8 {
 				t.Fatal("refused old history was modified", preservedVersion, e)
 			}
-			exec(migrator, "UPDATE authova_schema SET version=1")
+			exec(migrator, "UPDATE authova_schema SET version=?", schemaVersion)
 			if e = migrator.CheckRuntime(ctx); e == nil {
 				t.Fatal("privileged migrator accepted as runtime")
 			}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/carvebloom/authova/console/internal/diagnostic"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -26,7 +27,7 @@ func (b *bff) upstreamContext(ctx context.Context) context.Context {
 func (b *bff) appOAuth(ctx context.Context, key, client string) (*oidc.Provider, *oauth2.Config, error) {
 	provider, e := oidc.NewProvider(b.upstreamContext(ctx), b.api.BaseURL+"/a/"+key)
 	if e != nil {
-		return nil, nil, e
+		return nil, nil, diagnostic.Wrap(e, "console", "upstream")
 	}
 	endpoint := provider.Endpoint()
 	endpoint.AuthStyle = oauth2.AuthStyleInParams // Public Client: never probe/replay a rotation.
@@ -47,6 +48,7 @@ func (b *bff) appLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, e := b.api.HTTP.Do(req)
 	if e != nil {
+		diagnostic.Log(r.Context(), "console", "upstream", diagnostic.Wrap(e, "console", "upstream"))
 		problem(w, 503, "dependency_unavailable")
 		return
 	}
@@ -61,6 +63,7 @@ func (b *bff) appLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	_, config, e := b.appOAuth(r.Context(), in.AppKey, metadata.ClientID)
 	if e != nil {
+		diagnostic.Log(r.Context(), "console", "upstream", diagnostic.Wrap(e, "console", "upstream"))
 		problem(w, 503, "dependency_unavailable")
 		return
 	}
@@ -68,10 +71,12 @@ func (b *bff) appLogin(w http.ResponseWriter, r *http.Request) {
 	raw, _ := json.Marshal(flow)
 	encrypted, e := b.crypt(raw, true)
 	if e != nil {
+		diagnostic.Log(r.Context(), "console", "upstream", diagnostic.Wrap(e, "console", "upstream"))
 		problem(w, 503, "dependency_unavailable")
 		return
 	}
 	if e = b.cache.Do(r.Context(), b.cache.B().Set().Key("authova:console:flow:"+flow.State).Value(string(encrypted)).ExSeconds(300).Build()).Error(); e != nil {
+		diagnostic.Log(r.Context(), "console", "query", diagnostic.Wrap(e, "console", "query"))
 		problem(w, 503, "dependency_unavailable")
 		return
 	}
@@ -88,6 +93,7 @@ func (b *bff) appCallback(w http.ResponseWriter, r *http.Request) {
 	raw, e := b.cache.Do(r.Context(), b.cache.B().Getdel().Key("authova:console:flow:"+state).Build()).AsBytes()
 	if e != nil {
 		if !valkey.IsValkeyNil(e) {
+			diagnostic.Log(r.Context(), "console", "query", diagnostic.Wrap(e, "console", "query"))
 			problem(w, 503, "dependency_unavailable")
 			return
 		}
@@ -106,6 +112,7 @@ func (b *bff) appCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	provider, config, e := b.appOAuth(r.Context(), flow.Key, flow.ClientID)
 	if e != nil {
+		diagnostic.Log(r.Context(), "console", "upstream", diagnostic.Wrap(e, "console", "upstream"))
 		problem(w, 503, "dependency_unavailable")
 		return
 	}
@@ -139,6 +146,7 @@ func (b *bff) appCallback(w http.ResponseWriter, r *http.Request) {
 	session := session{Token: token.AccessToken, Refresh: token.RefreshToken, TokenExpires: token.Expiry, AppKey: flow.Key, ClientID: flow.ClientID, CSRF: random(), Operator: current.Operator, Expires: time.Now().Add(8 * time.Hour)}
 	id := random()
 	if e = b.saveSession(r.Context(), id, session); e != nil {
+		diagnostic.Log(r.Context(), "console", "query", e)
 		problem(w, 503, "dependency_unavailable")
 		return
 	}
@@ -163,7 +171,8 @@ func (b *bff) saveSession(ctx context.Context, id string, s session) error {
 }
 
 // refreshSession serializes rotation across BFF replicas, then reloads the shared state.
-func (b *bff) refreshSession(r *http.Request, id string, s session) (session, error) {
+func (b *bff) refreshSession(r *http.Request, id string, s session) (out session, err error) {
+	rotated := false
 	if s.Refresh == "" || s.TokenExpires.After(time.Now().Add(30*time.Second)) {
 		return s, nil
 	}
@@ -173,6 +182,9 @@ func (b *bff) refreshSession(r *http.Request, id string, s session) (session, er
 	acquired := false
 	for time.Now().Before(deadline) {
 		result, e := b.cache.Do(r.Context(), b.cache.B().Set().Key(lock).Value(nonce).Nx().ExSeconds(30).Build()).ToString()
+		if e != nil && !valkey.IsValkeyNil(e) {
+			return s, diagnostic.Wrap(e, "console", "query")
+		}
 		if e == nil && result == "OK" {
 			acquired = true
 			break
@@ -189,11 +201,18 @@ func (b *bff) refreshSession(r *http.Request, id string, s session) (session, er
 	defer func() {
 		release, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		b.cache.Do(release, b.cache.B().Eval().Script("if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) else return 0 end").Numkeys(1).Key(lock).Arg(nonce).Build())
+		cleanup := b.cache.Do(release, b.cache.B().Eval().Script("if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) else return 0 end").Numkeys(1).Key(lock).Arg(nonce).Build()).Error()
+		if cleanup != nil {
+			combined := diagnostic.Combine(err, diagnostic.Wrap(cleanup, "console", "cleanup"), rotated)
+			diagnostic.Log(r.Context(), "console", "cleanup", combined)
+			if err != nil {
+				err = combined
+			}
+		}
 	}()
 	current, _, e := b.load(r)
 	if e != nil {
-		return s, e
+		return s, diagnostic.Wrap(e, "console", "upstream")
 	}
 	if current.RefreshPending {
 		return current, errSessionMissing
@@ -203,22 +222,24 @@ func (b *bff) refreshSession(r *http.Request, id string, s session) (session, er
 	}
 	_, config, e := b.appOAuth(r.Context(), current.AppKey, current.ClientID)
 	if e != nil {
-		return s, e
+		return s, diagnostic.Wrap(e, "console", "upstream")
 	}
 	current.RefreshPending = true
 	if e = b.replaceSession(r.Context(), id, current); e != nil {
-		return current, e
+		return current, diagnostic.Wrap(e, "console", "upstream")
 	}
 	token, e := config.TokenSource(r.Context(), &oauth2.Token{RefreshToken: current.Refresh, Expiry: time.Now().Add(-time.Hour)}).Token()
 	if e != nil {
-		return s, e
+		return s, diagnostic.Wrap(e, "console", "upstream")
 	}
 	if token.AccessToken == "" || token.RefreshToken == "" || !token.Expiry.After(time.Now()) {
 		return current, errors.New("invalid refresh response")
 	}
 	current.Token, current.Refresh, current.TokenExpires = token.AccessToken, token.RefreshToken, token.Expiry
 	current.RefreshPending = false
-	return current, b.replaceSession(r.Context(), id, current)
+	err = b.replaceSession(r.Context(), id, current)
+	rotated = err == nil
+	return current, err
 }
 func (b *bff) revokeAppSession(ctx context.Context, s session) error {
 	form := url.Values{"client_id": {s.ClientID}, "token": {s.Refresh}, "token_type_hint": {"refresh_token"}}

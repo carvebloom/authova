@@ -22,6 +22,62 @@ type OutboxMessageCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetDeliveryState sets the "delivery_state" field.
+func (_c *OutboxMessageCreate) SetDeliveryState(v string) *OutboxMessageCreate {
+	_c.mutation.SetDeliveryState(v)
+	return _c
+}
+
+// SetNillableDeliveryState sets the "delivery_state" field if the given value is not nil.
+func (_c *OutboxMessageCreate) SetNillableDeliveryState(v *string) *OutboxMessageCreate {
+	if v != nil {
+		_c.SetDeliveryState(*v)
+	}
+	return _c
+}
+
+// SetFailurePhase sets the "failure_phase" field.
+func (_c *OutboxMessageCreate) SetFailurePhase(v string) *OutboxMessageCreate {
+	_c.mutation.SetFailurePhase(v)
+	return _c
+}
+
+// SetNillableFailurePhase sets the "failure_phase" field if the given value is not nil.
+func (_c *OutboxMessageCreate) SetNillableFailurePhase(v *string) *OutboxMessageCreate {
+	if v != nil {
+		_c.SetFailurePhase(*v)
+	}
+	return _c
+}
+
+// SetFailureCode sets the "failure_code" field.
+func (_c *OutboxMessageCreate) SetFailureCode(v string) *OutboxMessageCreate {
+	_c.mutation.SetFailureCode(v)
+	return _c
+}
+
+// SetNillableFailureCode sets the "failure_code" field if the given value is not nil.
+func (_c *OutboxMessageCreate) SetNillableFailureCode(v *string) *OutboxMessageCreate {
+	if v != nil {
+		_c.SetFailureCode(*v)
+	}
+	return _c
+}
+
+// SetOutcomeUnknown sets the "outcome_unknown" field.
+func (_c *OutboxMessageCreate) SetOutcomeUnknown(v int16) *OutboxMessageCreate {
+	_c.mutation.SetOutcomeUnknown(v)
+	return _c
+}
+
+// SetNillableOutcomeUnknown sets the "outcome_unknown" field if the given value is not nil.
+func (_c *OutboxMessageCreate) SetNillableOutcomeUnknown(v *int16) *OutboxMessageCreate {
+	if v != nil {
+		_c.SetOutcomeUnknown(*v)
+	}
+	return _c
+}
+
 // SetAppID sets the "app_id" field.
 func (_c *OutboxMessageCreate) SetAppID(v string) *OutboxMessageCreate {
 	_c.mutation.SetAppID(v)
@@ -65,6 +121,7 @@ func (_c *OutboxMessageCreate) Mutation() *OutboxMessageMutation {
 
 // Save creates the OutboxMessage in the database.
 func (_c *OutboxMessageCreate) Save(ctx context.Context) (*OutboxMessage, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -90,8 +147,55 @@ func (_c *OutboxMessageCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_c *OutboxMessageCreate) defaults() {
+	if _, ok := _c.mutation.DeliveryState(); !ok {
+		v := outboxmessage.DefaultDeliveryState
+		_c.mutation.SetDeliveryState(v)
+	}
+	if _, ok := _c.mutation.FailurePhase(); !ok {
+		v := outboxmessage.DefaultFailurePhase
+		_c.mutation.SetFailurePhase(v)
+	}
+	if _, ok := _c.mutation.FailureCode(); !ok {
+		v := outboxmessage.DefaultFailureCode
+		_c.mutation.SetFailureCode(v)
+	}
+	if _, ok := _c.mutation.OutcomeUnknown(); !ok {
+		v := outboxmessage.DefaultOutcomeUnknown
+		_c.mutation.SetOutcomeUnknown(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (_c *OutboxMessageCreate) check() error {
+	if _, ok := _c.mutation.DeliveryState(); !ok {
+		return &ValidationError{Name: "delivery_state", err: errors.New(`ent: missing required field "OutboxMessage.delivery_state"`)}
+	}
+	if v, ok := _c.mutation.DeliveryState(); ok {
+		if err := outboxmessage.DeliveryStateValidator(v); err != nil {
+			return &ValidationError{Name: "delivery_state", err: fmt.Errorf(`ent: validator failed for field "OutboxMessage.delivery_state": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.FailurePhase(); !ok {
+		return &ValidationError{Name: "failure_phase", err: errors.New(`ent: missing required field "OutboxMessage.failure_phase"`)}
+	}
+	if v, ok := _c.mutation.FailurePhase(); ok {
+		if err := outboxmessage.FailurePhaseValidator(v); err != nil {
+			return &ValidationError{Name: "failure_phase", err: fmt.Errorf(`ent: validator failed for field "OutboxMessage.failure_phase": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.FailureCode(); !ok {
+		return &ValidationError{Name: "failure_code", err: errors.New(`ent: missing required field "OutboxMessage.failure_code"`)}
+	}
+	if v, ok := _c.mutation.FailureCode(); ok {
+		if err := outboxmessage.FailureCodeValidator(v); err != nil {
+			return &ValidationError{Name: "failure_code", err: fmt.Errorf(`ent: validator failed for field "OutboxMessage.failure_code": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.OutcomeUnknown(); !ok {
+		return &ValidationError{Name: "outcome_unknown", err: errors.New(`ent: missing required field "OutboxMessage.outcome_unknown"`)}
+	}
 	if _, ok := _c.mutation.AppID(); !ok {
 		return &ValidationError{Name: "app_id", err: errors.New(`ent: missing required field "OutboxMessage.app_id"`)}
 	}
@@ -153,6 +257,22 @@ func (_c *OutboxMessageCreate) createSpec() (*OutboxMessage, *sqlgraph.CreateSpe
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.DeliveryState(); ok {
+		_spec.SetField(outboxmessage.FieldDeliveryState, field.TypeString, value)
+		_node.DeliveryState = value
+	}
+	if value, ok := _c.mutation.FailurePhase(); ok {
+		_spec.SetField(outboxmessage.FieldFailurePhase, field.TypeString, value)
+		_node.FailurePhase = value
+	}
+	if value, ok := _c.mutation.FailureCode(); ok {
+		_spec.SetField(outboxmessage.FieldFailureCode, field.TypeString, value)
+		_node.FailureCode = value
+	}
+	if value, ok := _c.mutation.OutcomeUnknown(); ok {
+		_spec.SetField(outboxmessage.FieldOutcomeUnknown, field.TypeInt16, value)
+		_node.OutcomeUnknown = value
+	}
 	if value, ok := _c.mutation.AppID(); ok {
 		_spec.SetField(outboxmessage.FieldAppID, field.TypeString, value)
 		_node.AppID = value
@@ -180,7 +300,7 @@ func (_c *OutboxMessageCreate) createSpec() (*OutboxMessage, *sqlgraph.CreateSpe
 // of the `INSERT` statement. For example:
 //
 //	client.OutboxMessage.Create().
-//		SetAppID(v).
+//		SetDeliveryState(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -189,7 +309,7 @@ func (_c *OutboxMessageCreate) createSpec() (*OutboxMessage, *sqlgraph.CreateSpe
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.OutboxMessageUpsert) {
-//			SetAppID(v+v).
+//			SetDeliveryState(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *OutboxMessageCreate) OnConflict(opts ...sql.ConflictOption) *OutboxMessageUpsertOne {
@@ -224,6 +344,60 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetDeliveryState sets the "delivery_state" field.
+func (u *OutboxMessageUpsert) SetDeliveryState(v string) *OutboxMessageUpsert {
+	u.Set(outboxmessage.FieldDeliveryState, v)
+	return u
+}
+
+// UpdateDeliveryState sets the "delivery_state" field to the value that was provided on create.
+func (u *OutboxMessageUpsert) UpdateDeliveryState() *OutboxMessageUpsert {
+	u.SetExcluded(outboxmessage.FieldDeliveryState)
+	return u
+}
+
+// SetFailurePhase sets the "failure_phase" field.
+func (u *OutboxMessageUpsert) SetFailurePhase(v string) *OutboxMessageUpsert {
+	u.Set(outboxmessage.FieldFailurePhase, v)
+	return u
+}
+
+// UpdateFailurePhase sets the "failure_phase" field to the value that was provided on create.
+func (u *OutboxMessageUpsert) UpdateFailurePhase() *OutboxMessageUpsert {
+	u.SetExcluded(outboxmessage.FieldFailurePhase)
+	return u
+}
+
+// SetFailureCode sets the "failure_code" field.
+func (u *OutboxMessageUpsert) SetFailureCode(v string) *OutboxMessageUpsert {
+	u.Set(outboxmessage.FieldFailureCode, v)
+	return u
+}
+
+// UpdateFailureCode sets the "failure_code" field to the value that was provided on create.
+func (u *OutboxMessageUpsert) UpdateFailureCode() *OutboxMessageUpsert {
+	u.SetExcluded(outboxmessage.FieldFailureCode)
+	return u
+}
+
+// SetOutcomeUnknown sets the "outcome_unknown" field.
+func (u *OutboxMessageUpsert) SetOutcomeUnknown(v int16) *OutboxMessageUpsert {
+	u.Set(outboxmessage.FieldOutcomeUnknown, v)
+	return u
+}
+
+// UpdateOutcomeUnknown sets the "outcome_unknown" field to the value that was provided on create.
+func (u *OutboxMessageUpsert) UpdateOutcomeUnknown() *OutboxMessageUpsert {
+	u.SetExcluded(outboxmessage.FieldOutcomeUnknown)
+	return u
+}
+
+// AddOutcomeUnknown adds v to the "outcome_unknown" field.
+func (u *OutboxMessageUpsert) AddOutcomeUnknown(v int16) *OutboxMessageUpsert {
+	u.Add(outboxmessage.FieldOutcomeUnknown, v)
+	return u
+}
 
 // SetAppID sets the "app_id" field.
 func (u *OutboxMessageUpsert) SetAppID(v string) *OutboxMessageUpsert {
@@ -349,6 +523,69 @@ func (u *OutboxMessageUpsertOne) Update(set func(*OutboxMessageUpsert)) *OutboxM
 		set(&OutboxMessageUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeliveryState sets the "delivery_state" field.
+func (u *OutboxMessageUpsertOne) SetDeliveryState(v string) *OutboxMessageUpsertOne {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.SetDeliveryState(v)
+	})
+}
+
+// UpdateDeliveryState sets the "delivery_state" field to the value that was provided on create.
+func (u *OutboxMessageUpsertOne) UpdateDeliveryState() *OutboxMessageUpsertOne {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.UpdateDeliveryState()
+	})
+}
+
+// SetFailurePhase sets the "failure_phase" field.
+func (u *OutboxMessageUpsertOne) SetFailurePhase(v string) *OutboxMessageUpsertOne {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.SetFailurePhase(v)
+	})
+}
+
+// UpdateFailurePhase sets the "failure_phase" field to the value that was provided on create.
+func (u *OutboxMessageUpsertOne) UpdateFailurePhase() *OutboxMessageUpsertOne {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.UpdateFailurePhase()
+	})
+}
+
+// SetFailureCode sets the "failure_code" field.
+func (u *OutboxMessageUpsertOne) SetFailureCode(v string) *OutboxMessageUpsertOne {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.SetFailureCode(v)
+	})
+}
+
+// UpdateFailureCode sets the "failure_code" field to the value that was provided on create.
+func (u *OutboxMessageUpsertOne) UpdateFailureCode() *OutboxMessageUpsertOne {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.UpdateFailureCode()
+	})
+}
+
+// SetOutcomeUnknown sets the "outcome_unknown" field.
+func (u *OutboxMessageUpsertOne) SetOutcomeUnknown(v int16) *OutboxMessageUpsertOne {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.SetOutcomeUnknown(v)
+	})
+}
+
+// AddOutcomeUnknown adds v to the "outcome_unknown" field.
+func (u *OutboxMessageUpsertOne) AddOutcomeUnknown(v int16) *OutboxMessageUpsertOne {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.AddOutcomeUnknown(v)
+	})
+}
+
+// UpdateOutcomeUnknown sets the "outcome_unknown" field to the value that was provided on create.
+func (u *OutboxMessageUpsertOne) UpdateOutcomeUnknown() *OutboxMessageUpsertOne {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.UpdateOutcomeUnknown()
+	})
 }
 
 // SetAppID sets the "app_id" field.
@@ -499,6 +736,7 @@ func (_c *OutboxMessageCreateBulk) Save(ctx context.Context) ([]*OutboxMessage, 
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*OutboxMessageMutation)
 				if !ok {
@@ -577,7 +815,7 @@ func (_c *OutboxMessageCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.OutboxMessageUpsert) {
-//			SetAppID(v+v).
+//			SetDeliveryState(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *OutboxMessageCreateBulk) OnConflict(opts ...sql.ConflictOption) *OutboxMessageUpsertBulk {
@@ -654,6 +892,69 @@ func (u *OutboxMessageUpsertBulk) Update(set func(*OutboxMessageUpsert)) *Outbox
 		set(&OutboxMessageUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeliveryState sets the "delivery_state" field.
+func (u *OutboxMessageUpsertBulk) SetDeliveryState(v string) *OutboxMessageUpsertBulk {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.SetDeliveryState(v)
+	})
+}
+
+// UpdateDeliveryState sets the "delivery_state" field to the value that was provided on create.
+func (u *OutboxMessageUpsertBulk) UpdateDeliveryState() *OutboxMessageUpsertBulk {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.UpdateDeliveryState()
+	})
+}
+
+// SetFailurePhase sets the "failure_phase" field.
+func (u *OutboxMessageUpsertBulk) SetFailurePhase(v string) *OutboxMessageUpsertBulk {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.SetFailurePhase(v)
+	})
+}
+
+// UpdateFailurePhase sets the "failure_phase" field to the value that was provided on create.
+func (u *OutboxMessageUpsertBulk) UpdateFailurePhase() *OutboxMessageUpsertBulk {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.UpdateFailurePhase()
+	})
+}
+
+// SetFailureCode sets the "failure_code" field.
+func (u *OutboxMessageUpsertBulk) SetFailureCode(v string) *OutboxMessageUpsertBulk {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.SetFailureCode(v)
+	})
+}
+
+// UpdateFailureCode sets the "failure_code" field to the value that was provided on create.
+func (u *OutboxMessageUpsertBulk) UpdateFailureCode() *OutboxMessageUpsertBulk {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.UpdateFailureCode()
+	})
+}
+
+// SetOutcomeUnknown sets the "outcome_unknown" field.
+func (u *OutboxMessageUpsertBulk) SetOutcomeUnknown(v int16) *OutboxMessageUpsertBulk {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.SetOutcomeUnknown(v)
+	})
+}
+
+// AddOutcomeUnknown adds v to the "outcome_unknown" field.
+func (u *OutboxMessageUpsertBulk) AddOutcomeUnknown(v int16) *OutboxMessageUpsertBulk {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.AddOutcomeUnknown(v)
+	})
+}
+
+// UpdateOutcomeUnknown sets the "outcome_unknown" field to the value that was provided on create.
+func (u *OutboxMessageUpsertBulk) UpdateOutcomeUnknown() *OutboxMessageUpsertBulk {
+	return u.Update(func(s *OutboxMessageUpsert) {
+		s.UpdateOutcomeUnknown()
+	})
 }
 
 // SetAppID sets the "app_id" field.

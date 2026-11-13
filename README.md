@@ -21,13 +21,15 @@ and remaining acceptance limits.
 | `internal/migrations/sql` | reviewed PostgreSQL/MySQL migrations, RLS and Atlas sums |
 | `docs/migration` | provenance, decisions, compatibility and acceptance status |
 
-Requires Go 1.27.3; `make build-all` builds all three Go executables from this
+Requires Go 1.27.4; `make build-all` builds all three Go executables from this
 checkout alone. `npm --prefix console/web ci && npm --prefix console/web run build`
 builds the frontend. Core: `bin/authova serve`; Worker: `bin/authova worker`;
 Console: `bin/authova-console`. Each needs its own explicit runtime configuration.
 Console communicates only through Core HTTP API and has no Core database/master key.
 
-Start with [isolated run instructions](docs/migration/RUN.md),
+New server deployments default to **MySQL 8.4/InnoDB**; PostgreSQL remains an explicit compatibility option, with no fallback or in-place engine/data conversion. Start with [independent MySQL test setup](docs/local-test.md) and [database policy mapping](docs/mysql-first.md).
+
+Historical local migration instance: [isolated run instructions](docs/migration/RUN.md),
 [implementation decisions and capability matrix](docs/migration/IMPLEMENTATION.md),
 and [current validation report](docs/migration/VALIDATION.md).
 The [previous Core README](docs/migration/LEGACY-CORE-README.md) is retained as
@@ -39,4 +41,6 @@ issuers, identities and keys are outside this repository migration.
 
 Schema engineering: [Ent → Atlas review planning](docs/migration/SCHEMA-PLANNING.md), including compound constraints, protected-object fingerprints and dual-dialect upgrade rehearsals.
 
-Database schema starts at the unpublished **v1** baseline (`001_initial.sql`); the next migration is 002. [Versioning and prior test instances](docs/migration/VERSIONING.md).
+Current database schema is the unpublished **v1** baseline (`001_initial.sql`), including bounded delivery diagnostics. The next reviewed migration is 002. [Versioning and prior test instances](docs/migration/VERSIONING.md).
+
+Error handling: [organization v1.0.1 mappings and exceptions](docs/go-error-handling.md), [validation](docs/go-errors-validation.md).

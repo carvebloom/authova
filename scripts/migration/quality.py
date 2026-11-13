@@ -29,7 +29,7 @@ try:
     with tempfile.TemporaryDirectory() as directory:
         key=Path(directory)/'master';key.write_bytes(secrets.token_bytes(32));key.chmod(0o600)
         env=os.environ.copy()
-        toolchain='/Users/chenhuanxiang/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.3.darwin-arm64/bin'
+        toolchain='/Users/chenhuanxiang/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.4.darwin-arm64/bin'
         if Path(toolchain).exists(): env.update(PATH=toolchain+os.pathsep+env['PATH'],GOTOOLCHAIN='local')
         env.update(AUTHOVA_TEST_DISPOSABLE_DATABASE=name,AUTHOVA_TEST_VALKEY_ADDRESS=env.get('AUTHOVA_TEST_VALKEY_ADDRESS','127.0.0.1:36379'),AUTHOVA_MODE='development',AUTHOVA_BASE_URL='http://127.0.0.1:18080',AUTHOVA_CONSOLE_URL='http://127.0.0.1:18090',AUTHOVA_MASTER_KEY_FILE=str(key),AUTHOVA_ENCRYPTION_KEYRING_FILE='')
         pg_admin=f'postgres://authova_migrator:authova-local-database-only@127.0.0.1:35432/{name}?sslmode=disable'

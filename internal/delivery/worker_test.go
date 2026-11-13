@@ -3,6 +3,7 @@ package delivery
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -249,8 +250,8 @@ func TestSMTPCancelClosesStalledGreeting(t *testing.T) {
 	cancel()
 	select {
 	case e := <-done:
-		if e == nil {
-			t.Fatal("cancelled SMTP succeeded")
+		if !errors.Is(e, context.Canceled) {
+			t.Fatal("cancelled SMTP lost cancellation cause")
 		}
 	case <-time.After(time.Second):
 		t.Fatal("SMTP cancellation ignored")

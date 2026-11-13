@@ -16,6 +16,14 @@ type OutboxMessage struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// DeliveryState holds the value of the "delivery_state" field.
+	DeliveryState string `json:"delivery_state,omitempty"`
+	// FailurePhase holds the value of the "failure_phase" field.
+	FailurePhase string `json:"failure_phase,omitempty"`
+	// FailureCode holds the value of the "failure_code" field.
+	FailureCode string `json:"failure_code,omitempty"`
+	// OutcomeUnknown holds the value of the "outcome_unknown" field.
+	OutcomeUnknown int16 `json:"outcome_unknown,omitempty"`
 	// AppID holds the value of the "app_id" field.
 	AppID string `json:"app_id,omitempty"`
 	// AvailableAt holds the value of the "available_at" field.
@@ -36,9 +44,9 @@ func (*OutboxMessage) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case outboxmessage.FieldPayload:
 			values[i] = new([]byte)
-		case outboxmessage.FieldAvailableAt, outboxmessage.FieldAttempts, outboxmessage.FieldCompleted:
+		case outboxmessage.FieldOutcomeUnknown, outboxmessage.FieldAvailableAt, outboxmessage.FieldAttempts, outboxmessage.FieldCompleted:
 			values[i] = new(sql.NullInt64)
-		case outboxmessage.FieldID, outboxmessage.FieldAppID:
+		case outboxmessage.FieldID, outboxmessage.FieldDeliveryState, outboxmessage.FieldFailurePhase, outboxmessage.FieldFailureCode, outboxmessage.FieldAppID:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -60,6 +68,30 @@ func (_m *OutboxMessage) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
 				_m.ID = value.String
+			}
+		case outboxmessage.FieldDeliveryState:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field delivery_state", values[i])
+			} else if value.Valid {
+				_m.DeliveryState = value.String
+			}
+		case outboxmessage.FieldFailurePhase:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field failure_phase", values[i])
+			} else if value.Valid {
+				_m.FailurePhase = value.String
+			}
+		case outboxmessage.FieldFailureCode:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field failure_code", values[i])
+			} else if value.Valid {
+				_m.FailureCode = value.String
+			}
+		case outboxmessage.FieldOutcomeUnknown:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field outcome_unknown", values[i])
+			} else if value.Valid {
+				_m.OutcomeUnknown = int16(value.Int64)
 			}
 		case outboxmessage.FieldAppID:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -127,6 +159,18 @@ func (_m *OutboxMessage) String() string {
 	var builder strings.Builder
 	builder.WriteString("OutboxMessage(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("delivery_state=")
+	builder.WriteString(_m.DeliveryState)
+	builder.WriteString(", ")
+	builder.WriteString("failure_phase=")
+	builder.WriteString(_m.FailurePhase)
+	builder.WriteString(", ")
+	builder.WriteString("failure_code=")
+	builder.WriteString(_m.FailureCode)
+	builder.WriteString(", ")
+	builder.WriteString("outcome_unknown=")
+	builder.WriteString(fmt.Sprintf("%v", _m.OutcomeUnknown))
+	builder.WriteString(", ")
 	builder.WriteString("app_id=")
 	builder.WriteString(_m.AppID)
 	builder.WriteString(", ")

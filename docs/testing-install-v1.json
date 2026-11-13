@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "task_id": "org-project-testing-v1-adoption",
+  "recorded_at": "2026-11-12T16:19:21Z",
+  "scope": "Authova exact-version Skill installation, preservation and explicit reading only; no new product/test execution",
+  "target": {
+    "id": "authova-project-lead-v1",
+    "agent": "codex",
+    "scope": "project",
+    "baseRoot": "/Users/chenhuanxiang/Workbench/authova",
+    "skillsRoot": "/Users/chenhuanxiang/Workbench/authova/.agents/skills",
+    "writePolicy": "managed"
+  },
+  "manager": "/Users/chenhuanxiang/Workbench/.kitarbor-local-coordination",
+  "official_cli": "/Users/chenhuanxiang/Workbench/kitarbor/bin/kitarbor",
+  "reference": "engineering/project-testing@1.0.0",
+  "source_exact": "https://skills.lab.localhost/engineering/project-testing@1.0.0",
+  "artifact_sha256": "090ea71a804eed82cad2b94f62ed2a3bf70653d29dfb0d976b1cd682f17a5c36",
+  "artifact_bytes": 40954,
+  "version_id": "01209f0f-5631-410f-938e-9b6d933f48ef",
+  "artifact_id": "7979570e-3667-4d17-8c65-59b55dafc231",
+  "plan_id": "op-914a87e24165d17d3dfd88e4",
+  "plan_digest": "303ad4f834960171fa9f772923fb43f27a09db966b314023fe0bee29844e74f7",
+  "apply_expect_digest": "303ad4f834960171fa9f772923fb43f27a09db966b314023fe0bee29844e74f7",
+  "history_status": "committed",
+  "entry_id": "f7b9e4967323842a8764efc5b9a8197bf715cd36a112cdeebfa79059e0f4be27",
+  "installation_id": "install-3682a7d3865e8df65c8b1dfd",
+  "rendered_digest": "225d912a209b5bd13b1645f6efe1a60007672f81761de75c75e24bc52f7ceb07",
+  "payload_files_verified": 17,
+  "receipt_files": 1,
+  "integrity": "unchanged",
+  "integrity_findings": [],
+  "doctor_mode": "offline named target",
+  "doctor_native_exit": 0,
+  "remote_doctor": "NOT_RUN; not implemented for named target",
+  "command_native_exits": {
+    "history-before": 0,
+    "entry-inspect": 0,
+    "history-after": 0,
+    "plan-view": 0,
+    "target-before": 0,
+    "target-after": 0,
+    "list-after": 0,
+    "registry-inspect": 0,
+    "install-plan": 0,
+    "list-before": 0,
+    "apply": 0,
+    "doctor": 0
+  },
+  "preservation": {
+    "original_files": {
+      "AGENTS.md": {
+        "sha256": "bf65e5d385a374b7220d4e3926b34d97eefd6a632a2381f23df221a76e8dbdda",
+        "bytes": 4860,
+        "mode": "0o644"
+      },
+      ".agents/skills/.kitarbor-root.json": {
+        "sha256": "010baa833118916c5891d99b97e2670fcc7d51332b1bae0027f1f60566db61a0",
+        "bytes": 123,
+        "mode": "0o600"
+      }
+    },
+    "original_bytes_and_modes_unchanged": true,
+    "original_target_unchanged": true,
+    "prior_history_unchanged": true,
+    "prior_history_ids": [
+      "op-be93faf2ae203973dbb027d9"
+    ],
+    "other_skill_entries_before": [],
+    "other_skill_entries_after": [],
+    "new_target_added": false,
+    "managed_block_modified": false,
+    "root_marker_replaced": false
+  },
+  "explicitly_read": [
+    {
+      "path": ".agents/skills/project-testing/SKILL.md",
+      "sha256": "8538c56274fa610ddf9d30a71a7b6ec730599055e1478d30de3f193cab2e6482"
+    },
+    {
+      "path": ".agents/skills/project-testing/references/docs/testing-policy/v1/POLICY.md",
+      "sha256": "4862382b5054b23ba6c3e6a93d73880284020c3484a4f18b9d8ca064a679bcba"
+    },
+    {
+      "path": ".agents/skills/project-testing/references/docs/testing-policy/v1/ADOPTION.md",
+      "sha256": "abd12469ebb09b3a1e4fc8603bdf56862a4fb97a6935063aac6451b1c41fc6d3"
+    },
+    {
+      "path": ".agents/skills/project-testing/references/docs/testing-policy/v1/PROJECT-TESTING.template.md",
+      "sha256": "26a6843d2ec16348ae3a1cf81014c7c210282a53ee263c05d70fdc7843f2f50a"
+    }
+  ],
+  "authentication": "Official CLI consumed expressly authorized read-only configuration; credential values not read by auditing scripts, copied, printed or hashed",
+  "transport": "Process-local SSL_CERT_FILE; canonical HTTPS/hostname validation; no trust/hosts/global-profile change",
+  "source_adaptation": {
+    "code_commit": "6b2c308f4afdb072c8f7fc1eafc32f046d48b9b7",
+    "review": "Existing TESTING/Make/Go profile, Console discovery and CI mapping match the frozen requirements within documented scope; only installation-state documentation updated",
+    "root_reported_python": {
+      "tests": 6,
+      "skipped": 0,
+      "native_exit": 0,
+      "tool_chunk": "c3dece",
+      "rerun": false
+    },
+    "remaining": "Go/Node/DB/OCI/generation/browser/new CI NOT_RUN; prior local-login task remains undeployed/unverified"
+  },
+  "result": "PASS for installation and preservation; runtime acceptance remains partial"
+}

@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/carvebloom/authova/internal/diagnostic"
 	"strconv"
 	"strings"
 	"sync"
@@ -221,6 +222,9 @@ func (s *Store) transaction(ctx context.Context, app string, write bool, fn func
 	started := time.Now()
 	ctx, span := observability.Start(ctx, "db.transaction", attribute.String("db.system.name", s.dialect), attribute.Bool("db.transaction.write", write))
 	defer func() {
+		if err != nil && ctx.Err() != nil && !diagnostic.Has(err, ctx.Err()) {
+			err = errors.Join(err, ctx.Err())
+		}
 		observability.End(span, err)
 		if s.ObserveTransaction != nil {
 			s.ObserveTransaction(write, time.Since(started), err)
@@ -234,7 +238,12 @@ func (s *Store) transaction(ctx context.Context, app string, write bool, fn func
 	if e != nil {
 		return classify(e, "begin")
 	}
-	defer t.Rollback()
+	defer func() {
+		if e := t.Rollback(); e != nil && !errors.Is(e, sql.ErrTxDone) {
+			err = diagnostic.Combine(err, e, false)
+			diagnostic.Log(ctx, "storage", "rollback", err)
+		}
+	}()
 	if s.dialect == "postgres" {
 		if _, e = t.ExecContext(ctx, "SELECT set_config('authova.app_id',$1,true)", app); e != nil {
 			return classify(e)
@@ -326,17 +335,17 @@ func (t *tx) lock(enabled bool) string {
 func (t *tx) seal(kind string, value any) ([]byte, error) {
 	data, err := encodePayload(kind, value)
 	if err != nil {
-		return nil, domain.ErrUnavailable
+		return nil, diagnostic.Wrap(errors.Join(domain.ErrUnavailable, err), "storage", "encode")
 	}
 	return t.store.vault.Seal(t.app+":"+kind, data)
 }
 func (t *tx) open(kind string, b []byte, v any) error {
 	data, err := t.store.vault.Open(t.app+":"+kind, b)
 	if err != nil {
-		return domain.ErrUnavailable
+		return diagnostic.Wrap(errors.Join(domain.ErrUnavailable, err), "storage", "decode")
 	}
 	if err = decodePayload(kind, data, v); err != nil {
-		return domain.ErrUnavailable
+		return diagnostic.Wrap(errors.Join(domain.ErrUnavailable, err), "storage", "decode")
 	}
 	return nil
 }

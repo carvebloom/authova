@@ -11451,21 +11451,26 @@ func (m *OperatorMutation) ResetEdge(name string) error {
 // OutboxMessageMutation represents an operation that mutates the OutboxMessage nodes in the graph.
 type OutboxMessageMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *string
-	app_id          *string
-	available_at    *int64
-	addavailable_at *int64
-	attempts        *int
-	addattempts     *int
-	completed       *int16
-	addcompleted    *int16
-	payload         *[]byte
-	clearedFields   map[string]struct{}
-	done            bool
-	oldValue        func(context.Context) (*OutboxMessage, error)
-	predicates      []predicate.OutboxMessage
+	op                 Op
+	typ                string
+	id                 *string
+	delivery_state     *string
+	failure_phase      *string
+	failure_code       *string
+	outcome_unknown    *int16
+	addoutcome_unknown *int16
+	app_id             *string
+	available_at       *int64
+	addavailable_at    *int64
+	attempts           *int
+	addattempts        *int
+	completed          *int16
+	addcompleted       *int16
+	payload            *[]byte
+	clearedFields      map[string]struct{}
+	done               bool
+	oldValue           func(context.Context) (*OutboxMessage, error)
+	predicates         []predicate.OutboxMessage
 }
 
 var _ ent.Mutation = (*OutboxMessageMutation)(nil)
@@ -11570,6 +11575,170 @@ func (m *OutboxMessageMutation) IDs(ctx context.Context) ([]string, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetDeliveryState sets the "delivery_state" field.
+func (m *OutboxMessageMutation) SetDeliveryState(s string) {
+	m.delivery_state = &s
+}
+
+// DeliveryState returns the value of the "delivery_state" field in the mutation.
+func (m *OutboxMessageMutation) DeliveryState() (r string, exists bool) {
+	v := m.delivery_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDeliveryState returns the old "delivery_state" field's value of the OutboxMessage entity.
+// If the OutboxMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OutboxMessageMutation) OldDeliveryState(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDeliveryState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDeliveryState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDeliveryState: %w", err)
+	}
+	return oldValue.DeliveryState, nil
+}
+
+// ResetDeliveryState resets all changes to the "delivery_state" field.
+func (m *OutboxMessageMutation) ResetDeliveryState() {
+	m.delivery_state = nil
+}
+
+// SetFailurePhase sets the "failure_phase" field.
+func (m *OutboxMessageMutation) SetFailurePhase(s string) {
+	m.failure_phase = &s
+}
+
+// FailurePhase returns the value of the "failure_phase" field in the mutation.
+func (m *OutboxMessageMutation) FailurePhase() (r string, exists bool) {
+	v := m.failure_phase
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFailurePhase returns the old "failure_phase" field's value of the OutboxMessage entity.
+// If the OutboxMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OutboxMessageMutation) OldFailurePhase(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFailurePhase is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFailurePhase requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFailurePhase: %w", err)
+	}
+	return oldValue.FailurePhase, nil
+}
+
+// ResetFailurePhase resets all changes to the "failure_phase" field.
+func (m *OutboxMessageMutation) ResetFailurePhase() {
+	m.failure_phase = nil
+}
+
+// SetFailureCode sets the "failure_code" field.
+func (m *OutboxMessageMutation) SetFailureCode(s string) {
+	m.failure_code = &s
+}
+
+// FailureCode returns the value of the "failure_code" field in the mutation.
+func (m *OutboxMessageMutation) FailureCode() (r string, exists bool) {
+	v := m.failure_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFailureCode returns the old "failure_code" field's value of the OutboxMessage entity.
+// If the OutboxMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OutboxMessageMutation) OldFailureCode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFailureCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFailureCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFailureCode: %w", err)
+	}
+	return oldValue.FailureCode, nil
+}
+
+// ResetFailureCode resets all changes to the "failure_code" field.
+func (m *OutboxMessageMutation) ResetFailureCode() {
+	m.failure_code = nil
+}
+
+// SetOutcomeUnknown sets the "outcome_unknown" field.
+func (m *OutboxMessageMutation) SetOutcomeUnknown(i int16) {
+	m.outcome_unknown = &i
+	m.addoutcome_unknown = nil
+}
+
+// OutcomeUnknown returns the value of the "outcome_unknown" field in the mutation.
+func (m *OutboxMessageMutation) OutcomeUnknown() (r int16, exists bool) {
+	v := m.outcome_unknown
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOutcomeUnknown returns the old "outcome_unknown" field's value of the OutboxMessage entity.
+// If the OutboxMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OutboxMessageMutation) OldOutcomeUnknown(ctx context.Context) (v int16, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOutcomeUnknown is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOutcomeUnknown requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOutcomeUnknown: %w", err)
+	}
+	return oldValue.OutcomeUnknown, nil
+}
+
+// AddOutcomeUnknown adds i to the "outcome_unknown" field.
+func (m *OutboxMessageMutation) AddOutcomeUnknown(i int16) {
+	if m.addoutcome_unknown != nil {
+		*m.addoutcome_unknown += i
+	} else {
+		m.addoutcome_unknown = &i
+	}
+}
+
+// AddedOutcomeUnknown returns the value that was added to the "outcome_unknown" field in this mutation.
+func (m *OutboxMessageMutation) AddedOutcomeUnknown() (r int16, exists bool) {
+	v := m.addoutcome_unknown
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetOutcomeUnknown resets all changes to the "outcome_unknown" field.
+func (m *OutboxMessageMutation) ResetOutcomeUnknown() {
+	m.outcome_unknown = nil
+	m.addoutcome_unknown = nil
 }
 
 // SetAppID sets the "app_id" field.
@@ -11846,7 +12015,19 @@ func (m *OutboxMessageMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *OutboxMessageMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 9)
+	if m.delivery_state != nil {
+		fields = append(fields, outboxmessage.FieldDeliveryState)
+	}
+	if m.failure_phase != nil {
+		fields = append(fields, outboxmessage.FieldFailurePhase)
+	}
+	if m.failure_code != nil {
+		fields = append(fields, outboxmessage.FieldFailureCode)
+	}
+	if m.outcome_unknown != nil {
+		fields = append(fields, outboxmessage.FieldOutcomeUnknown)
+	}
 	if m.app_id != nil {
 		fields = append(fields, outboxmessage.FieldAppID)
 	}
@@ -11870,6 +12051,14 @@ func (m *OutboxMessageMutation) Fields() []string {
 // schema.
 func (m *OutboxMessageMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case outboxmessage.FieldDeliveryState:
+		return m.DeliveryState()
+	case outboxmessage.FieldFailurePhase:
+		return m.FailurePhase()
+	case outboxmessage.FieldFailureCode:
+		return m.FailureCode()
+	case outboxmessage.FieldOutcomeUnknown:
+		return m.OutcomeUnknown()
 	case outboxmessage.FieldAppID:
 		return m.AppID()
 	case outboxmessage.FieldAvailableAt:
@@ -11889,6 +12078,14 @@ func (m *OutboxMessageMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *OutboxMessageMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case outboxmessage.FieldDeliveryState:
+		return m.OldDeliveryState(ctx)
+	case outboxmessage.FieldFailurePhase:
+		return m.OldFailurePhase(ctx)
+	case outboxmessage.FieldFailureCode:
+		return m.OldFailureCode(ctx)
+	case outboxmessage.FieldOutcomeUnknown:
+		return m.OldOutcomeUnknown(ctx)
 	case outboxmessage.FieldAppID:
 		return m.OldAppID(ctx)
 	case outboxmessage.FieldAvailableAt:
@@ -11908,6 +12105,34 @@ func (m *OutboxMessageMutation) OldField(ctx context.Context, name string) (ent.
 // type.
 func (m *OutboxMessageMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case outboxmessage.FieldDeliveryState:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDeliveryState(v)
+		return nil
+	case outboxmessage.FieldFailurePhase:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFailurePhase(v)
+		return nil
+	case outboxmessage.FieldFailureCode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFailureCode(v)
+		return nil
+	case outboxmessage.FieldOutcomeUnknown:
+		v, ok := value.(int16)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOutcomeUnknown(v)
+		return nil
 	case outboxmessage.FieldAppID:
 		v, ok := value.(string)
 		if !ok {
@@ -11951,6 +12176,9 @@ func (m *OutboxMessageMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *OutboxMessageMutation) AddedFields() []string {
 	var fields []string
+	if m.addoutcome_unknown != nil {
+		fields = append(fields, outboxmessage.FieldOutcomeUnknown)
+	}
 	if m.addavailable_at != nil {
 		fields = append(fields, outboxmessage.FieldAvailableAt)
 	}
@@ -11968,6 +12196,8 @@ func (m *OutboxMessageMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *OutboxMessageMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case outboxmessage.FieldOutcomeUnknown:
+		return m.AddedOutcomeUnknown()
 	case outboxmessage.FieldAvailableAt:
 		return m.AddedAvailableAt()
 	case outboxmessage.FieldAttempts:
@@ -11983,6 +12213,13 @@ func (m *OutboxMessageMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *OutboxMessageMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case outboxmessage.FieldOutcomeUnknown:
+		v, ok := value.(int16)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOutcomeUnknown(v)
+		return nil
 	case outboxmessage.FieldAvailableAt:
 		v, ok := value.(int64)
 		if !ok {
@@ -12031,6 +12268,18 @@ func (m *OutboxMessageMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *OutboxMessageMutation) ResetField(name string) error {
 	switch name {
+	case outboxmessage.FieldDeliveryState:
+		m.ResetDeliveryState()
+		return nil
+	case outboxmessage.FieldFailurePhase:
+		m.ResetFailurePhase()
+		return nil
+	case outboxmessage.FieldFailureCode:
+		m.ResetFailureCode()
+		return nil
+	case outboxmessage.FieldOutcomeUnknown:
+		m.ResetOutcomeUnknown()
+		return nil
 	case outboxmessage.FieldAppID:
 		m.ResetAppID()
 		return nil

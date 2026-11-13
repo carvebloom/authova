@@ -4,9 +4,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
+	dbdriver "database/sql/driver"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/carvebloom/authova/internal/diagnostic"
 	migrationcatalog "github.com/carvebloom/authova/internal/migrations"
 	"time"
 )
@@ -14,7 +16,7 @@ import (
 var schemaVersion = migrationcatalog.LatestVersion()
 
 // Migrate uses a dedicated deployment credential. Runtime startup never migrates.
-func (s *Store) Migrate(ctx context.Context) error {
+func (s *Store) Migrate(ctx context.Context) (result error) {
 	if err := migrationcatalog.Validate(s.dialect); err != nil {
 		return err
 	}
@@ -27,13 +29,23 @@ func (s *Store) Migrate(ctx context.Context) error {
 		if _, e = c.ExecContext(ctx, "SELECT pg_advisory_lock(193813751)"); e != nil {
 			return e
 		}
-		defer releaseMigrationLock(c, "SELECT pg_advisory_unlock(193813751)")
+		defer func() {
+			if e := releaseMigrationLock(c, "SELECT pg_advisory_unlock(193813751)"); e != nil {
+				result = diagnostic.Combine(result, e, result == nil)
+				diagnostic.Log(ctx, "storage", "cleanup", result)
+			}
+		}()
 	} else {
 		var ok int
 		if e = c.QueryRowContext(ctx, "SELECT GET_LOCK('authova_migrate',10)").Scan(&ok); e != nil || ok != 1 {
 			return errors.New("cannot acquire migration lock")
 		}
-		defer releaseMigrationLock(c, "SELECT RELEASE_LOCK('authova_migrate')")
+		defer func() {
+			if e := releaseMigrationLock(c, "SELECT RELEASE_LOCK('authova_migrate')"); e != nil {
+				result = diagnostic.Combine(result, e, result == nil)
+				diagnostic.Log(ctx, "storage", "cleanup", result)
+			}
+		}()
 	}
 	if e = s.checkMigrationNamespace(ctx, c); e != nil {
 		return e
@@ -114,10 +126,16 @@ func (s *Store) Migrate(ctx context.Context) error {
 	return nil
 }
 
-func releaseMigrationLock(conn *sql.Conn, statement string) {
+func releaseMigrationLock(conn *sql.Conn, statement string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	_, _ = conn.ExecContext(ctx, statement) // A failed/unreachable connection drops its lock on close.
+	if _, e := conn.ExecContext(ctx, statement); e != nil {
+		// sql.Conn.Close returns a healthy connection to the pool; force physical
+		// disposal on unlock failure so an advisory lock cannot survive reuse.
+		_ = conn.Raw(func(any) error { return dbdriver.ErrBadConn })
+		return diagnostic.Wrap(e, "storage", "cleanup")
+	}
+	return nil
 }
 
 // The unpublished baseline is only initialized in an empty application schema.

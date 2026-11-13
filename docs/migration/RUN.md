@@ -1,6 +1,8 @@
+> This describes the preserved historical PostgreSQL migration instance. For new server deployments use [MySQL-first local setup](../local-test.md). Do not run these historical commands against old data as an engine-switch procedure.
+
 # Isolated local run
 
-Required: Go 1.27.3, Docker, Docker Compose, Node/npm. The optional `scripts/migration/go.sh` wrapper uses this machine's cached matching Go toolchain; portable environments can use normal Go 1.27.3 directly.
+Required: Go 1.27.4, Docker, Docker Compose, Node/npm. The optional `scripts/migration/go.sh` wrapper uses this machine's cached matching Go toolchain; portable environments can use normal Go 1.27.4 directly.
 
 From the repository root:
 

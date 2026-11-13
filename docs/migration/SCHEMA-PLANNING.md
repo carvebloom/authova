@@ -36,7 +36,7 @@ not independently maintained alternative ORM repositories.
 
 ## Generate and verify a review
 
-Build with Go 1.27.3 and `make schema-plan`. Load the isolated test database DSN
+Build with Go 1.27.4 and `make schema-plan`. Load the isolated test database DSN
 into `AUTHOVA_PLAN_DATABASE_URL` using a private environment/secret mechanism.
 The command takes an environment variable name, never a DSN command argument.
 Use a migration owner or a dedicated schema-audit account. It always starts a

@@ -1,6 +1,6 @@
 module github.com/carvebloom/authova
 
-go 1.27.3
+go 1.27.4
 
 require (
 	ariga.io/atlas v0.36.2-0.20250730182955-2c6300d0a3e1

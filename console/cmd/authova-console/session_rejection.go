@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"log/slog"
+	"github.com/carvebloom/authova/console/internal/diagnostic"
 
 	"github.com/valkey-io/valkey-go"
 )
@@ -15,7 +15,7 @@ import (
 func (b *bff) invalidateRejectedSession(ctx context.Context, id string, rejected session) (err error) {
 	defer func() {
 		if err != nil {
-			slog.Warn("console rejected-session cleanup unavailable")
+			diagnostic.Log(ctx, "console", "cleanup", err)
 		}
 	}()
 	key := "authova:console:" + id

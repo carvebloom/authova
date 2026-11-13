@@ -9,6 +9,6 @@
   },
   "sha256": {
     "management.yaml": "92957f878d1b581ac1d595f58d12c6017fa98d148fd5b2fa2a1d2e2c7522b40e",
-    "sdk-client.go.txt": "1cc8406fd1f2c7332c837df0fc212b9687f1a41be9d7cb7dd70adf6d43d5a63b"
+    "sdk-client.go.txt": "c4628a773e02983fd133229173c33bf91520b41327e4e9aa12f5231c1bdb26a8"
   }
 }

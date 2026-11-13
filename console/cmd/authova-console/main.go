@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"github.com/carvebloom/authova/console/internal/diagnostic"
 	"io"
 	"io/fs"
 	"log/slog"
@@ -90,17 +91,17 @@ func (b *bff) load(r *http.Request) (session, string, error) {
 		if valkey.IsValkeyNil(e) {
 			return s, c.Value, errSessionMissing
 		}
-		return s, c.Value, e
+		return s, c.Value, diagnostic.Wrap(e, "console", "decode")
 	}
 	data, e := b.crypt(raw, false)
 	if e != nil {
-		return s, c.Value, e
+		return s, c.Value, diagnostic.Wrap(e, "console", "decode")
 	}
 	e = json.Unmarshal(data, &s)
 	if s.Expires.Before(time.Now()) {
 		return s, c.Value, errSessionMissing
 	}
-	return s, c.Value, e
+	return s, c.Value, diagnostic.Wrap(e, "console", "decode")
 }
 func (b *bff) cookie(w http.ResponseWriter, id string, maxAge int) {
 	http.SetCookie(w, &http.Cookie{Name: "av_console", Value: id, Path: "/", HttpOnly: true, Secure: !b.development, SameSite: http.SameSiteLaxMode, MaxAge: maxAge})
@@ -116,12 +117,23 @@ func problem(w http.ResponseWriter, status int, code string) {
 	json.NewEncoder(w).Encode(sdk.Problem{Type: "urn:authova:problem:" + code, Status: status, Title: http.StatusText(status), Code: code, RequestID: w.Header().Get("X-Request-ID")})
 }
 func (b *bff) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if v := recover(); v != nil {
+			if v == http.ErrAbortHandler {
+				panic(http.ErrAbortHandler)
+			}
+			diagnostic.Panic(r.Context(), "console", v)
+			panic(http.ErrAbortHandler)
+		}
+	}()
 	concurrency := b.inflight.Add(1)
 	defer b.inflight.Add(-1)
 	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 	r = r.WithContext(b.upstreamContext(ctx))
 	b.securityHeaders(w)
+	r = r.WithContext(diagnostic.WithRequest(r.Context(), w.Header().Get("X-Request-ID")))
+
 	r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
 	maximum := b.maxInflight
 	if maximum <= 0 {
@@ -189,8 +201,15 @@ func (b *bff) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if e != nil {
 			var p *sdk.Problem
 			if errors.As(e, &p) {
+				if p.Status >= 500 {
+					diagnostic.Log(diagnostic.WithUpstream(r.Context(), p.RequestID), "console", "upstream", diagnostic.Wrap(e, "console", "upstream"))
+				}
+				if p.RequestID != "" {
+					w.Header().Set("X-Request-ID", diagnostic.ID(p.RequestID))
+				}
 				response(w, p.Status, p)
 			} else {
+				diagnostic.Log(r.Context(), "console", "upstream", e)
 				problem(w, 503, "dependency_unavailable")
 			}
 			return
@@ -199,11 +218,13 @@ func (b *bff) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		raw, _ := json.Marshal(s)
 		encrypted, e := b.crypt(raw, true)
 		if e != nil {
+			diagnostic.Log(r.Context(), "console", "upstream", e)
 			problem(w, 503, "dependency_unavailable")
 			return
 		}
 		id := random()
 		if e = b.cache.Do(r.Context(), b.cache.B().Set().Key("authova:console:"+id).Value(string(encrypted)).ExSeconds(int64(time.Until(s.Expires).Seconds())).Build()).Error(); e != nil {
+			diagnostic.Log(r.Context(), "console", "query", diagnostic.Wrap(e, "console", "query"))
 			problem(w, 503, "dependency_unavailable")
 			return
 		}
@@ -216,6 +237,7 @@ func (b *bff) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(e, errSessionMissing) {
 			problem(w, 401, "authentication_required")
 		} else {
+			diagnostic.Log(r.Context(), "console", "query", e)
 			problem(w, 503, "dependency_unavailable")
 		}
 		return
@@ -227,6 +249,7 @@ func (b *bff) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(e, errSessionMissing) {
 			problem(w, 401, "authentication_required")
 		} else {
+			diagnostic.Log(r.Context(), "console", "upstream", e)
 			problem(w, 503, "authentication_refresh_failed")
 		}
 		return
@@ -238,6 +261,7 @@ func (b *bff) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/bff/me" && r.Method == "GET" {
 		resp, e := b.api.Request(r.Context(), "GET", "/api/v1/platform/me", s.Token, "", nil)
 		if e != nil {
+			diagnostic.Log(r.Context(), "console", "upstream", e)
 			problem(w, 503, "dependency_unavailable")
 			return
 		}
@@ -247,15 +271,22 @@ func (b *bff) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				// reload cannot restore a session that requires fresh authentication.
 				_ = b.invalidateRejectedSession(r.Context(), id, s)
 			}
-			w.Header().Set("Content-Type", resp.ContentType)
+			w.Header().Set("Content-Type", "application/problem+json")
+			if resp.RequestID != "" {
+				w.Header().Set("X-Request-ID", diagnostic.ID(resp.RequestID))
+			}
+			if resp.Status >= 500 {
+				diagnostic.Log(diagnostic.WithUpstream(r.Context(), resp.RequestID), "console", "upstream", diagnostic.Wrap(errors.New("upstream unavailable"), "console", "upstream"))
+			}
 			w.WriteHeader(resp.Status)
-			w.Write(resp.Body)
+			_ = json.NewEncoder(w).Encode(sdk.ProjectProblem(resp.Status, resp.Body, resp.RequestID))
 			return
 		}
 		var current struct {
 			Operator sdk.Operator `json:"operator"`
 		}
-		if json.Unmarshal(resp.Body, &current) != nil {
+		if decodeErr := json.Unmarshal(resp.Body, &current); decodeErr != nil {
+			diagnostic.Log(diagnostic.WithUpstream(r.Context(), resp.RequestID), "console", "decode", diagnostic.Wrap(decodeErr, "console", "decode"))
 			problem(w, 503, "invalid_response")
 			return
 		}
@@ -271,10 +302,12 @@ func (b *bff) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			resp, e = b.api.Request(r.Context(), "DELETE", "/api/v1/platform/sessions", s.Token, "", nil)
 		}
 		if e != nil || resp.Status != 204 {
+			diagnostic.Log(diagnostic.WithUpstream(r.Context(), resp.RequestID), "console", "upstream", e)
 			problem(w, 503, "logout_failed")
 			return
 		}
 		if e = b.cache.Do(r.Context(), b.cache.B().Del().Key("authova:console:"+id).Build()).Error(); e != nil {
+			diagnostic.Log(r.Context(), "console", "cleanup", diagnostic.Combine(nil, e, true))
 			problem(w, 503, "logout_failed")
 			return
 		}
@@ -285,8 +318,15 @@ func (b *bff) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	b.proxyManagement(w, r, s, id)
 }
 func main() {
+	defer func() {
+		if v := recover(); v != nil {
+			diagnostic.Panic(context.Background(), "console", v)
+			os.Exit(1)
+		}
+	}()
+	slog.SetDefault(slog.New(diagnostic.Handler{Next: slog.NewJSONHandler(os.Stderr, nil)}))
 	if e := run(); e != nil {
-		slog.Error("console stopped", "error", e)
+		diagnostic.Log(context.Background(), "console", "startup", e)
 		os.Exit(1)
 	}
 }
@@ -318,7 +358,7 @@ func run() error {
 	}
 	cache, e := valkey.NewClient(options)
 	if e != nil {
-		return errors.New("valkey connection failed; check transport, trust and ACL settings")
+		return diagnostic.Wrap(e, "console", "connect")
 	}
 	defer cache.Close()
 	assets := os.Getenv("AUTHOVA_CONSOLE_ASSETS")
@@ -326,11 +366,11 @@ func run() error {
 		assets = "console/web/dist"
 	}
 	if _, e = os.Stat(filepath.Join(assets, "index.html")); e != nil {
-		return errors.New("build Console frontend first")
+		return diagnostic.Wrap(e, "console", "startup")
 	}
 	assetRoot, e := os.OpenRoot(assets)
 	if e != nil {
-		return errors.New("cannot open static asset root")
+		return diagnostic.Wrap(e, "console", "startup")
 	}
 	defer assetRoot.Close()
 	listen := os.Getenv("AUTHOVA_CONSOLE_LISTEN")

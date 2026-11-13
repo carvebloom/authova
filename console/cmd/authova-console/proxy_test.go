@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	sdk "github.com/carvebloom/authova/console/internal/coreapi"
 )
@@ -137,5 +138,38 @@ func TestProxyBoundsRoutesAndPreservesAuthority(t *testing.T) {
 	b.proxyManagement(w, r, session{Token: "fixture-token"}, "unused-fixture-id")
 	if w.Code != 409 || w.Header().Get("X-Request-ID") != "core-request-id" || !strings.Contains(w.Body.String(), `"code":"conflict"`) || calls.Load() != 1 {
 		t.Fatal("Core rejection was rewritten or retried")
+	}
+}
+
+func TestProxyNeverTrustsUpstreamErrorMessages(t *testing.T) {
+	core := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.Header().Set("X-Request-ID", "safe-upstream-id")
+		w.WriteHeader(409)
+		w.Write([]byte(`{"code":"conflict","title":"CANARY-PASSWORD","detail":"CANARY-SQL","metadata":{"token":"CANARY"}}`))
+	}))
+	defer core.Close()
+	api, _ := sdk.New(core.URL)
+	b := &bff{api: api}
+	w := httptest.NewRecorder()
+	b.proxyManagement(w, httptest.NewRequest("PATCH", "https://console.example/bff/apps/app", strings.NewReader(`{}`)), session{}, "")
+	if w.Code != 409 || strings.Contains(w.Body.String(), "CANARY") || !strings.Contains(w.Body.String(), "safe-upstream-id") {
+		t.Fatal("untrusted error body or lost correlation", w.Body.String())
+	}
+}
+
+func TestMeErrorsUseSameSafeProjectionAndHeaderCorrelation(t *testing.T) {
+	b, _ := fixtureBFF(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.Header().Set("X-Request-ID", "upstream-me-123")
+		w.WriteHeader(503)
+		w.Write([]byte(`{"code":"dependency_unavailable","title":"CANARY","detail":"CANARY","metadata":{"token":"CANARY"}}`))
+	}))
+	_, r := fixtureSession(t, b, session{Token: "fixture", Expires: time.Now().Add(time.Hour)})
+	r.URL.Path = "/bff/me"
+	w := httptest.NewRecorder()
+	b.ServeHTTP(w, r)
+	if w.Code != 503 || strings.Contains(w.Body.String(), "CANARY") || !strings.Contains(w.Body.String(), "upstream-me-123") || w.Result().Header.Get("X-Request-ID") != "upstream-me-123" {
+		t.Fatal("me route bypassed projection/correlation")
 	}
 }

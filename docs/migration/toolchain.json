@@ -1,7 +1,7 @@
 {
   "reference": "local kitarbor go.mod, Makefile, binary go version -m and pnpm-lock.yaml",
   "go_reference": "1.27.1",
-  "go_target": "1.27.3",
+  "go_target": "1.27.4",
   "kratos_runtime": "v3.0.0",
   "ent": "v0.14.6",
   "atlas_library": "v0.36.2-0.20250730182955-2c6300d0a3e1",
@@ -16,5 +16,6 @@
   "notes": "Pinned reference tools verified. Proto owns both public schemas; query generated bindings active. OSS Atlas executor uses same deployment-lock connection, preserving legacy checksum/dirty fence; no login or commercial features.",
   "active_openapi_projector": "cmd/proto-openapi over descriptor sets and Authova options",
   "active_go_client_generator": "oapi-codegen v2.8.0",
-  "active_typescript_generator": "openapi-typescript 7.10.1"
+  "active_typescript_generator": "openapi-typescript 7.10.1",
+  "go_security_advisory": "GO-2026-6859"
 }

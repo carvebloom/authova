@@ -17,6 +17,7 @@ for dialect in ['postgres','mysql']:
 def run(label,command,env=None,**kw):
  with (out/(label+'.log')).open('wb') as log:return subprocess.run(command,env=env,cwd=kw.pop('cwd',root),stdout=log,stderr=subprocess.STDOUT,check=True,**kw)
 run('future-checksum',[str(root/'scripts/migration/go.sh'),'run','./cmd/migration-hash'],cwd=copy)
+current=out/'authova-v1';run('current-build',[str(root/'scripts/migration/go.sh'),'build','-trimpath','-o',str(current),'./cmd/authova'])
 future=out/'authova-v2';run('future-build',[str(root/'scripts/migration/go.sh'),'build','-trimpath','-o',str(future),'./cmd/authova'],cwd=copy)
 compose=['docker-compose','-p','authova-migration','-f',str(root/'deploy/migration/compose.yaml'),'exec','-T']
 pg=compose+['-e','PGPASSWORD=authova-local-database-only','postgres','psql','-U','authova_migrator','-v','ON_ERROR_STOP=1','-At']
@@ -42,7 +43,7 @@ for dialect in ['postgres','mysql']:
    owner_sql(dialect,f"GRANT SELECT,INSERT,UPDATE,DELETE ON {name}.* TO 'authova_runtime'@'%'")
    owner=f'root:authova-local-database-only@tcp(127.0.0.1:33306)/{name}?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin';runtime=f'authova_runtime:authova-local-runtime-only@tcp(127.0.0.1:33306)/{name}?parseTime=true&charset=utf8mb4&collation=utf8mb4_bin'
   env.update(AUTHOVA_DATABASE_URL=runtime,AUTHOVA_MIGRATION_DATABASE_URL=owner)
-  run(dialect+'-v1-migrate',[str(root/'bin/authova'),'migrate'],env)
+  run(dialect+'-v1-migrate',[str(current),'migrate'],env)
   sql(dialect,name,"INSERT INTO apps(id,app_key,slug,name,status,config_version,created_at,issuer) VALUES('00000000-0000-0000-0000-000000000001','upgrade-probe','upgrade-probe','Preserved App','active',1,0,'https://upgrade.example/a/upgrade-probe')")
   facts_query='SELECT id,app_key,slug,name,status,config_version,created_at,issuer,key_epoch,authentication_policy,resource_limits FROM apps ORDER BY id'
   before=sql(dialect,name,facts_query);version_before=sql(dialect,name,'SELECT version FROM authova_schema WHERE singleton=1');assert version_before=='1'
@@ -50,7 +51,7 @@ for dialect in ['postgres','mysql']:
   after=sql(dialect,name,facts_query);assert before==after,'upgrade changed existing App facts'
   def history():return [int(sql(dialect,name,q)) for q in ['SELECT version FROM authova_schema WHERE singleton=1','SELECT COUNT(*) FROM authova_migration_history','SELECT COUNT(*) FROM authova_atlas_revisions']]
   assert history()==[2,2,2],history()
-  with (out/(dialect+'-older-refusal.log')).open('wb') as log:old=subprocess.run([str(root/'bin/authova'),'migrate'],cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT)
+  with (out/(dialect+'-older-refusal.log')).open('wb') as log:old=subprocess.run([str(current),'migrate'],cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT)
   assert old.returncode!=0 and history()==[2,2,2],'v1 binary changed v2 history'
   # Runtime uses only the DML account; migration credentials are removed.
   runtime_env={k:v for k,v in env.items() if k!='AUTHOVA_MIGRATION_DATABASE_URL'}

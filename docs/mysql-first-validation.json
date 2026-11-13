@@ -1,0 +1,352 @@
+{
+  "date": "2026-11-08",
+  "baseline": "307a499b9ceff5cfd21067e4f72425e0dc3f8dba",
+  "branch": "feat/mysql-first-authova",
+  "policy": {
+    "version": 1,
+    "source": "Workbench/docs/database-policy/mysql-first-v1.md",
+    "sha256": "264cc0ea20661b7c8c56aca4ad6c2ec2b6d3f784b72968f6ae6efb9f545be9a6"
+  },
+  "defaults": {
+    "runtime": "mysql",
+    "server_version": "8.4.11",
+    "postgres": "explicit_compatibility_no_fallback",
+    "SQLite": "not_introduced_or_modified"
+  },
+  "stack": {
+    "project": "authova-mysql-dcd5854bf8",
+    "gates": [
+      {
+        "gate": "init",
+        "exit_code": 0
+      },
+      {
+        "gate": "compose-config",
+        "exit_code": 0
+      },
+      {
+        "gate": "core-image",
+        "exit_code": 0
+      },
+      {
+        "gate": "console-image",
+        "exit_code": 0
+      },
+      {
+        "gate": "start",
+        "exit_code": 0
+      },
+      {
+        "gate": "ready",
+        "exit_code": 0
+      },
+      {
+        "gate": "smoke-restart",
+        "exit_code": 0
+      },
+      {
+        "gate": "init-idempotent",
+        "exit_code": 0
+      },
+      {
+        "gate": "retained-volume-down",
+        "exit_code": 0
+      },
+      {
+        "gate": "retained-volume-up",
+        "exit_code": 0
+      },
+      {
+        "gate": "retained-volume-smoke",
+        "exit_code": 0
+      },
+      {
+        "gate": "cleanup-containers",
+        "exit_code": 0
+      },
+      {
+        "gate": "cleanup-owned-volume",
+        "exit_code": 0
+      },
+      {
+        "gate": "cleanup-owned-volume",
+        "exit_code": 0
+      }
+    ],
+    "image_ids": {
+      "core": "sha256:a731b8979c81feb7c812ff4f0871beb4baa1b12f5a8e026a74015a54346200ec",
+      "console": "sha256:7076784008b5ecd84ad54d414aa254ffc753dcc883fc534cb6928d673db6d4d2"
+    },
+    "evidence": ".migration/mysql-first",
+    "mode": "independent_HTTP_development_with_real_Valkey_mTLS_ACL",
+    "later_image_rebuild": "only_tests_docs_CI_and_memory_caps_changed_after_app_image_build; application_sources_unchanged"
+  },
+  "database_gates": [
+    {
+      "engine": "mysql",
+      "project": "authova-errors-956398e183",
+      "gates": [
+        {
+          "gate": "containers-up",
+          "exit_code": 0
+        },
+        {
+          "gate": "build-current",
+          "exit_code": 0
+        },
+        {
+          "gate": "v1-init-mysql",
+          "exit_code": 0
+        },
+        {
+          "gate": "v1-rerun-with-row-mysql",
+          "exit_code": 0
+        },
+        {
+          "gate": "repeat-migrate-mysql",
+          "exit_code": 0
+        },
+        {
+          "gate": "dual-db-race",
+          "exit_code": 0
+        },
+        {
+          "gate": "contract-combination",
+          "exit_code": 0
+        },
+        {
+          "gate": "containers-down",
+          "exit_code": 0
+        },
+        {
+          "gate": "owned-volume-cleanup",
+          "exit_code": 0
+        }
+      ],
+      "test_events": {
+        "skip": 8,
+        "pass": 38
+      },
+      "skips": [
+        {
+          "test": "TestAtlasPlanningCLI",
+          "reason": "requires_simultaneous_both_databases_not_run"
+        },
+        {
+          "test": "TestAtlasPlanning/postgres",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        },
+        {
+          "test": "TestAtlasProposedUpgrade/postgres",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        },
+        {
+          "test": "TestEntPhysicalMapping/postgres",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        },
+        {
+          "test": "TestMaintenanceGates/postgres",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        },
+        {
+          "test": "TestOutboxAppFairness/postgres",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        },
+        {
+          "test": "TestOutboxWorkerAppIsolation/postgres",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        },
+        {
+          "test": "TestDeliveryFailurePersistsAcrossReopen/postgres",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        }
+      ],
+      "race_log_sha256": "1c71989bc15429fbc439cc556b33c86c41787190641a6c77f1a0be01654403c4",
+      "evidence": ".migration/go-errors-v1-mysql-focused"
+    },
+    {
+      "engine": "postgres",
+      "project": "authova-errors-9fdbe32099",
+      "gates": [
+        {
+          "gate": "containers-up",
+          "exit_code": 0
+        },
+        {
+          "gate": "build-current",
+          "exit_code": 0
+        },
+        {
+          "gate": "v1-init-postgres",
+          "exit_code": 0
+        },
+        {
+          "gate": "v1-rerun-with-row-postgres",
+          "exit_code": 0
+        },
+        {
+          "gate": "repeat-migrate-postgres",
+          "exit_code": 0
+        },
+        {
+          "gate": "dual-db-race",
+          "exit_code": 0
+        },
+        {
+          "gate": "contract-combination",
+          "exit_code": 0
+        },
+        {
+          "gate": "containers-down",
+          "exit_code": 0
+        },
+        {
+          "gate": "owned-volume-cleanup",
+          "exit_code": 0
+        }
+      ],
+      "test_events": {
+        "skip": 8,
+        "pass": 37
+      },
+      "skips": [
+        {
+          "test": "TestAtlasPlanningCLI",
+          "reason": "requires_simultaneous_both_databases_not_run"
+        },
+        {
+          "test": "TestAtlasPlanning/mysql",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        },
+        {
+          "test": "TestAtlasProposedUpgrade/mysql",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        },
+        {
+          "test": "TestEntPhysicalMapping/mysql",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        },
+        {
+          "test": "TestMaintenanceGates/mysql",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        },
+        {
+          "test": "TestOutboxAppFairness/mysql",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        },
+        {
+          "test": "TestOutboxWorkerAppIsolation/mysql",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        },
+        {
+          "test": "TestDeliveryFailurePersistsAcrossReopen/mysql",
+          "reason": "other_dialect_explicitly_covered_in_other_stage"
+        }
+      ],
+      "race_log_sha256": "8693324cfdc52c349edfbe085890ca9f55c99b18fe643ecfd66431cc70e5e21e",
+      "evidence": ".migration/go-errors-v1-postgres-focused"
+    }
+  ],
+  "additional_checks": {
+    "config_race": "passed; mysql_default_explicit_postgres_and_reject_mismatch",
+    "python_engine_marker_guard": "passed",
+    "init_existing_keys_env_idempotence": "passed_digest_unchanged",
+    "targeted_race": "config_diagnostic_delivery_transport_passed",
+    "go_vet_all": "passed",
+    "Ent_generation": "207_files_verified",
+    "Proto_GoHTTP_OpenAPI_TS_pinned_Console_SDK_generation": "passed",
+    "both_Compose_config": "passed",
+    "workflow_YAML_parse_and_engine_job_selection": "passed",
+    "migration_checksums_dependencies_frozen_error_standard": "unchanged"
+  },
+  "resources": {
+    "full_stack_single_observation_mib": 617.414,
+    "observation": "docker stats after initial smoke; not a continuous peak",
+    "recovery_peak_sampler": "failed_due_to_container_recreation_between_ps_and_stats; no zero-memory claim",
+    "running_stack_limit_mib": 2432,
+    "one_shot_clients_limit_mib": 128,
+    "budget_mib": 4096,
+    "Go_parallelism": 2,
+    "go-errors-v1-mysql-focused": {
+      "sampling_exit": 0,
+      "memory": [
+        "11.25MiB / 384MiB",
+        "485.8MiB / 1GiB"
+      ]
+    }
+  },
+  "cleanup": {
+    "owned_projects": [
+      {
+        "project": "authova-errors-56d5b82f5d",
+        "remaining_containers": 0,
+        "remaining_volumes": 0
+      },
+      {
+        "project": "authova-errors-66c00fd9a3",
+        "remaining_containers": 0,
+        "remaining_volumes": 0
+      },
+      {
+        "project": "authova-errors-956398e183",
+        "remaining_containers": 0,
+        "remaining_volumes": 0
+      },
+      {
+        "project": "authova-errors-9fdbe32099",
+        "remaining_containers": 0,
+        "remaining_volumes": 0
+      },
+      {
+        "project": "authova-errors-cc46449ec0",
+        "remaining_containers": 0,
+        "remaining_volumes": 0
+      },
+      {
+        "project": "authova-mysql-dcd5854bf8",
+        "remaining_containers": 0,
+        "remaining_volumes": 0
+      }
+    ],
+    "owned_image_tags_removed": [
+      "authova-core:mysql-authova-mysql-dcd5854bf8",
+      "authova-console:mysql-authova-mysql-dcd5854bf8"
+    ],
+    "shared_build_cache": "not_pruned",
+    "unrelated_resources": "not_modified"
+  },
+  "failure_history": [
+    {
+      "phase": "contract_combinations_initial_serial_attempts",
+      "error": "gate_required_both_engines_simultaneously",
+      "resolution": "explicit_selected_dialect; default_both_requirement_retained; missing_selected_DSN_still_fatal",
+      "evidence": [
+        ".migration/mysql-first/mysql-attempt-1",
+        ".migration/mysql-first/postgres-attempt-1"
+      ]
+    },
+    {
+      "phase": "continuous_peak_sampling",
+      "error": "container_recreation_between_ps_and_stats",
+      "resolution": "report_observed_samples_and_hard_limits; no_claim_of_precise_peak"
+    }
+  ],
+  "limitations": [
+    "full_all_package_DB_suite_not_rerun_locally; primary_CI_configured_to_run_it",
+    "TestAtlasPlanningCLI_needs_both_DBs_and_was_skipped_in_serial_local_fixtures",
+    "real_browser_external_vendor_production_HTTPS_and_database_HA_not_run",
+    "MySQL_fixture_uses_local_network_development_DB_connection; production_DSN_recommends_verified_TLS_not_claimed_as_production_TLS_acceptance",
+    "full_UI_unit_suite_not_rerun; OCI_frontend_build_executed",
+    "continuous_resource_peak_unknown_not_zero"
+  ],
+  "CI": {
+    "jobs": [
+      "mysql-primary",
+      "postgres-compatibility"
+    ],
+    "compatibility_depends_on_primary": true,
+    "execution": "query_GitHub_by_delivery_SHA; local_checks_do_not_claim_remote_success"
+  },
+  "existing_instances": "Lab_old_001_checksum_incompatible_and_untouched; no_env_DSN_keys_issuer_App_client_volume_changes",
+  "git": "ordinary_task_branch_push_only; no_force_PR_merge_release_or_deploy"
+}

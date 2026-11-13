@@ -1,10 +1,22 @@
-# Unpublished v1 baseline
+# Database versions: current unpublished v1
+
+User authorization on 2026-11-08 permits consolidating the four delivery diagnostic
+columns into PG/MySQL `001_initial.sql` before first release. Current catalog and
+compiled schema version are **1**, with no product 002. Ent types are unchanged;
+Atlas checksums are regenerated. Next reviewed migration is 002. Frozen Go error
+standard v1.0.1 is unchanged; this is an explicit pre-release migration exception.
+
+Existing Lab v1 databases retain their earlier checksum. Current binaries reject
+that mismatch; no instance was rebuilt, migrated or renumbered. A separately
+reviewed instance/data plan is required before any switch. The temporary v2
+implementation and its upgrade evidence remain in Git c014110 and
+[historical error acceptance](../go-errors-v2-historical.md), not current proof.
 
 The former **v8** meant the source database's eighth schema migration. It was
 not an Authova product release number. Because this repository is unpublished,
 its complete current structure is consolidated into one reviewed initial
 migration per dialect: `internal/migrations/sql/{postgres,mysql}/001_initial.sql`.
-The new compiled database schema version is **1**. The public API was already
+At consolidation the compiled database schema version was **1**. The public API was already
 `/api/v1` and stays there. Product/package build labels and encrypted payload
 format versions are separate version domains and are not renumbered here.
 
@@ -15,8 +27,8 @@ history or its data backfills. Encryption, AAD, legacy gob readers and persisted
 payload formats remain unchanged. The Ent-to-Atlas model has zero diff on fresh
 PostgreSQL and MySQL v1 databases.
 
-After a reviewed future Ent change, `schema-plan` now emits
-`002_<name>.sql`. Later migrations continue 003, 004, etc.; runtime and migrator
+The next reviewed change uses `002_<name>.sql` from `schema-plan`.
+Later migrations continue 003, 004, etc.; runtime and migrator
 both read the same checksum-validated contiguous catalog. There is no hardcoded
 version-eight startup list or special version-two legacy backfill branch.
 
@@ -49,7 +61,7 @@ keys/operators/Apps; prior demonstration users are not silently imported.
 validation/performance reports may mention schema 8; those are preserved as
 historical evidence and are not relabeled as v1 test results. Source manifests
 and historical design documents likewise retain their actual source versions.
-Current instructions and generation candidates use v1/002.
+Current instructions use schema v1, with the next candidate numbered 002.
 
 The bounded old/new benchmark uses two fresh databases, each initialized by its
 own binary. Only newly seeded synthetic product facts are copied by column name;

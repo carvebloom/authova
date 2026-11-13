@@ -378,12 +378,34 @@ func init() {
 	operator.IDValidator = operatorDescID.Validators[0].(func(string) error)
 	outboxmessageFields := schema.OutboxMessage{}.Fields()
 	_ = outboxmessageFields
+	// outboxmessageDescDeliveryState is the schema descriptor for delivery_state field.
+	outboxmessageDescDeliveryState := outboxmessageFields[0].Descriptor()
+	// outboxmessage.DefaultDeliveryState holds the default value on creation for the delivery_state field.
+	outboxmessage.DefaultDeliveryState = outboxmessageDescDeliveryState.Default.(string)
+	// outboxmessage.DeliveryStateValidator is a validator for the "delivery_state" field. It is called by the builders before save.
+	outboxmessage.DeliveryStateValidator = outboxmessageDescDeliveryState.Validators[0].(func(string) error)
+	// outboxmessageDescFailurePhase is the schema descriptor for failure_phase field.
+	outboxmessageDescFailurePhase := outboxmessageFields[1].Descriptor()
+	// outboxmessage.DefaultFailurePhase holds the default value on creation for the failure_phase field.
+	outboxmessage.DefaultFailurePhase = outboxmessageDescFailurePhase.Default.(string)
+	// outboxmessage.FailurePhaseValidator is a validator for the "failure_phase" field. It is called by the builders before save.
+	outboxmessage.FailurePhaseValidator = outboxmessageDescFailurePhase.Validators[0].(func(string) error)
+	// outboxmessageDescFailureCode is the schema descriptor for failure_code field.
+	outboxmessageDescFailureCode := outboxmessageFields[2].Descriptor()
+	// outboxmessage.DefaultFailureCode holds the default value on creation for the failure_code field.
+	outboxmessage.DefaultFailureCode = outboxmessageDescFailureCode.Default.(string)
+	// outboxmessage.FailureCodeValidator is a validator for the "failure_code" field. It is called by the builders before save.
+	outboxmessage.FailureCodeValidator = outboxmessageDescFailureCode.Validators[0].(func(string) error)
+	// outboxmessageDescOutcomeUnknown is the schema descriptor for outcome_unknown field.
+	outboxmessageDescOutcomeUnknown := outboxmessageFields[3].Descriptor()
+	// outboxmessage.DefaultOutcomeUnknown holds the default value on creation for the outcome_unknown field.
+	outboxmessage.DefaultOutcomeUnknown = outboxmessageDescOutcomeUnknown.Default.(int16)
 	// outboxmessageDescAppID is the schema descriptor for app_id field.
-	outboxmessageDescAppID := outboxmessageFields[1].Descriptor()
+	outboxmessageDescAppID := outboxmessageFields[5].Descriptor()
 	// outboxmessage.AppIDValidator is a validator for the "app_id" field. It is called by the builders before save.
 	outboxmessage.AppIDValidator = outboxmessageDescAppID.Validators[0].(func(string) error)
 	// outboxmessageDescID is the schema descriptor for id field.
-	outboxmessageDescID := outboxmessageFields[0].Descriptor()
+	outboxmessageDescID := outboxmessageFields[4].Descriptor()
 	// outboxmessage.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	outboxmessage.IDValidator = outboxmessageDescID.Validators[0].(func(string) error)
 	passkeyFields := schema.Passkey{}.Fields()

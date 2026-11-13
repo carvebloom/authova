@@ -205,3 +205,13 @@ type DeliveryLeaseRequest struct {
 	AppLimit int
 	InFlight map[string]int
 }
+
+// DeliveryFailure is a safe, bounded persisted attempt diagnostic.
+type DeliveryFailure struct {
+	DeliveryState  string
+	Phase, Code    string
+	OutcomeUnknown bool
+}
+type DiagnosticDeliveryQueue interface {
+	FinishMessageWithFailure(context.Context, string, int, int, int64, DeliveryFailure) error
+}

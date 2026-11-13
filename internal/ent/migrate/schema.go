@@ -412,6 +412,10 @@ var (
 	// OutboxColumns holds the columns for the "outbox" table.
 	OutboxColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Size: 36, SchemaType: map[string]string{"mysql": "varchar(36)", "postgres": "character varying(36)"}},
+		{Name: "delivery_state", Type: field.TypeString, Size: 16, Default: "unknown", SchemaType: map[string]string{"mysql": "varchar(16)", "postgres": "character varying(16)"}},
+		{Name: "failure_phase", Type: field.TypeString, Size: 16, Default: "unknown", SchemaType: map[string]string{"mysql": "varchar(16)", "postgres": "character varying(16)"}},
+		{Name: "failure_code", Type: field.TypeString, Size: 32, Default: "unknown", SchemaType: map[string]string{"mysql": "varchar(32)", "postgres": "character varying(32)"}},
+		{Name: "outcome_unknown", Type: field.TypeInt16, Default: 0},
 		{Name: "app_id", Type: field.TypeString, Size: 36, SchemaType: map[string]string{"mysql": "varchar(36)", "postgres": "character varying(36)"}},
 		{Name: "available_at", Type: field.TypeInt64, SchemaType: map[string]string{"mysql": "bigint", "postgres": "bigint"}},
 		{Name: "attempts", Type: field.TypeInt, SchemaType: map[string]string{"mysql": "int", "postgres": "integer"}},
@@ -427,12 +431,12 @@ var (
 			{
 				Name:    "outbox_app_ready",
 				Unique:  false,
-				Columns: []*schema.Column{OutboxColumns[1], OutboxColumns[4], OutboxColumns[2], OutboxColumns[0]},
+				Columns: []*schema.Column{OutboxColumns[5], OutboxColumns[8], OutboxColumns[6], OutboxColumns[0]},
 			},
 			{
 				Name:    "outbox_ready_idx",
 				Unique:  false,
-				Columns: []*schema.Column{OutboxColumns[4], OutboxColumns[2], OutboxColumns[0]},
+				Columns: []*schema.Column{OutboxColumns[8], OutboxColumns[6], OutboxColumns[0]},
 			},
 		},
 	}

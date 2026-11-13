@@ -1,0 +1,168 @@
+{
+  "report_version": 2,
+  "date": "2026-11-08",
+  "baseline_commit": "c0141109c4938fd53409dde0f5d3a1b968de7fe6",
+  "branch": "fix/go-errors-v1-authova",
+  "standard": {
+    "version": "1.0.1",
+    "sha256": "10e29e102ee1e7c7fc9d61ffad0e1b9458990f765be3c49491fc7a46399e6d05",
+    "frozen_source_unchanged": true
+  },
+  "user_authorized_exception": "unpublished_first_release_consolidation_of_four_delivery_diagnostic_columns_into_001",
+  "current_migrations": {
+    "postgres": {
+      "current_version": 1,
+      "next_version": 2,
+      "001_sha256": "eb08b1598d2a61175a41249342f3ed57cb20717a6feb09c3a7332a97e453fc3a",
+      "atlas_sum_sha256": "16c107ca16b6d236f380c9fad4d4cd73f7063de129da6768faca5bf6045e16f4"
+    },
+    "mysql": {
+      "current_version": 1,
+      "next_version": 2,
+      "001_sha256": "92fffe90e6cbcfe93dd11b93beaa2d4c60289e25f9270318d1c38917dc0348c3",
+      "atlas_sum_sha256": "5bb550526f994e72d0cd7728d8728b3decb5c648b577dbbcc3b6dd53f5e9b7ea"
+    }
+  },
+  "checks": [
+    {
+      "name": "fresh_v1_dual_database_focused_race",
+      "status": "passed",
+      "test_events": {
+        "pass": 55
+      },
+      "skips": [],
+      "project": "authova-errors-65d2422e10",
+      "images": [
+        "postgres:17-alpine",
+        "mysql:8.4",
+        "valkey/valkey:9.1-alpine"
+      ],
+      "gates": [
+        {
+          "gate": "containers-up",
+          "exit_code": 0
+        },
+        {
+          "gate": "build-current",
+          "exit_code": 0
+        },
+        {
+          "gate": "v1-init-postgres",
+          "exit_code": 0
+        },
+        {
+          "gate": "v1-rerun-with-row-postgres",
+          "exit_code": 0
+        },
+        {
+          "gate": "repeat-migrate-postgres",
+          "exit_code": 0
+        },
+        {
+          "gate": "v1-init-mysql",
+          "exit_code": 0
+        },
+        {
+          "gate": "v1-rerun-with-row-mysql",
+          "exit_code": 0
+        },
+        {
+          "gate": "repeat-migrate-mysql",
+          "exit_code": 0
+        },
+        {
+          "gate": "dual-db-race",
+          "exit_code": 0
+        },
+        {
+          "gate": "contract-combination",
+          "exit_code": 0
+        },
+        {
+          "gate": "containers-down",
+          "exit_code": 0
+        },
+        {
+          "gate": "owned-volume-cleanup",
+          "exit_code": 0
+        },
+        {
+          "gate": "owned-volume-cleanup",
+          "exit_code": 0
+        }
+      ],
+      "evidence": ".migration/go-errors-v1-focused",
+      "race_log_sha256": "d5389eff0e8f8fb479d3cb69e88c6f47b12ad1821d2f330fd9cf966eb751e65d",
+      "result_sha256": "91a0816755e203220870e58e3f456d9625f0ae666ad7b9ff0bc680873f742455"
+    },
+    {
+      "name": "targeted_race_vet_generation_boundaries",
+      "status": "passed",
+      "gates": [
+        {
+          "gate": "targeted-race",
+          "exit_code": 0
+        },
+        {
+          "gate": "vet",
+          "exit_code": 0
+        },
+        {
+          "gate": "ent-check",
+          "exit_code": 0
+        },
+        {
+          "gate": "api-check",
+          "exit_code": 0
+        },
+        {
+          "gate": "boundaries",
+          "exit_code": 0
+        }
+      ],
+      "evidence": ".migration/go-errors-v1-checks",
+      "result_sha256": "9351512aa03fc57059eae1d7716213955c58775642574b42775d3178a61591dc",
+      "DSN_absent_skips_not_counted_as_database_acceptance": true
+    }
+  ],
+  "evidence_meaning": {
+    "schema": "current_binary_empty_database_initialization_version_1_then_repeated_migrate_with_synthetic_row_and_default_classification",
+    "mapping": "Ent_and_Atlas_zero_diff_both_dialects",
+    "persistence": "new_Store_and_connection_reopen_not_physical_restart",
+    "version_catalog": "single_001_and_dynamic_next_002",
+    "upgrade_rehearsal_tool": "build_current_binary_in_private_evidence_directory; Python_compile_only_not_executed_against_fixed_migration_services"
+  },
+  "historical_only": {
+    "source_commit": "c0141109c4938fd53409dde0f5d3a1b968de7fe6",
+    "report": "go-errors-v2-historical.json",
+    "not_current_acceptance": true
+  },
+  "unchanged_behavior": [
+    "outcome_unknown_priority_over_cancellation_and_no_automatic_write_replay",
+    "explicit_primary_cleanup_committed_roles",
+    "safe_error_projection_logs_trace_and_panic_frames",
+    "at_least_once_outbox_budget_fencing_and_recovery",
+    "public_Problem_OAuth_codes_HTTP_status_CLI_stdout_exit_contracts"
+  ],
+  "not_run": [
+    "full_database_all_package_suite_after_v1_consolidation",
+    "UI_and_independent_Valkey_mTLS_outage_rerun_unchanged_sources",
+    "capacity_soak_snapshot_browser_external_provider_production_acceptance",
+    "legacy_fixed_instance_upgrade_rehearsal",
+    "existing_Lab_database_upgrade_or_rebuild",
+    "physical_database_restart_backup_restore"
+  ],
+  "existing_instances": {
+    "Lab_untouched": true,
+    "old_v1_checksum_mismatch": "current_binary_refuses; requires_separate_instance_and_data_plan",
+    "old_v2": "no_automatic_downgrade_or_history_rewrite"
+  },
+  "git": {
+    "identity": "rwasayc",
+    "repository": "carvebloom/authova",
+    "remote": "git@github.com:carvebloom/authova.git",
+    "fetch_no_remote_only_commits": true,
+    "rewrite_previous_commit": false,
+    "push_scope": "current_task_branch_only_no_force_no_merge_no_deploy"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "restart_persistence": true,
+  "console_csrf_rejection": true,
+  "console_password_totp_session": true,
+  "valkey_mtls_acl": true,
+  "schema_baseline": 1,
+  "mode": "development",
+  "unix_time": 1794037681,
+  "verified_at": "2026-11-07T07:48:17.010798+00:00",
+  "compose": "standalone docker-compose v5.1.0",
+  "project": "authova-test",
+  "checks": {
+    "compose_config": "passed",
+    "actual_image_build": "passed",
+    "actual_containers_and_readiness": "passed",
+    "init_idempotence_and_no_secret_replacement": "passed",
+    "entrypoint_from_arbitrary_cwd": "passed",
+    "private_modes_0700_0600": "passed",
+    "down_up_without_deleting_volumes": "passed",
+    "postgres_forced_rls_tables": 24,
+    "runtime_superuser": false,
+    "runtime_bypassrls": false,
+    "console_no_core_db_or_master_key": "passed",
+    "make_check": "passed (gofmt, go vet, race tests; opt-in integrations without their external env remain skipped)",
+    "module_boundaries": "passed",
+    "shell_and_python_syntax": "passed"
+  },
+  "not_verified": [
+    "HTTPS ingress and external issuer routing/browser OIDC flow",
+    "production-mode end-to-end behind external HTTPS proxy",
+    "real email delivery/outbox-to-Mailpit workflow (Mailpit HTTP API checked)",
+    "hardware/browser Passkey",
+    "docker compose plugin path (unavailable here; standalone fallback verified)"
+  ]
+}

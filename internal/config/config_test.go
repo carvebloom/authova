@@ -26,3 +26,30 @@ func TestSMSConfiguration(t *testing.T) {
 		})
 	}
 }
+
+func TestDatabaseDefaultDoesNotFallback(t *testing.T) {
+	for _, tc := range []struct {
+		driver, dsn, want string
+		valid             bool
+	}{
+		{"", "authova_runtime:fixture@tcp(127.0.0.1:3306)/fixture", "mysql", true},
+		{"postgres", "postgres://fixture@localhost/fixture", "postgres", true},
+		{"", "postgres://fixture@localhost/fixture", "mysql", false},
+		{"mysql", "postgres://fixture@localhost/fixture", "mysql", false},
+		{"unknown", "fixture", "unknown", false},
+	} {
+		t.Run(tc.driver+tc.want, func(t *testing.T) {
+			t.Setenv("AUTHOVA_MODE", "development")
+			t.Setenv("AUTHOVA_BASE_URL", "http://127.0.0.1:18080")
+			t.Setenv("AUTHOVA_CONSOLE_URL", "http://127.0.0.1:18090")
+			t.Setenv("AUTHOVA_MASTER_KEY_FILE", "")
+			t.Setenv("AUTHOVA_MASTER_KEY", base64.StdEncoding.EncodeToString(make([]byte, 32)))
+			t.Setenv("AUTHOVA_DATABASE_DRIVER", tc.driver)
+			t.Setenv("AUTHOVA_DATABASE_URL", tc.dsn)
+			c, e := Load()
+			if c.Dialect != tc.want || (e == nil) != tc.valid {
+				t.Fatal("engine selection or fail-closed behavior changed")
+			}
+		})
+	}
+}

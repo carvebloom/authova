@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
@@ -79,6 +80,22 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("Authova query rejected (HTTP %d, %s, request_id=%s)", e.Status, e.Code, e.RequestID)
 }
 
+type dependencyError struct {
+	message string
+	cause   error
+	line    int
+	id      string
+}
+
+func (e *dependencyError) Error() string {
+	if e.id != "" {
+		return e.message + " (request_id=" + safeCode(e.id) + ")"
+	}
+	return e.message
+}
+func (e *dependencyError) DiagnosticRequestID() string { return safeCode(e.id) }
+func (e *dependencyError) Unwrap() error               { return e.cause }
+
 type Client struct {
 	config  Config
 	http    *http.Client
@@ -98,25 +115,25 @@ func LoadConfig(path string) (Config, error) {
 	var c Config
 	f, err := os.Open(path)
 	if err != nil {
-		return c, errors.New("cannot open query configuration")
+		return c, validationError("cannot open query configuration")
 	}
 	defer f.Close()
 	info, err := f.Stat()
 	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 {
-		return c, errors.New("query configuration must be a private regular file (0600)")
+		return c, validationError("query configuration must be a private regular file (0600)")
 	}
 	raw, err := io.ReadAll(io.LimitReader(f, 65537))
 	if err != nil || len(raw) > 65536 {
-		return c, errors.New("query configuration exceeds limit")
+		return c, validationError("query configuration exceeds limit")
 	}
 	d := json.NewDecoder(bytes.NewReader(raw))
 	d.DisallowUnknownFields()
 	if d.Decode(&c) != nil {
-		return Config{}, errors.New("invalid query configuration")
+		return Config{}, validationError("invalid query configuration")
 	}
 	var extra any
 	if !errors.Is(d.Decode(&extra), io.EOF) {
-		return Config{}, errors.New("query configuration must contain one JSON object")
+		return Config{}, validationError("query configuration must contain one JSON object")
 	}
 	return c, nil
 }
@@ -125,13 +142,13 @@ func New(c Config, client *http.Client) (*Client, error) {
 	base, e := url.Parse(c.BaseURL)
 	if e != nil || base.Host == "" || base.User != nil || base.RawQuery != "" || base.Fragment != "" || base.Path != "" ||
 		(base.Scheme != "https" && !(c.AllowLoopbackHTTP && base.Scheme == "http" && slices.Contains([]string{"localhost", "127.0.0.1", "::1"}, base.Hostname()))) {
-		return nil, errors.New("query origin must use HTTPS (or explicitly approved loopback HTTP)")
+		return nil, validationError("query origin must use HTTPS (or explicitly approved loopback HTTP)")
 	}
 	issuer, e := url.Parse(c.Issuer)
 	if e != nil || issuer.Scheme != base.Scheme || issuer.Host != base.Host || issuer.User != nil || issuer.RawQuery != "" || issuer.Fragment != "" ||
 		!strings.HasPrefix(issuer.Path, "/a/") || len(strings.TrimPrefix(issuer.Path, "/a/")) != 32 || strings.Contains(strings.TrimPrefix(issuer.Path, "/a/"), "/") ||
 		!reference(c.AppID) || !reference(c.ClientID) || !reference(c.InstallationID) || len(c.ClientSecret) == 0 || len(c.ClientSecret) > 4096 || len(c.Scopes) == 0 || len(c.Scopes) > 9 {
-		return nil, errors.New("invalid App-bound query identity configuration")
+		return nil, validationError("invalid App-bound query identity configuration")
 	}
 	seen := map[string]bool{}
 	for _, scope := range c.Scopes {
@@ -140,7 +157,7 @@ func New(c Config, client *http.Client) (*Client, error) {
 			valid = valid || scope == op.Scope
 		}
 		if !valid || seen[scope] {
-			return nil, errors.New("query scopes must be unique read-only capabilities")
+			return nil, validationError("query scopes must be unique read-only capabilities")
 		}
 		seen[scope] = true
 	}
@@ -181,21 +198,21 @@ func requestPath(q Request) (string, error) {
 		list = true
 	case "user", "agent", "installation", "grant":
 		if !reference(q.ID) {
-			return "", errors.New("a valid object id is required")
+			return "", validationError("a valid object id is required")
 		}
 		plural := map[string]string{"user": "users", "agent": "agents", "installation": "installations", "grant": "grants"}
 		path = plural[q.Operation] + "/" + q.ID
 	case "sessions":
 		if !reference(q.UserID) {
-			return "", errors.New("a valid user_id is required")
+			return "", validationError("a valid user_id is required")
 		}
 		path = "users/" + q.UserID + "/sessions"
 		list = true
 	default:
-		return "", errors.New("unknown read-only query operation")
+		return "", validationError("unknown read-only query operation")
 	}
 	if q.ID != "" && slices.Contains([]string{"context", "configuration", "users", "agents", "installations", "grants", "audit", "sessions"}, q.Operation) {
-		return "", errors.New("id is not accepted by this query")
+		return "", validationError("id is not accepted by this query")
 	}
 	values := url.Values{}
 	if list {
@@ -203,31 +220,31 @@ func requestPath(q Request) (string, error) {
 			q.Limit = 20
 		}
 		if q.Limit < 1 || q.Limit > 100 {
-			return "", errors.New("limit must be between 1 and 100")
+			return "", validationError("limit must be between 1 and 100")
 		}
 		values.Set("limit", fmt.Sprint(q.Limit))
 		if q.Cursor != "" {
 			if !reference(q.Cursor) {
-				return "", errors.New("invalid cursor")
+				return "", validationError("invalid cursor")
 			}
 			values.Set("cursor", q.Cursor)
 		}
 	} else if q.Limit != 0 || q.Cursor != "" {
-		return "", errors.New("pagination is not accepted by this query")
+		return "", validationError("pagination is not accepted by this query")
 	}
 	filters := q.AgentID != "" || q.InstallationID != "" || q.TenantID != "" || q.UserID != "" && q.Operation != "sessions"
 	if q.Operation == "installations" && q.InstallationID != "" {
-		return "", errors.New("use the installation query to read one installation")
+		return "", validationError("use the installation query to read one installation")
 	}
 	if filters && q.Operation != "installations" && q.Operation != "grants" {
-		return "", errors.New("filters are not accepted by this query")
+		return "", validationError("filters are not accepted by this query")
 	}
 	for k, v := range map[string]string{"agent_id": q.AgentID, "installation_id": q.InstallationID, "tenant_id": q.TenantID, "user_id": q.UserID} {
 		if v == "" || k == "user_id" && q.Operation == "sessions" {
 			continue
 		}
 		if len(v) > 128 || strings.ContainsAny(v, "\r\n\x00") {
-			return "", errors.New("invalid query filter")
+			return "", validationError("invalid query filter")
 		}
 		values.Set(k, v)
 	}
@@ -250,7 +267,7 @@ func (c *Client) Query(ctx context.Context, q Request) (Response, error) {
 		}
 	}
 	if !slices.Contains(c.config.Scopes, required) {
-		return out, errors.New("query capability is not configured")
+		return out, validationError("query capability is not configured")
 	}
 	token, err := c.accessToken(ctx)
 	if err != nil {
@@ -261,12 +278,13 @@ func (c *Client) Query(ctx context.Context, q Request) (Response, error) {
 	r.Header.Set("Accept", "application/json")
 	response, err := c.http.Do(r)
 	if err != nil {
-		return out, errors.New("authova query dependency unavailable")
+		return out, dependency("authova query dependency unavailable", err)
 	}
 	defer response.Body.Close()
+	out.RequestID = safeCode(response.Header.Get("X-Request-ID"))
 	raw, err := io.ReadAll(io.LimitReader(response.Body, 1048577))
 	if err != nil || len(raw) > 1048576 {
-		return out, errors.New("invalid or oversized query response")
+		return out, &dependencyError{message: "invalid or oversized query response", cause: err, id: out.RequestID, line: contactLine()}
 	}
 	id := safeCode(response.Header.Get("X-Request-ID"))
 	if response.StatusCode != http.StatusOK {
@@ -289,11 +307,11 @@ func (c *Client) Query(ctx context.Context, q Request) (Response, error) {
 	}
 	media, _, parseErr := mime.ParseMediaType(response.Header.Get("Content-Type"))
 	if parseErr != nil || media != "application/json" {
-		return out, errors.New("query response must be JSON")
+		return out, validationError("query response must be JSON")
 	}
 	var object map[string]json.RawMessage
 	if json.Unmarshal(raw, &object) != nil || object == nil {
-		return out, errors.New("invalid query JSON response")
+		return out, validationError("invalid query JSON response")
 	}
 	out.Data, out.RequestID = raw, id
 	return out, nil
@@ -322,7 +340,7 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 		c.mu.Unlock()
 		select {
 		case <-ctx.Done():
-			return "", errors.New("query token request cancelled")
+			return "", dependency("query token request cancelled", ctx.Err())
 		case <-load.done:
 			return load.token, load.err
 		}
@@ -351,19 +369,19 @@ func (c *Client) fetchToken(ctx context.Context) (string, time.Time, error) {
 	started := time.Now()
 	response, err := c.http.Do(r)
 	if err != nil {
-		return "", time.Time{}, errors.New("query token dependency unavailable")
+		return "", time.Time{}, dependency("query token dependency unavailable", err)
 	}
 	defer response.Body.Close()
 	raw, err := io.ReadAll(io.LimitReader(response.Body, 32769))
 	if err != nil || len(raw) > 32768 {
-		return "", time.Time{}, errors.New("invalid token response")
+		return "", time.Time{}, &dependencyError{message: "invalid token response", cause: err, id: safeCode(response.Header.Get("X-Request-ID")), line: contactLine()}
 	}
 	if response.StatusCode != http.StatusOK {
 		return "", time.Time{}, &Error{Status: response.StatusCode, Code: "query_token_rejected", RequestID: safeCode(response.Header.Get("X-Request-ID"))}
 	}
 	media, _, parseErr := mime.ParseMediaType(response.Header.Get("Content-Type"))
 	if parseErr != nil || media != "application/json" {
-		return "", time.Time{}, errors.New("token response must be JSON")
+		return "", time.Time{}, validationError("token response must be JSON")
 	}
 	var token struct {
 		Access  string `json:"access_token"`
@@ -372,12 +390,63 @@ func (c *Client) fetchToken(ctx context.Context) (string, time.Time, error) {
 		Scope   string `json:"scope"`
 	}
 	if json.Unmarshal(raw, &token) != nil || token.Access == "" || len(token.Access) > 16384 || strings.ContainsAny(token.Access, " \r\n\t") || !strings.EqualFold(token.Type, "Bearer") || token.Expires < 1 || token.Expires > 300 {
-		return "", time.Time{}, errors.New("invalid token response")
+		return "", time.Time{}, validationError("invalid token response")
 	}
 	for _, scope := range strings.Fields(token.Scope) {
 		if !slices.Contains(c.config.Scopes, scope) {
-			return "", time.Time{}, errors.New("unexpected token scope")
+			return "", time.Time{}, validationError("unexpected token scope")
 		}
 	}
 	return token.Access, started.Add(time.Duration(token.Expires) * time.Second), nil
+}
+
+func dependency(message string, cause error) error {
+	_, _, line, _ := runtime.Caller(1)
+	return &dependencyError{message: message, cause: cause, line: line}
+}
+func (e *dependencyError) DiagnosticContact() (string, int) { return "client.go", e.line }
+
+func contactLine() int { _, _, line, _ := runtime.Caller(1); return line }
+
+// PublicError only renders SDK-owned constructors, never a foreign Error method.
+// Callers may inspect causes; raw causes are not a public display contract.
+type validationError string
+
+func (e validationError) Error() string { return string(e) }
+func PublicError(err error) string {
+	switch e := err.(type) {
+	case validationError:
+		return string(e)
+	case *dependencyError:
+		if e != nil {
+			return e.Error()
+		}
+	case *Error:
+		if e == nil {
+			break
+		}
+		code := "query_rejected"
+		switch e.Code {
+		case "query_token_rejected", "invalid_request", "authentication_required", "forbidden", "not_found", "rate_limited", "dependency_unavailable", "outcome_unknown":
+			code = e.Code
+		}
+		s := *e
+		s.Code = code
+		s.RequestID = safeCode(e.RequestID)
+		return s.Error()
+	}
+	return "authova query failed"
+}
+
+// FailureKind classifies only SDK-owned errors. It never trusts a foreign message.
+func FailureKind(err error) string {
+	switch err.(type) {
+	case validationError:
+		return "invalid"
+	case *dependencyError:
+		return "dependency"
+	case *Error:
+		return "rejected"
+	}
+	return "internal"
 }

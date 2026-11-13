@@ -7,24 +7,24 @@ check:
 	test -z "$$(gofmt -l cmd internal)"
 	go vet ./...
 	go test -race -count=1 ./...
-dev-env: build-all
-	python3 scripts/migration/instance.py init
+dev-env:
+	./scripts/local-test.sh init
 infrastructure:
-	docker-compose -p authova-migration -f deploy/migration/compose.yaml --profile mysql up -d --wait
+	./scripts/local-test.sh up
 migrate: build
 	bin/authova migrate
 bootstrap: build
 	bin/authova bootstrap
 integration:
-	python3 scripts/migration/quality.py --evidence .migration/integration
+	python3 scripts/tests/go-errors.py
 demo:
 	./scripts/demo.sh
 verify:
 	./scripts/verify.sh
 
-# Creates disposable PG/MySQL databases and a fresh shared test root, then cleans up.
+# Creates an owned disposable MySQL fixture; PostgreSQL is an explicit compatibility option.
 quality-local:
-	python3 scripts/migration/quality.py --evidence .migration/quality-local
+	python3 scripts/tests/go-errors.py
 contract-combination:
 	python3 scripts/verify-contract-combination.py
 
@@ -38,7 +38,7 @@ ent:
 migration-hash:
 	go run ./cmd/migration-hash
 migration-test:
-	python3 scripts/migration/quality.py --evidence .migration/acceptance
+	python3 scripts/tests/go-errors.py --focused
 
 .PHONY: boundaries
 boundaries:
@@ -66,3 +66,32 @@ schema-plan-test:
 .PHONY: migration-upgrade-test
 migration-upgrade-test: build
 	python3 scripts/migration/upgrade-gates.py --evidence .migration/v1-upgrade-gates
+
+# Layered aliases supplement the legacy test/check/verify contracts. See TESTING.md.
+TEST_DATABASE_DIALECT ?= mysql
+.PHONY: test-discover test-unit test-component test-python test-web test-integration test-race test-e2e generate-check
+test-discover:
+	python3 -B scripts/test_profiles.py unit --list
+	python3 -B scripts/test_profiles.py component --list
+	python3 -B scripts/test_profiles.py database --list
+	python3 -B scripts/test_profiles.py contract --list
+test-unit:
+	python3 -B scripts/test_profiles.py unit
+	python3 -B scripts/test_profiles.py python-unit
+test-component:
+	python3 -B scripts/test_profiles.py component
+	$(MAKE) test-python test-web
+test-python:
+	python3 -B scripts/test_profiles.py python
+test-web:
+	npm --prefix console/web test -- --maxWorkers=2
+# Requires an already provisioned, isolated fixture. Does not create or migrate it.
+test-integration:
+	python3 -B scripts/test_profiles.py database --dialect $(TEST_DATABASE_DIALECT) --race
+test-race: test
+# Legacy browser specs require an explicitly reviewed disposable .dev fixture.
+test-e2e:
+	test "$(AUTHOVA_E2E_OWNED_FIXTURE)" = 1
+	npm run test:e2e
+generate-check: api-check ent-check
+	python3 console/scripts/generate-contracts.py --check

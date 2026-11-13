@@ -62,6 +62,26 @@ func IDContainsFold(id string) predicate.OutboxMessage {
 	return predicate.OutboxMessage(sql.FieldContainsFold(FieldID, id))
 }
 
+// DeliveryState applies equality check predicate on the "delivery_state" field. It's identical to DeliveryStateEQ.
+func DeliveryState(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldEQ(FieldDeliveryState, v))
+}
+
+// FailurePhase applies equality check predicate on the "failure_phase" field. It's identical to FailurePhaseEQ.
+func FailurePhase(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldEQ(FieldFailurePhase, v))
+}
+
+// FailureCode applies equality check predicate on the "failure_code" field. It's identical to FailureCodeEQ.
+func FailureCode(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldEQ(FieldFailureCode, v))
+}
+
+// OutcomeUnknown applies equality check predicate on the "outcome_unknown" field. It's identical to OutcomeUnknownEQ.
+func OutcomeUnknown(v int16) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldEQ(FieldOutcomeUnknown, v))
+}
+
 // AppID applies equality check predicate on the "app_id" field. It's identical to AppIDEQ.
 func AppID(v string) predicate.OutboxMessage {
 	return predicate.OutboxMessage(sql.FieldEQ(FieldAppID, v))
@@ -85,6 +105,241 @@ func Completed(v int16) predicate.OutboxMessage {
 // Payload applies equality check predicate on the "payload" field. It's identical to PayloadEQ.
 func Payload(v []byte) predicate.OutboxMessage {
 	return predicate.OutboxMessage(sql.FieldEQ(FieldPayload, v))
+}
+
+// DeliveryStateEQ applies the EQ predicate on the "delivery_state" field.
+func DeliveryStateEQ(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldEQ(FieldDeliveryState, v))
+}
+
+// DeliveryStateNEQ applies the NEQ predicate on the "delivery_state" field.
+func DeliveryStateNEQ(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldNEQ(FieldDeliveryState, v))
+}
+
+// DeliveryStateIn applies the In predicate on the "delivery_state" field.
+func DeliveryStateIn(vs ...string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldIn(FieldDeliveryState, vs...))
+}
+
+// DeliveryStateNotIn applies the NotIn predicate on the "delivery_state" field.
+func DeliveryStateNotIn(vs ...string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldNotIn(FieldDeliveryState, vs...))
+}
+
+// DeliveryStateGT applies the GT predicate on the "delivery_state" field.
+func DeliveryStateGT(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldGT(FieldDeliveryState, v))
+}
+
+// DeliveryStateGTE applies the GTE predicate on the "delivery_state" field.
+func DeliveryStateGTE(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldGTE(FieldDeliveryState, v))
+}
+
+// DeliveryStateLT applies the LT predicate on the "delivery_state" field.
+func DeliveryStateLT(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldLT(FieldDeliveryState, v))
+}
+
+// DeliveryStateLTE applies the LTE predicate on the "delivery_state" field.
+func DeliveryStateLTE(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldLTE(FieldDeliveryState, v))
+}
+
+// DeliveryStateContains applies the Contains predicate on the "delivery_state" field.
+func DeliveryStateContains(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldContains(FieldDeliveryState, v))
+}
+
+// DeliveryStateHasPrefix applies the HasPrefix predicate on the "delivery_state" field.
+func DeliveryStateHasPrefix(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldHasPrefix(FieldDeliveryState, v))
+}
+
+// DeliveryStateHasSuffix applies the HasSuffix predicate on the "delivery_state" field.
+func DeliveryStateHasSuffix(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldHasSuffix(FieldDeliveryState, v))
+}
+
+// DeliveryStateEqualFold applies the EqualFold predicate on the "delivery_state" field.
+func DeliveryStateEqualFold(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldEqualFold(FieldDeliveryState, v))
+}
+
+// DeliveryStateContainsFold applies the ContainsFold predicate on the "delivery_state" field.
+func DeliveryStateContainsFold(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldContainsFold(FieldDeliveryState, v))
+}
+
+// FailurePhaseEQ applies the EQ predicate on the "failure_phase" field.
+func FailurePhaseEQ(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldEQ(FieldFailurePhase, v))
+}
+
+// FailurePhaseNEQ applies the NEQ predicate on the "failure_phase" field.
+func FailurePhaseNEQ(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldNEQ(FieldFailurePhase, v))
+}
+
+// FailurePhaseIn applies the In predicate on the "failure_phase" field.
+func FailurePhaseIn(vs ...string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldIn(FieldFailurePhase, vs...))
+}
+
+// FailurePhaseNotIn applies the NotIn predicate on the "failure_phase" field.
+func FailurePhaseNotIn(vs ...string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldNotIn(FieldFailurePhase, vs...))
+}
+
+// FailurePhaseGT applies the GT predicate on the "failure_phase" field.
+func FailurePhaseGT(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldGT(FieldFailurePhase, v))
+}
+
+// FailurePhaseGTE applies the GTE predicate on the "failure_phase" field.
+func FailurePhaseGTE(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldGTE(FieldFailurePhase, v))
+}
+
+// FailurePhaseLT applies the LT predicate on the "failure_phase" field.
+func FailurePhaseLT(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldLT(FieldFailurePhase, v))
+}
+
+// FailurePhaseLTE applies the LTE predicate on the "failure_phase" field.
+func FailurePhaseLTE(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldLTE(FieldFailurePhase, v))
+}
+
+// FailurePhaseContains applies the Contains predicate on the "failure_phase" field.
+func FailurePhaseContains(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldContains(FieldFailurePhase, v))
+}
+
+// FailurePhaseHasPrefix applies the HasPrefix predicate on the "failure_phase" field.
+func FailurePhaseHasPrefix(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldHasPrefix(FieldFailurePhase, v))
+}
+
+// FailurePhaseHasSuffix applies the HasSuffix predicate on the "failure_phase" field.
+func FailurePhaseHasSuffix(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldHasSuffix(FieldFailurePhase, v))
+}
+
+// FailurePhaseEqualFold applies the EqualFold predicate on the "failure_phase" field.
+func FailurePhaseEqualFold(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldEqualFold(FieldFailurePhase, v))
+}
+
+// FailurePhaseContainsFold applies the ContainsFold predicate on the "failure_phase" field.
+func FailurePhaseContainsFold(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldContainsFold(FieldFailurePhase, v))
+}
+
+// FailureCodeEQ applies the EQ predicate on the "failure_code" field.
+func FailureCodeEQ(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldEQ(FieldFailureCode, v))
+}
+
+// FailureCodeNEQ applies the NEQ predicate on the "failure_code" field.
+func FailureCodeNEQ(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldNEQ(FieldFailureCode, v))
+}
+
+// FailureCodeIn applies the In predicate on the "failure_code" field.
+func FailureCodeIn(vs ...string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldIn(FieldFailureCode, vs...))
+}
+
+// FailureCodeNotIn applies the NotIn predicate on the "failure_code" field.
+func FailureCodeNotIn(vs ...string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldNotIn(FieldFailureCode, vs...))
+}
+
+// FailureCodeGT applies the GT predicate on the "failure_code" field.
+func FailureCodeGT(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldGT(FieldFailureCode, v))
+}
+
+// FailureCodeGTE applies the GTE predicate on the "failure_code" field.
+func FailureCodeGTE(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldGTE(FieldFailureCode, v))
+}
+
+// FailureCodeLT applies the LT predicate on the "failure_code" field.
+func FailureCodeLT(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldLT(FieldFailureCode, v))
+}
+
+// FailureCodeLTE applies the LTE predicate on the "failure_code" field.
+func FailureCodeLTE(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldLTE(FieldFailureCode, v))
+}
+
+// FailureCodeContains applies the Contains predicate on the "failure_code" field.
+func FailureCodeContains(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldContains(FieldFailureCode, v))
+}
+
+// FailureCodeHasPrefix applies the HasPrefix predicate on the "failure_code" field.
+func FailureCodeHasPrefix(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldHasPrefix(FieldFailureCode, v))
+}
+
+// FailureCodeHasSuffix applies the HasSuffix predicate on the "failure_code" field.
+func FailureCodeHasSuffix(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldHasSuffix(FieldFailureCode, v))
+}
+
+// FailureCodeEqualFold applies the EqualFold predicate on the "failure_code" field.
+func FailureCodeEqualFold(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldEqualFold(FieldFailureCode, v))
+}
+
+// FailureCodeContainsFold applies the ContainsFold predicate on the "failure_code" field.
+func FailureCodeContainsFold(v string) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldContainsFold(FieldFailureCode, v))
+}
+
+// OutcomeUnknownEQ applies the EQ predicate on the "outcome_unknown" field.
+func OutcomeUnknownEQ(v int16) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldEQ(FieldOutcomeUnknown, v))
+}
+
+// OutcomeUnknownNEQ applies the NEQ predicate on the "outcome_unknown" field.
+func OutcomeUnknownNEQ(v int16) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldNEQ(FieldOutcomeUnknown, v))
+}
+
+// OutcomeUnknownIn applies the In predicate on the "outcome_unknown" field.
+func OutcomeUnknownIn(vs ...int16) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldIn(FieldOutcomeUnknown, vs...))
+}
+
+// OutcomeUnknownNotIn applies the NotIn predicate on the "outcome_unknown" field.
+func OutcomeUnknownNotIn(vs ...int16) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldNotIn(FieldOutcomeUnknown, vs...))
+}
+
+// OutcomeUnknownGT applies the GT predicate on the "outcome_unknown" field.
+func OutcomeUnknownGT(v int16) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldGT(FieldOutcomeUnknown, v))
+}
+
+// OutcomeUnknownGTE applies the GTE predicate on the "outcome_unknown" field.
+func OutcomeUnknownGTE(v int16) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldGTE(FieldOutcomeUnknown, v))
+}
+
+// OutcomeUnknownLT applies the LT predicate on the "outcome_unknown" field.
+func OutcomeUnknownLT(v int16) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldLT(FieldOutcomeUnknown, v))
+}
+
+// OutcomeUnknownLTE applies the LTE predicate on the "outcome_unknown" field.
+func OutcomeUnknownLTE(v int16) predicate.OutboxMessage {
+	return predicate.OutboxMessage(sql.FieldLTE(FieldOutcomeUnknown, v))
 }
 
 // AppIDEQ applies the EQ predicate on the "app_id" field.

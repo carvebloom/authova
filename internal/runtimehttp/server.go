@@ -3,6 +3,7 @@ package runtimehttp
 
 import (
 	"context"
+	"github.com/carvebloom/authova/internal/diagnostic"
 	"net/http"
 	"time"
 
@@ -18,7 +19,7 @@ func NewServer(server *http.Server) *khttp.Server {
 	h := khttp.NewServer(khttp.Address(server.Addr), khttp.StrictSlash(false), khttp.Timeout(0))
 	// Register the existing protocol router as one handler: OAuth, OIDC and WebAuthn
 	// must retain their established methods, errors, headers and response encoding.
-	h.HandlePrefix("/", server.Handler)
+	h.HandlePrefix("/", diagnostic.HTTPGuard(server.Handler))
 	h.Server.ReadHeaderTimeout = server.ReadHeaderTimeout
 	h.Server.ReadTimeout = server.ReadTimeout
 	h.Server.WriteTimeout = server.WriteTimeout

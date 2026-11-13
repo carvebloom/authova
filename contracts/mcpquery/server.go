@@ -93,13 +93,23 @@ func ToolName(operation string) string {
 
 func add[T any](server *mcp.Server, client *query.Client, op query.Operation, request func(T) query.Request) {
 	no := false
-	mcp.AddTool(server, &mcp.Tool{Name: ToolName(op.Name), Description: op.Description, Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true, DestructiveHint: &no, OpenWorldHint: &no}}, func(ctx context.Context, _ *mcp.CallToolRequest, args T) (*mcp.CallToolResult, Result, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: ToolName(op.Name), Description: op.Description, Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true, DestructiveHint: &no, OpenWorldHint: &no}}, func(ctx context.Context, _ *mcp.CallToolRequest, args T) (toolResult *mcp.CallToolResult, output Result, failure error) {
+		defer func() {
+			if v := recover(); v != nil {
+				failure = RecoveredPanic(ctx, v)
+				toolResult = nil
+				output = Result{}
+			}
+		}()
 		response, err := client.Query(ctx, request(args))
 		if err != nil {
+			LogFailure(ctx, err)
 			return nil, Result{}, err
 		}
 		out := Result{RequestID: response.RequestID}
 		if err = json.Unmarshal(response.Data, &out.Data); err != nil {
+			err = &responseFailure{cause: err}
+			LogFailure(ctx, err)
 			return nil, Result{}, err
 		}
 		return nil, out, nil
