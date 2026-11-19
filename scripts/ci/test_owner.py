@@ -145,7 +145,7 @@ class TestOwner(CoreConsoleOwner):
                      'healthcheck':{'test':['CMD-SHELL','MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqladmin ping -h127.0.0.1 --silent'],'interval':'2s','timeout':'3s','retries':40}},
             'valkey':{'image':images['valkey'],'container_name':f['service_names']['valkey'],'user':'10001:10001','read_only':True,'mem_limit':'128m','memswap_limit':'128m',
                       'command':['valkey-server','/run/ci/valkey.conf'],'volumes':[volume('valkey')],'tmpfs':['/data:mode=1777'],
-                      'healthcheck':{'test':['CMD-SHELL','VALKEYCLI_AUTH=$(cat /run/ci/valkey.password) valkey-cli --tls --cacert /run/ci/ca.pem --cert /run/ci/tls.crt --key /run/ci/tls.key --user ci -h127.0.0.1 ping | grep -q PONG'],'interval':'2s','timeout':'3s','retries':40}},
+                      'healthcheck':{'test':['CMD-SHELL','VALKEYCLI_AUTH=$(cat /run/ci/valkey.password) valkey-cli --tls --cacert /run/ci/ca.pem --cert /run/ci/tls.crt --key /run/ci/tls.key --user ci -h 127.0.0.1 ping | grep -q PONG'],'interval':'2s','timeout':'3s','retries':40}},
             'proxy':{'image':images['tools'],'container_name':f['service_names']['proxy'],'user':'10001:10001','read_only':True,'mem_limit':'192m','memswap_limit':'192m',
                      'entrypoint':['python3'],'command':['-I','-B','-c','import sys;sys.path.insert(0,"/run/ci/code");import test_proxy;test_proxy.main()'],
                      'environment':{'PYTHONDONTWRITEBYTECODE':'1'},'volumes':[volume('proxy')],

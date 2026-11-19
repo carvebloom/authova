@@ -5,6 +5,8 @@ import importlib.util
 import io
 import json
 import os
+import shlex
+import subprocess
 from pathlib import Path
 import sys
 import tempfile
@@ -77,6 +79,32 @@ class CIOperationTests(unittest.TestCase):
                     write.assert_not_called()
                 self.assertFalse(native.records[0]['timely'])
                 self.assertTrue(native.records[0]['all_selected_IO_closed'])
+    def test_valkey_health_shell_passes_separate_host_option_without_argv_secret(self):
+        # Valkey9.1 parseOptions consumes exact "-h" then argv[++i]. This is
+        # a synthetic CLI actor, not a Valkey/TLS/auth/runtime qualification.
+        from test_owner import TestOwner,FIXTURE_PINS
+        obj=TestOwner.__new__(TestOwner);obj.profile={'fixture_images':dict(FIXTURE_PINS)}
+        obj.nonce='f'*64;obj.root_password='OWN_DB_CANARY'
+        f={'network':'OWN_NETWORK','mysql_volume':'OWN_DB','secret_volumes':{r:'OWN_'+r for r in ('core','console','valkey','proxy')},
+           'service_names':{r:'OWN_'+r for r in ('mysql','valkey','proxy')}}
+        cfg=obj.dependencies({'project':'OWN_PROJECT','fixture':f})
+        health=cfg['services']['valkey']['healthcheck']
+        self.assertEqual({k:v for k,v in health.items() if k!='test'},{'interval':'2s','timeout':'3s','retries':40})
+        self.assertEqual(health['test'][0],'CMD-SHELL')
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);password=root/'password';password.write_text('f'*64);password.chmod(0o600)
+            actor=root/'valkey-cli'
+            actor.write_text('#!'+sys.executable+"\nimport os,sys\nexpected=['--tls','--cacert','/run/ci/ca.pem','--cert','/run/ci/tls.crt','--key','/run/ci/tls.key','--user','ci','-h','127.0.0.1','ping']\nif sys.argv[1:]!=expected:sys.stderr.write('CLI_OPTION_ERROR\\n');sys.exit(1)\nif os.environ.get('VALKEYCLI_AUTH')!='f'*64 or any('f'*64 in a for a in sys.argv):sys.exit(2)\nprint('PONG')\n")
+            actor.chmod(0o700)
+            script=health['test'][1].replace('cat /run/ci/valkey.password','cat '+shlex.quote(str(password)))
+            env={'PATH':str(root)+':/usr/bin:/bin'}
+            for bad in (True,False):
+                command=script.replace('-h 127.0.0.1','-h127.0.0.1') if bad else script
+                result=subprocess.run(['/bin/sh','-c',command],env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=5)
+                self.assertEqual(result.returncode,1 if bad else 0)
+                self.assertEqual(result.stdout,b'')  # grep -q is still the producer sink.
+                self.assertEqual(result.stderr,b'CLI_OPTION_ERROR\n' if bad else b'')
+
     def test_readonly_schema_refusal_never_up_or_rollback(self):
         # Reuse the real signed boundary and real durable FS from its fixture.
         from test_ci_host_adapter import CIHostAdapterTests,receipt
