@@ -1,7 +1,12 @@
 """Prevent false green results from native failure, missing cases or fixture Skip."""
 import importlib.util
+import contextlib
+import io
+import os
 from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
 
 SPEC = importlib.util.spec_from_file_location("test_profiles", Path(__file__).resolve().parents[1] / "test_profiles.py")
 profiles = importlib.util.module_from_spec(SPEC)
@@ -16,6 +21,31 @@ def event(package, action, name=None):
 
 
 class RequiredResults(unittest.TestCase):
+    def test_serial_ci_resources_do_not_change_required_selection_or_race(self):
+        inventory=profiles.source_tests()
+        calls=[]
+        def fake(argv,**kwargs):
+            calls.append((argv,kwargs['env']))
+            return type('Return',(),{'returncode':1})()
+        for mode in (None,'serial768'):
+            with self.subTest(mode=mode),tempfile.TemporaryDirectory() as tmp:
+                env={'PATH':'/usr/bin:/bin','GOMAXPROCS':'9','GOMEMLIMIT':'9GiB','GOFLAGS':'-p=2'}
+                if mode is not None:env.update(AUTHOVA_CI_RESOURCE_PROFILE=mode,GOFLAGS='-p=9 -run=caller-forged-selection')
+                with patch.dict(os.environ,env,clear=True),patch.object(profiles,'ROOT',Path(tmp)),patch.object(profiles,'source_tests',return_value=inventory),patch.object(profiles.subprocess,'run',fake),contextlib.redirect_stdout(io.StringIO()):
+                    with self.assertRaisesRegex(ValueError,'Go gate failed'):
+                        profiles.run('component','mysql',True)
+        default,serial=calls
+        self.assertEqual([v for v in default[0] if not v.startswith(('-p=','-parallel='))],
+                         [v for v in serial[0] if not v.startswith(('-p=','-parallel='))])
+        self.assertIn('-race',serial[0]);self.assertIn('-timeout=10m',serial[0])
+        self.assertIn('-p=2',default[0]);self.assertEqual(default[1]['GOMAXPROCS'],'2')
+        self.assertIn('-p=1',serial[0]);self.assertIn('-parallel=1',serial[0])
+        self.assertEqual({k:serial[1][k] for k in ('GOMAXPROCS','GOFLAGS','GOMEMLIMIT','AUTHOVA_CI_RESOURCE_PROFILE')},
+                         {'GOMAXPROCS':'1','GOFLAGS':'-p=1','GOMEMLIMIT':'256MiB','AUTHOVA_CI_RESOURCE_PROFILE':'serial768'})
+        with patch.dict(os.environ,{'AUTHOVA_CI_RESOURCE_PROFILE':'serial768 -skip caller'},clear=True),patch.object(profiles.subprocess,'run',side_effect=AssertionError('NO_GO_ON_UNSUPPORTED_PROFILE')):
+            with self.assertRaisesRegex(ValueError,'unsupported CI resource profile'):
+                profiles.run('component','mysql',True)
+
     def test_native_and_selection_are_independent_requirements(self):
         selected = {"internal/domain": {"TestConstraint"}}
         passed = [event("internal/domain", "pass", "TestConstraint"), event("internal/domain", "pass")]

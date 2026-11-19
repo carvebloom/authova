@@ -35,13 +35,14 @@ steps:
         user: "1000:1000"
     environment:
       HOME: /tmp/authova-home
-      GOMAXPROCS: "2"
-      GOMEMLIMIT: 512MiB
+      AUTHOVA_CI_RESOURCE_PROFILE: serial768
+      GOMAXPROCS: "1"
+      GOMEMLIMIT: 256MiB
       GOCACHE: /tmp/authova-gocache
       GOMODCACHE: /tmp/authova-gomod
       GOPATH: /tmp/authova-gopath
       GOTOOLCHAIN: local
-      GOFLAGS: -p=2
+      GOFLAGS: -p=1
       NODE_OPTIONS: --max-old-space-size=512
       PYTHONDONTWRITEBYTECODE: "1"
     commands:
