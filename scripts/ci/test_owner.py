@@ -17,6 +17,15 @@ from release_contract import REQUIRED_CHECKS, need
 
 CODE=('release_contract.py','host_admission.py','private_native.py','deployment_http.py','test_http.py','test_proxy.py')
 
+FIXTURE_PINS={
+    'mysql':'docker.io/library/mysql@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70',
+    'valkey':'docker.io/valkey/valkey@sha256:56729e68bdda139cbd3f6a2538683dc3523325fc5711ea1a379938f1b37893f0',
+    'tools':'sha256:b8678913e1f8e9af59ee49092042147eb3beb3743f3381dafa19bbff0b5115cd'}
+FIXTURE_REPOSITORIES={
+    'mysql':('docker.io/library/mysql','library/mysql','mysql'),
+    'valkey':('docker.io/valkey/valkey','valkey/valkey')}
+
+
 
 class TestOwner(CoreConsoleOwner):
     def __init__(self,profile,state_root,nonce,*,source_bytes):
@@ -29,6 +38,40 @@ class TestOwner(CoreConsoleOwner):
         ids=self.command('CI_NAMESPACE_ABSENCE',['ps','--all','--quiet','--no-trunc','--filter','label=com.docker.compose.project='+binding['project']],guard)
         need(not ids.strip(),'CI_NAMESPACE_EXISTS')
         return binding['current']
+    def fixture_image(self,role,guard):
+        # Digest references are not Docker content-ID strings. This separate
+        # consumer admits only the fixed CI fixtures, never tags/caller refs.
+        need(type(role) is str and role in FIXTURE_PINS
+             and self.profile['fixture_images']==FIXTURE_PINS,'CI_FIXTURE_PIN')
+        ref=FIXTURE_PINS[role]
+        if role=='tools':return self.image(ref,guard)  # Already a fixed content ID.
+        value=strict_json(self.command('IMAGE_LOCAL_ONLY',['image','inspect',ref],guard))
+        need(type(value) is list and len(value)==1 and type(value[0]) is dict,'CI_FIXTURE_IMAGE')
+        image=value[0];digest=ref.split('@',1)[1]
+        need(image.get('Id')==digest and image.get('Os')=='linux'
+             and image.get('Architecture')=='arm64','CI_FIXTURE_IMAGE')
+        repos=image.get('RepoDigests');allowed={name+'@'+digest for name in FIXTURE_REPOSITORIES[role]}
+        need(type(repos) is list and 0<len(repos)<=len(allowed)
+             and all(type(v) is str and v in allowed for v in repos)
+             and len(set(repos))==len(repos),'CI_FIXTURE_REPO_DIGEST')
+        # Classic inspect APIs omit Descriptor. Exact Id==pinned digest and the
+        # selected repository digest remain mandatory even in that shape. Never
+        # infer absence from a separate failed projection or accept a config-ID
+        # substitution. If supplied, every descriptor identity field must agree.
+        if 'Descriptor' in image:
+            descriptor=image['Descriptor']
+            need(type(descriptor) is dict and set(descriptor)<={'mediaType','digest','size','platform','annotations'}
+                 and {'mediaType','digest','size'}<=set(descriptor)
+                 and descriptor['digest']==digest and descriptor['mediaType'] in
+                     ('application/vnd.oci.image.index.v1+json','application/vnd.docker.distribution.manifest.list.v2+json',
+                      'application/vnd.oci.image.manifest.v1+json','application/vnd.docker.distribution.manifest.v2+json')
+                 and type(descriptor['size']) is int and 0<descriptor['size']<=1048576,'CI_FIXTURE_DESCRIPTOR')
+            if 'platform' in descriptor:
+                need(descriptor['platform']=={'os':'linux','architecture':'arm64'},'CI_FIXTURE_DESCRIPTOR_PLATFORM')
+            if 'annotations' in descriptor:
+                need(type(descriptor['annotations']) is dict
+                     and all(type(k) is str and type(v) is str for k,v in descriptor['annotations'].items()),'CI_FIXTURE_DESCRIPTOR')
+        return image
     def preflight(self,binding,guard):
         self.phase='PREFLIGHT'
         self.operation=Path(binding['fixture']['root'])
@@ -38,7 +81,7 @@ class TestOwner(CoreConsoleOwner):
         need(not parent.is_symlink() and (parent.stat().st_mode&0o777)==0o700 and parent.stat().st_uid==os.getuid(),'CI_ROOT_PARENT')
         self.operation.mkdir(mode=0o700)
         self.archive_guard(binding['candidate'],guard)
-        for image in self.profile['fixture_images'].values():self.image(image,guard)
+        for role in self.profile['fixture_images']:self.fixture_image(role,guard)
         for name in [binding['fixture']['network'],binding['fixture']['mysql_volume'],*binding['fixture']['secret_volumes'].values()]:
             kind='network' if name==binding['fixture']['network'] else 'volume'
             raw=self.command('CI_RESOURCE_ABSENCE',[kind,'ls','--quiet','--filter','name=^'+name+'$'],guard)
