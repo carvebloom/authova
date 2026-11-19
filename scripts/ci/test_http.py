@@ -163,10 +163,26 @@ class Acceptance:
         self.checkpoint='USER_READBACK';self.last_status=None
         query=urllib.parse.urlencode({'q':self.c['recipient'],'limit':2})
         users=self.api('/apps/'+self.state['app']['id']+'/users?'+query)
-        need(len(users['items'])==1 and users['next_cursor'] is None,'CI_UNIQUE_USER')
-        u=users['items'][0];need(u['app_id']==self.state['app']['id'] and u['status']=='active' and u.get('admin_role','')=='' and u.get('email')==self.c['recipient'],'CI_ORDINARY_SERVER_USER')
+        need(type(users) is dict and set(users)=={'items','next_cursor'} and type(users['items']) is list
+             and len(users['items'])==1 and users['next_cursor'] is None,'CI_UNIQUE_USER')
+        # ListUsers(q) does an exact normalized identifier-digest lookup, then
+        # maskUser/secure.Mask deliberately hides the address on the wire.
+        # Keep the full exact q above; never use the mask as a search selector.
+        recipient=self.c['recipient'];masked=recipient[:1]+'***'+recipient[recipient.index('@'):]
+        def ordinary(u):
+            need(type(u) is dict and type(u.get('id')) is str and bool(u['id'])
+                 and type(u.get('app_id')) is str and u['app_id']==self.state['app']['id']
+                 and type(u.get('status')) is str and u['status']=='active'
+                 and type(u.get('admin_role','')) is str and u.get('admin_role','')==''
+                 and type(u.get('email')) is str and u['email']==masked,'CI_ORDINARY_SERVER_USER')
+        u=users['items'][0];ordinary(u)
         if 'user' in self.state:need(u['id']==self.state['user']['id'],'CI_REPEAT_SUBJECT')
-        self.state['user']=u
+        # The list DTO does not populate AdminRole. Read this same server ID's
+        # official detail (which does), rather than treating omitted list role
+        # as proof of ordinary membership or searching/enumerating other users.
+        detail=self.api('/apps/'+self.state['app']['id']+'/users/'+urllib.parse.quote(u['id'],safe=''))
+        ordinary(detail);need(detail['id']==u['id'],'CI_USER_READBACK_ID')
+        self.state['user']=detail
     def run(self,stage):
         if stage=='normal-tls-health-and-static-assets':
             b=self.browser();b.request(self.c['core']+'/readyz');b.request(self.c['console']+'/healthz')
