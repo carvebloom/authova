@@ -17,14 +17,19 @@ import (
 	mysql "github.com/go-sql-driver/mysql"
 )
 
-// This is an explicit release gate, never an optional local-database test.
+// Mandatory in the database/release profile, whose runner rejects missing fixture
+// configuration and any skipped required case. The general no-DB Go sweep does
+// not claim this storage gate. In the both profile this uses its MySQL side only.
 // The issuer must separately prove that the named fresh fixture is owned.
 func passwordStorageFixture(t *testing.T) (*fixture, *sql.DB) {
 	t.Helper()
 	name := os.Getenv("AUTHOVA_TEST_DISPOSABLE_DATABASE")
 	dsn := os.Getenv("AUTHOVA_TEST_MYSQL_DSN")
+	if name == "" && dsn == "" && os.Getenv("AUTHOVA_TEST_POSTGRES_DSN") == "" && os.Getenv("AUTHOVA_TEST_DATABASE_DIALECT") == "" {
+		t.Skip("run the owned database profile for the required password storage gate")
+	}
 	cfg, err := mysql.ParseDSN(dsn)
-	if err != nil || !regexp.MustCompile(`^authova_quality_[0-9a-f]{12}$`).MatchString(name) || cfg.DBName != name || os.Getenv("AUTHOVA_TEST_POSTGRES_DSN") != "" {
+	if err != nil || !regexp.MustCompile(`^authova_quality_[0-9a-f]{12}$`).MatchString(name) || cfg.DBName != name {
 		t.Fatal("release password gate requires its isolated MySQL fixture")
 	}
 	db, err := sql.Open("mysql", dsn)

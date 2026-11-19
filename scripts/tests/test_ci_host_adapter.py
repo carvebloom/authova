@@ -107,13 +107,13 @@ class CIHostAdapterTests(unittest.TestCase):
                            layers=['/host/base', '/host/previous', '/host/current'],
                            services={k:dict(id='4'*64, image='sha256:'+'5'*64) for k in ('core', 'console')})
         b = dict(schema='authova-owner-binding/v1', action=action, candidate=candidate(),
-                 project=current['project'], current=current, seconds=300, fixture=None)
+                 project=current['project'], current=current, seconds=1800 if action=='production' else 3600, fixture=None)
         if action == 'test':
             fixture_root = str(state.resolve())+'/test/'+'2'*32
             current['layers'] = [fixture_root+'/compose.json']
-            b['fixture'] = dict(schema='authova-ci-test-binding/v1', scope='2'*32, root=fixture_root,
-                                network=current['project']+'-network', mysql_volume=current['project']+'-mysql',
-                                service_names={k:current['project']+'-'+k for k in ('core','console','mysql','valkey')})
+            b['fixture'] = dict(schema='authova-ci-test-binding/v2', scope='2'*32, root=fixture_root,
+                                network=current['project']+'-network', mysql_volume=current['project']+'-mysql',secret_volumes={k:current['project']+'-'+k+'-credentials' for k in ('core','console','valkey','proxy')},
+                                service_names={k:current['project']+'-'+k for k in ('core','console','mysql','valkey','proxy')})
         p = e['payload']
         record = {k:p[k] for k in ('nonce', 'action', 'candidate_digest', 'build_pipeline', 'test_pipeline', 'production_pipeline')}
         record.update(schema='authova-host-admission-ledger/v1',
@@ -195,8 +195,8 @@ class CIHostAdapterTests(unittest.TestCase):
                 original = adapter.durable
                 def late(*args):
                     original(*args)
-                    if axis == 'wall':w[0] += 300
-                    else:m[0] += 300
+                    if axis == 'wall':w[0] += 3600
+                    else:m[0] += 3600
                 with patch.object(adapter, 'durable', late), self.assertRaisesRegex(Refused, 'OPERATION_EXPIRED'):
                     self.run_operation(parts, wall=lambda:w[0], mono=lambda:m[0])
                 self.assertNotIn('apply', parts[-1].events)
@@ -220,7 +220,7 @@ class CIHostAdapterTests(unittest.TestCase):
                 original = adapter.read_private
                 def read(*args, **kw):
                     result = original(*args, **kw)
-                    if scenario == 'late':wall[0] = 1303
+                    if scenario == 'late':wall[0] = 4603
                     return result
                 def execute():
                     return adapter.execute_files(str(private.resolve()), 'admission.json',

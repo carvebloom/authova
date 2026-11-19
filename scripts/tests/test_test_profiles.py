@@ -45,10 +45,12 @@ class RequiredResults(unittest.TestCase):
         names = {"TestEntPhysicalMapping", "TestDeliveryFailurePersistsAcrossReopen", "TestOutboxAppFairness",
                  "TestOutboxWorkerAppIsolation", "TestMaintenanceGates", "TestAtlasProposedUpgrade",
                  "TestKeyRotationRehearsal", "TestAtlasPlanningCLI"}
-        selected = {"internal/integration": profiles.INTEGRATION_CASES, "internal/storage/sqlstore": names}
+        selected = {"internal/integration": profiles.INTEGRATION_CASES | profiles.PASSWORD_STORAGE_CASES, "internal/storage/sqlstore": names}
         events = [event("internal/integration", "pass")]
         for name in profiles.INTEGRATION_CASES:
             events += [event("internal/integration", "pass", name), event("internal/integration", "pass", name + "/mysql")]
+        for name in profiles.PASSWORD_STORAGE_CASES:
+            events.append(event("internal/integration", "pass", name))
         for name in names - {"TestAtlasPlanningCLI"}:
             events += [event("internal/storage/sqlstore", "pass", name + "/mysql"),
                        event("internal/storage/sqlstore", "skip", name + "/postgres"),
@@ -61,6 +63,13 @@ class RequiredResults(unittest.TestCase):
             profiles.check_events(missing, selected, "database", "mysql", 0)
         with self.assertRaisesRegex(ValueError, "unexpected Skip"):
             profiles.check_events(events, selected, "database", "both", 0)
+        for name in profiles.PASSWORD_STORAGE_CASES:
+            with self.subTest(password_storage=name),self.assertRaisesRegex(ValueError,"unexpected Skip"):
+                profiles.check_events(events+[event("internal/integration","skip",name)],selected,"database","mysql",0)
+        inventory=profiles.source_tests()
+        inventory['internal/integration']-=profiles.PASSWORD_STORAGE_CASES
+        with self.assertRaisesRegex(ValueError,"password storage-case registration drift"):
+            profiles.selection('database',inventory)
 
     def test_allowlist_cannot_hide_selected_or_nested_skips(self):
         for package, name, dialect in [

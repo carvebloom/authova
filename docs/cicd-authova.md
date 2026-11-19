@@ -105,8 +105,9 @@ work_mem4MiB; Valkey maxmemory64MiB/no persistence. Command Go heap512MiB/Node51
 GOMAXPROCS2/-p2. These are candidate limits, **not** 3GiB headroom or cold-fit evidence;
 platform must qualify the actual 3GiB VM serially before activation.
 
-Automatic same-image test deployment/acceptance and trusted host packaging/execution
-remain explicit pending pieces, not certified by these gate/fixture OWN checks.
+Same-image test deployment/acceptance and host execution now have source implementations
+in the owner host package. Their actual installation/execution and full CI resource fit
+remain pending; gate/fixture OWN checks do not certify them.
 
 ## Trusted packaging / promotion
 
@@ -128,10 +129,11 @@ imported only by a pinned installed host worker. They independently verify the f
 platform HMAC v1, private nonce-keyed immutable ledger and whole test receipt,
 same-inode lock/current CAS, then EXCL/fsync nonce+intent before mutation. They do
 not authorize themselves from a job's review fields. The exact private binding,
-nine required test checks, native-evidence receipt and still-missing installed
-operations wiring are in [the host contract](cicd-host-adapter.md). The lane remains
-held until the private operations, actual test runner, worker ledger and packager
-are connected and qualified; a model backend or plan helper cannot close that gap.
+nine required test checks, native-evidence receipt and implemented installed
+operations are in [the host contract](cicd-host-adapter.md). The owner host package contains concrete Core/Console operations and an isolated
+TLS/SMTP/HTTP/OIDC test runner. The lane remains held until normal Git integration,
+worker hookup and actual gates/packaging/deployment qualification; a model or plan
+helper cannot close that runtime gap.
 
 The host-controlled current configuration must supply `schemaDigest` from the
 adopted source and preserve **all** current active layers referenced by

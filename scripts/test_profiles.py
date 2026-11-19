@@ -54,6 +54,7 @@ INTEGRATION_CASES = frozenset({
     "TestAgentConcurrentRefreshReplay", "TestAgentRecoveryQuarantine", "TestCredentialWriteConcurrency",
     "TestIdentityRecoveryLifecycle",
 })
+PASSWORD_STORAGE_CASES = frozenset({"TestPlatformPasswordStorage", "TestPlatformPasswordReproofStorage"})
 PYTHON_UNIT_FILES = ("test_local_test.py", "test_test_profiles.py")
 
 
@@ -98,6 +99,8 @@ def selection(profile, inventory):
         raise ValueError("campaign registration drift; review separate acceptance entry")
     if profile == "database" and not INTEGRATION_CASES <= selected["internal/integration"]:
         raise ValueError("critical database-case registration drift")
+    if profile == "database" and not PASSWORD_STORAGE_CASES <= selected["internal/integration"]:
+        raise ValueError("required password storage-case registration drift")
     return selected, sorted(excluded)
 
 

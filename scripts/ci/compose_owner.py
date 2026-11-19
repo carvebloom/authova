@@ -1,0 +1,398 @@
+"""Installed Authova Core/Console operations; private projections stay in RAM."""
+import copy
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import tarfile
+
+from host_admission import canonical, strict_json
+from host_adapter import durable, directory, _token, _close
+from private_native import Native, Unknown
+from release_contract import need
+
+ROLES=('core','console')
+COMPOSE_LABELS={'com.docker.compose.config-hash','com.docker.compose.image',
+                'com.docker.compose.project.config_files'}
+IMAGE_LABELS={'org.opencontainers.image.revision','io.carvebloom.artifact-manifest',
+              'io.carvebloom.schema','io.carvebloom.role'}
+
+
+def env_map(rows):
+    need(type(rows) is list and all(type(v) is str and '=' in v for v in rows),'ENV_TYPE')
+    result={}
+    for row in rows:
+        k,v=row.split('=',1)
+        need(k not in result and re.fullmatch('[A-Za-z_][A-Za-z0-9_]*',k),'ENV_KEYS')
+        result[k]=v
+    return result
+
+
+def env_file(values):
+    # Compose has already interpreted quoting. Docker CLI env-file values are raw:
+    # do not pass retained files directly or quote a second time. RAM/pipe only.
+    need(type(values) is dict and all(type(k) is str and re.fullmatch('[A-Za-z_][A-Za-z0-9_]*',k)
+         and type(v) is str and '\n' not in v and '\r' not in v and '\x00' not in v for k,v in values.items()),'PROBE_ENV_UNSUPPORTED')
+    return ''.join(k+'='+v+'\n' for k,v in sorted(values.items())).encode()
+
+
+def stable(container):
+    # Whole Config/HostConfig + stable network/mount semantics. Only ephemeral
+    # endpoint/CID allocation is removed, never Env/volumes/resources/hardening.
+    config=copy.deepcopy(container['Config'])
+    config.pop('Hostname',None)  # default CID hostname, independently checked below
+    networks={}
+    for name,value in container['NetworkSettings']['Networks'].items():
+        networks[name]={k:value.get(k) for k in ('NetworkID','IPAMConfig','Links')}
+        for k in ('Aliases','DNSNames'):
+            networks[name][k]=sorted(v for v in (value.get(k) or []) if not re.fullmatch('[0-9a-f]{12}|[0-9a-f]{64}',v))
+    mounts=[{k:m.get(k) for k in ('Type','Name','Source','Destination','Driver','Mode','RW','Propagation')}
+            for m in container['Mounts']]
+    return {'config':config,'host':container['HostConfig'],'networks':networks,
+            'mounts':sorted(mounts,key=lambda x:x['Destination'])}
+
+
+def compare_config(old,new,candidate):
+    expected=copy.deepcopy(old)
+    for role in ROLES:
+        expected['services'][role]['image']=candidate[role+'ID']
+    expected['services']['console'].setdefault('environment',{})['AUTHOVA_CONSOLE_ASSETS']='/opt/authova-console/web'
+    need(new==expected,'COMPOSE_SEMANTIC_DELTA')
+
+
+def post_semantics(before,after,candidate,images,layers,hashes):
+    for role in ROLES:
+        old,new=stable(before[role]),stable(after[role])
+        expected=copy.deepcopy(old)
+        c=expected['config']
+        c['Image']=candidate[role+'ID']
+        if role=='console':
+            values=env_map(c['Env']);values['AUTHOVA_CONSOLE_ASSETS']='/opt/authova-console/web'
+            c['Env']=[k+'='+v for k,v in sorted(values.items())]
+        # Env is semantically a map but every key/value is compared.
+        new['config']['Env']=[k+'='+v for k,v in sorted(env_map(new['config']['Env']).items())]
+        c['Env']=[k+'='+v for k,v in sorted(env_map(c['Env']).items())]
+        for name in IMAGE_LABELS:
+            c.setdefault('Labels',{})[name]=images[role]['Config']['Labels'][name]
+        c['Labels']['com.docker.compose.config-hash']=hashes[role]
+        c['Labels']['com.docker.compose.image']=candidate[role+'ID']
+        c['Labels']['com.docker.compose.project.config_files']=','.join(layers)
+        need(new==expected,'RUNTIME_SEMANTIC_DELTA')
+        # Only a Docker-assigned CID hostname may change implicitly.
+        need(before[role]['Config']['Hostname'] in (before[role]['Id'][:12],before[role]['Id'])
+             and after[role]['Config']['Hostname'] in (after[role]['Id'][:12],after[role]['Id']),'EXPLICIT_HOSTNAME_UNSUPPORTED')
+
+
+class CoreConsoleOwner:
+    def __init__(self, profile, state_root, nonce):
+        need(re.fullmatch('[0-9a-f]{64}',nonce) is not None,'OPERATION_NONCE')
+        self.profile=profile;self.state_root=state_root;self.nonce=nonce
+        self.native=Native(profile['docker'],profile['docker_host'],profile['docker_config'])
+        self.compose_native=Native(profile['compose'],profile['docker_host'],profile['docker_config'])
+        self.daemon_checked=False
+        self.operation=Path(state_root)/'operations'/nonce[:24]
+        self.original=None;self.control=None;self.post=None;self.images={};self.up_started=False
+        self.cfg=None;self.override=None;self.hashes={};self.old_images={};self.secret_inputs={}
+
+    def command(self,tag,args,guard,**kw):
+        if not self.daemon_checked:
+            value=self.native.require('DAEMON_BINDING',['info','--format','{{.ID}} {{.OSType}} {{.Architecture}}'],guard).decode().split()
+            need(value==[self.profile['daemon_id'],'linux','aarch64'],'DAEMON_IDENTITY')
+            self.daemon_checked=True
+        if args[0]=='compose':return self.compose_native.require(tag,args[1:],guard,**kw)
+        return self.native.require(tag,args,guard,**kw)
+    def compose_run(self,tag,args,guard,**kw):
+        need(args[0]=='compose','COMPOSE_ARGV')
+        return self.compose_native.run(tag,args[1:],guard,**kw)
+    def compose(self,binding,layers=None):
+        argv=['compose','--project-name',binding['project'],'--env-file','/dev/null']
+        for p in (layers or binding['current']['layers']):argv+=['-f',p]
+        return argv
+    def inspect_services(self,binding,guard):
+        result={}
+        for role in ROLES:
+            raw=self.command('SELECT_SERVICE',['ps','--all','--quiet','--no-trunc','--filter',
+                   'label=com.docker.compose.project='+binding['project'],'--filter',
+                   'label=com.docker.compose.service='+role],guard)
+            ids=raw.decode('ascii').split()
+            need(len(ids)==1 and re.fullmatch('[0-9a-f]{64}',ids[0]),'SERVICE_SINGLETON')
+            value=strict_json(self.command('INSPECT_SERVICE',['inspect',ids[0]],guard))
+            need(type(value) is list and len(value)==1 and value[0]['Id']==ids[0],'SERVICE_INSPECT')
+            c=value[0];labels=c['Config'].get('Labels') or {}
+            need(labels.get('com.docker.compose.project')==binding['project'] and labels.get('com.docker.compose.service')==role
+                 and labels.get('com.docker.compose.oneoff')=='False','SERVICE_OWNERSHIP')
+            result[role]=c
+        return result
+    def control_value(self):
+        with directory(str(Path(self.profile['active_control']).parent),os.getuid(),private=False) as root:
+            # Public control is commonly0644, so read through explicit regular metadata
+            # consumer rather than relaxing the private0600 credential reader.
+            fd=os.open(Path(self.profile['active_control']).name,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=root)
+            first=None
+            try:
+                import stat
+                s=os.fstat(fd);need(stat.S_ISREG(s.st_mode) and stat.S_IMODE(s.st_mode) in (0o600,0o644) and s.st_nlink==1 and s.st_uid==os.getuid() and s.st_size<=65536,'CONTROL_METADATA')
+                body=os.read(fd,65537);need(len(body)==s.st_size and _token(s)==_token(os.fstat(fd))==_token(os.stat(Path(self.profile['active_control']).name,dir_fd=root,follow_symlinks=False)),'CONTROL_DRIFT')
+            except BaseException as exc:first=exc;raise
+            finally:_close(fd,first,'CONTROL_CLOSE')
+        return strict_json(body)
+    def current(self,binding,guard):
+        previous=getattr(self,"phase","BOOTSTRAP");self.phase="CURRENT"
+        value=self.control_value()
+        need(value['project']==binding['project'] and value['keep_all_layers_in_order'] is True,'CONTROL_PROJECT')
+        if 'compose_layers' in value:
+            need(value['schema']=='authova-two-service-active-control/v1','CONTROL_SCHEMA')
+            layers=value['compose_layers']
+        else:
+            need(value['schema']=='authova-console-static-active-control/v1','CONTROL_SCHEMA')
+            layers=[value[k] for k in ('retained_compose','retained_prior_override','active_override')]
+        if self.control is not None:need(value==self.control,'CURRENT_CONTROL_WHOLE_CAS')
+        else:self.control=value
+        containers=self.inspect_services(binding,guard)
+        need(value['images']=={r:containers[r]['Image'] for r in ROLES},'CONTROL_ACTUAL_IMAGES')
+        self.phase=previous if previous!='BOOTSTRAP' else 'CURRENT'
+        return dict(schema='authova-owner-current/v1',project=binding['project'],
+                    schemaDigest=binding['current']['schemaDigest'],layers=layers,
+                    services={r:{'id':containers[r]['Id'],'image':containers[r]['Image']} for r in ROLES})
+    def selected_private_inputs(self,binding,guard):
+        # Parse only the retained JSON layers and the three explicitly selected
+        # env sources. Reject Compose includes/extends before the CLI can follow
+        # any additional file. Body comparison is RAM-only; never content hash.
+        base=Path(binding['current']['layers'][0]).parent
+        allowed={str(base/r/'service.env') for r in ('core','console','migrator')}
+        for path in binding['current']['layers']:
+            body=self.private_input(path,guard)
+            layer=strict_json(body)
+            need(type(layer) is dict and not {'include','extends'}&set(layer),'COMPOSE_FILE_INDIRECTION')
+            for role,service in layer.get('services',{}).items():
+                need(type(service) is dict and 'extends' not in service,'COMPOSE_SERVICE_INDIRECTION')
+                rows=service.get('env_file',[])
+                if type(rows) is str:rows=[rows]
+                need(type(rows) is list,'ENV_FILE_LIST')
+                for row in rows:
+                    if type(row) is dict:
+                        need(set(row)<= {'path','required'} and row.get('required',True) is True,'ENV_FILE_OPTIONS')
+                        row=row['path']
+                    need(type(row) is str,'ENV_FILE_PATH')
+                    p=str(Path(path).parent/row) if not row.startswith('/') else row
+                    need(p in allowed,'ENV_FILE_NOT_SELECTED')
+                    self.private_input(p,guard)
+    def private_input(self,path,guard):
+        from host_adapter import read_private
+        guard();p=Path(path)
+        with directory(str(p.parent),os.getuid()) as root:
+            body=read_private(root,p.name,os.getuid(),limit=1048576)
+            token=_token(os.stat(p.name,dir_fd=root,follow_symlinks=False))
+        previous=self.secret_inputs.get(path)
+        if previous is not None:need(previous==(token,body),'PRIVATE_INPUT_CAS')
+        else:self.secret_inputs[path]=(token,body)
+        guard();return body
+    def input_guard(self,guard):
+        for path in tuple(self.secret_inputs):self.private_input(path,guard)
+    def render(self,binding,guard,layers=None):
+        self.input_guard(guard)
+        result=strict_json(self.command('COMPOSE_PRIVATE_CONFIG',self.compose(binding,layers)+['config','--format','json'],guard))
+        self.input_guard(guard);return result
+    def image(self,image,guard):
+        raw=strict_json(self.command('IMAGE_LOCAL_ONLY',['image','inspect',image],guard))
+        need(type(raw) is list and len(raw)==1 and raw[0]['Id']==image and raw[0]['Os']=='linux' and raw[0]['Architecture']=='arm64','IMAGE_IDENTITY')
+        return raw[0]
+    def setup_directory(self):
+        parent=self.operation.parent
+        try:parent.mkdir(mode=0o700)
+        except FileExistsError:pass
+        need(not parent.is_symlink() and (parent.stat().st_mode&0o777)==0o700 and parent.stat().st_uid==os.getuid(),'OPERATION_PARENT')
+        self.operation.mkdir(mode=0o700)
+    def write(self,name,value):
+        with directory(str(self.operation),os.getuid()) as fd:durable(fd,name,value)
+        return str(self.operation/name)
+    def archive_guard(self,candidate,guard):
+        path=self.profile['archive']['path'];expected=self.profile['archive']
+        fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW);first=None
+        try:
+            import stat
+            s=os.fstat(fd);need(stat.S_ISREG(s.st_mode) and s.st_nlink==1 and list(_token(s))==expected['identity'] and s.st_size<=512*1024*1024,'ARCHIVE_METADATA')
+            h=hashlib.sha256();count=0
+            while True:
+                guard();body=os.read(fd,65536)
+                if not body:break
+                h.update(body);count+=len(body)
+            need(count==s.st_size and h.hexdigest()==candidate['archive'],'ARCHIVE_SHA')
+            os.lseek(fd,0,os.SEEK_SET)
+            with os.fdopen(os.dup(fd),'rb') as stream,tarfile.open(fileobj=stream,mode='r:') as tar:
+                members=[]
+                for member in tar:
+                    guard();members.append(member);need(len(members)<=4096,'ARCHIVE_MEMBERS')
+                listed=[v for v in members if v.name=='manifest.json']
+                need(len(listed)==1 and listed[0].isreg() and listed[0].size<=65536,'DOCKER_ARCHIVE_MANIFEST')
+                manifest=strict_json(tar.extractfile(listed[0]).read())
+                need(type(manifest) is list and len(manifest)==2,'DOCKER_ARCHIVE_IMAGES')
+                configs={v.get('Config') for v in manifest}
+                choices=[{candidate[r+'ID'][7:]+'.json' for r in ROLES},{'blobs/sha256/'+candidate[r+'ID'][7:] for r in ROLES}]
+                need(configs in choices,'DOCKER_ARCHIVE_CONFIGS')
+            need(_token(s)==_token(os.fstat(fd))==_token(os.stat(path,follow_symlinks=False)),'ARCHIVE_DRIFT')
+        except BaseException as exc:first=exc;raise
+        finally:_close(fd,first,'ARCHIVE_CLOSE')
+    def preflight(self,binding,guard):
+        self.phase='PREFLIGHT'
+        self.setup_directory();self.archive_guard(binding['candidate'],guard);self.selected_private_inputs(binding,guard)
+        from deployment_http import readonly_acceptance
+        readonly_acceptance(self.profile,guard)  # qualify existing normal CA/route before any service change
+        self.original=self.inspect_services(binding,guard)
+        self.cfg=self.render(binding,guard)
+        need(set(ROLES)<=set(self.cfg['services']),'COMPOSE_SERVICES')
+        for role,c in self.original.items():
+            need(c['State']['Running'] is True and c['State'].get('Health',{}).get('Status')=='healthy','OLD_RUNTIME_HEALTH')
+            old=self.image(c['Image'],guard);self.old_images[role]=old  # rollback immutable local image, no pull
+            values=env_map(old['Config'].get('Env') or [])
+            desired=self.cfg['services'][role].get('environment') or {}
+            need(all(type(k) is str and type(v) is str for k,v in desired.items()),'COMPOSE_ENV_UNSUPPORTED')
+            values.update(desired)
+            need(values==env_map(c['Config']['Env']),'CURRENT_ENV_SEMANTICS')
+            env_file(values)  # explicitly rejects env-file newline ambiguity before any mutation
+        self.override=self.write('candidate-override.json',{'services':{'core':{'image':binding['candidate']['coreID']},'console':{'image':binding['candidate']['consoleID'],'environment':{'AUTHOVA_CONSOLE_ASSETS':'/opt/authova-console/web'}}}})
+        layers=binding['current']['layers']+[self.override]
+        compare_config(self.cfg,self.render(binding,guard,layers),binding['candidate'])
+        for role in ROLES:
+            value=self.command('COMPOSE_HASH',self.compose(binding,layers)+['config','--hash',role],guard).decode().strip().split()
+            need(len(value)==2 and value[0]==role and re.fullmatch('[0-9a-f]{64}',value[1]),'COMPOSE_HASH_FORMAT')
+            self.hashes[role]=value[1]
+    def oneshot(self,binding,guard,image,args,values,mounts,*,network,body=None,tag='SCHEMA_PROBE',entrypoint=None):
+        name=binding['project']+'-'+tag.lower().replace('_','-')+'-'+self.nonce[:12]
+        argv=['create','--pull=never','--interactive','--name',name,'--network',network,'--read-only','--cap-drop','ALL',
+              '--security-opt','no-new-privileges:true','--user','10001:10001','--memory','256m','--memory-swap','256m','--cpus','0.5','--pids-limit','64',
+              '--label','io.carvebloom.ci.operation='+self.nonce,'--env-file','/dev/stdin']
+        for m in mounts:
+            need(m['RW'] is False and m['Type'] in ('bind','volume'),'PROBE_MOUNT')
+            source=m['Name'] if m['Type']=='volume' else m['Source']
+            mount='type='+m['Type']+',source='+source+',target='+m['Destination']+',readonly'
+            if m['Type']=='volume':mount+=',volume-nocopy'
+            argv+=['--mount',mount]
+        if entrypoint is not None:argv+=['--entrypoint',entrypoint]
+        cid=self.command('HELPER_CREATE',argv+[image,*args],guard,body=env_file(values)).decode().strip()
+        need(re.fullmatch('[0-9a-f]{64}',cid) is not None,'HELPER_CREATE_ACK_UNKNOWN')
+        self.write(tag+'-ack.json',{'id':cid,'image':image,'operation':self.nonce})
+        rc,output=self.native.run('HELPER_START_WAIT',['start','--attach','--interactive',cid],guard,body=body,whole=90,suffix=240)
+        state=strict_json(self.command('HELPER_STATE',['inspect','--format','{{json .State}}',cid],guard))
+        need(state['Running'] is False and type(state['ExitCode']) is int and state['ExitCode']==rc,'HELPER_WAIT_UNKNOWN')
+        self.command('HELPER_REMOVE',['rm',cid],guard)
+        remaining=self.command('HELPER_ABSENCE',['ps','--all','--quiet','--no-trunc','--filter','id='+cid],guard)
+        need(not remaining.strip(),'HELPER_ABSENCE_UNKNOWN')
+        return rc,output
+    def apply(self,binding,guard):
+        self.phase='APPLY'
+        # Loading/creating a read-only schema probe are Docker mutations, so both
+        # happen here AFTER durable signed nonce consumption, never in preflight.
+        self.archive_guard(binding['candidate'],guard)
+        self.command('IMAGE_LOAD',['image','load','--input',self.profile['archive']['path']],guard,whole=120,suffix=300)
+        for role in ROLES:
+            image=self.image(binding['candidate'][role+'ID'],guard);labels=image['Config'].get('Labels') or {}
+            need(image['Config']['User']=='10001:10001' and image['Config']['Entrypoint']==['authova' if role=='core' else 'authova-console']
+                 and labels.get('org.opencontainers.image.revision')==binding['candidate']['source']
+                 and labels.get('io.carvebloom.artifact-manifest')==binding['candidate']['manifest']
+                 and labels.get('io.carvebloom.schema')==binding['candidate']['schemaDigest']
+                 and labels.get('io.carvebloom.role')==role,'CANDIDATE_IMAGE_PROVENANCE')
+            self.images[role]=image
+            values=env_map(image['Config'].get('Env') or []);values.update(self.cfg['services'][role].get('environment') or {})
+            original=env_map(self.original[role]['Config']['Env'])
+            if role=='console':
+                values['AUTHOVA_CONSOLE_ASSETS']='/opt/authova-console/web';original['AUTHOVA_CONSOLE_ASSETS']='/opt/authova-console/web'
+            if values!=original:return 'PREFLIGHT_REFUSED'
+            actual_labels=dict(image['Config'].get('Labels') or {});actual_labels.update(self.cfg['services'][role].get('labels') or {})
+            old_labels=dict(self.original[role]['Config'].get('Labels') or {})
+            for key in list(old_labels):
+                if key.startswith('com.docker.compose.') or key in IMAGE_LABELS:old_labels.pop(key)
+            for key in list(actual_labels):
+                if key.startswith('com.docker.compose.') or key in IMAGE_LABELS:actual_labels.pop(key)
+            if old_labels!=actual_labels:return 'PREFLIGHT_REFUSED'
+        core=self.original['core'];mounts=core['Mounts']
+        values=env_map(core['Config']['Env'])
+        files=[values[k] for k in ('AUTHOVA_MASTER_KEY_FILE','AUTHOVA_ENCRYPTION_KEYRING_FILE','AUTHOVA_VALKEY_PASSWORD_FILE',
+                                  'AUTHOVA_VALKEY_TLS_CA_FILE','AUTHOVA_VALKEY_TLS_CERT_FILE','AUTHOVA_VALKEY_TLS_KEY_FILE') if values.get(k)]
+        needed=set()
+        for path in files:
+            need(path.startswith('/') and all(v not in ('','.','..') for v in path.split('/')[1:]),'PROBE_FILE_PATH')
+            candidates=[m for m in mounts if m['Destination']!='/' and (path==m['Destination'] or path.startswith(m['Destination'].rstrip('/')+'/'))]
+            need(bool(candidates),'PROBE_FILE_NOT_MOUNTED')
+            m=max(candidates,key=lambda value:len(value['Destination']))
+            need(m['RW'] is False and m['Type'] in ('bind','volume'),'PROBE_SELECTED_RO_MOUNTS')
+            needed.add(m['Destination'])
+        selected=[m for m in mounts if m['Destination'] in needed]
+        rc,frame=self.oneshot(binding,guard,binding['candidate']['coreID'],['schema-check'],env_map(core['Config']['Env']),selected,network='container:'+core['Id'])
+        if rc!=0:return 'PREFLIGHT_REFUSED'
+        need(strict_json(frame)=={'schema':'authova-runtime-schema/v1','result':'PASS'},'SCHEMA_FRAME')
+        need(self.current(binding,guard)==binding['current'] and self.render(binding,guard)==self.cfg,'PRE_UP_CURRENT_CAS')
+        current=self.inspect_services(binding,guard)
+        need(all(stable(current[r])==stable(self.original[r]) for r in ROLES),'PRE_UP_PRIVATE_CAS')
+        guard.full(120,600)
+        self.input_guard(guard)
+        self.up_started=True
+        rc,_=self.compose_run('SELECTIVE_UP',self.compose(binding,binding['current']['layers']+[self.override])+['up','--detach','--no-deps','--no-build','--pull','never','--wait','--wait-timeout','90','core','console'],guard,whole=120,suffix=600)
+        self.input_guard(guard)
+        self.post=self.inspect_services(binding,guard)
+        need(all(self.post[r]['Image'] in (self.original[r]['Image'],binding['candidate'][r+'ID']) for r in ROLES),'POSTSTATE_UNKNOWN')
+        return 'APPLIED' if rc==0 and all(self.post[r]['Image']==binding['candidate'][r+'ID'] for r in ROLES) else 'FAILED_KNOWN'
+    def accept(self,binding,guard):
+        self.phase='ACCEPT'
+        from deployment_http import readonly_acceptance
+        observed=self.inspect_services(binding,guard)
+        need(all(observed[r]['Id']==self.post[r]['Id'] and stable(observed[r])==stable(self.post[r]) for r in ROLES),'ACCEPTANCE_CURRENT_CAS_UNKNOWN')
+        self.post=observed
+        try:
+            post_semantics(self.original,self.post,binding['candidate'],self.images,binding['current']['layers']+[self.override],self.hashes)
+            if not all(self.post[r]['State']['Running'] is True and self.post[r]['State'].get('Health',{}).get('Status')=='healthy' for r in ROLES):return 'FAIL_KNOWN'
+            readonly_acceptance(self.profile,guard)
+        except __import__('deployment_http').KnownUnhealthy:
+            return 'FAIL_KNOWN'
+        self.publish_control(binding,guard)
+        return 'PASS'
+    def rollback(self,binding,guard):
+        self.phase='ROLLBACK'
+        need(self.post is not None,'ROLLBACK_STATE_UNKNOWN')
+        need(self.control_value()==self.control,'ROLLBACK_CONTROL_CAS')
+        current=self.inspect_services(binding,guard)
+        need(all(current[r]['Id']==self.post[r]['Id'] and stable(current[r])==stable(self.post[r]) for r in ROLES),'ROLLBACK_CAS_UNKNOWN')
+        need(self.render(binding,guard)==self.cfg,'ROLLBACK_CONFIG_CAS')
+        override=self.write('rollback-override.json',{'services':{r:{'image':self.original[r]['Image']} for r in ROLES}})
+        rollback_layers=binding['current']['layers']+[override]
+        rollback_hashes={}
+        for role in ROLES:
+            row=self.command('ROLLBACK_HASH',self.compose(binding,rollback_layers)+['config','--hash',role],guard).decode().split()
+            need(len(row)==2 and row[0]==role and re.fullmatch('[0-9a-f]{64}',row[1]),'ROLLBACK_HASH_FORMAT')
+            rollback_hashes[role]=row[1]
+        rc,_=self.compose_run('KNOWN_ROLLBACK',self.compose(binding,binding['current']['layers']+[override])+['up','--detach','--no-deps','--no-build','--pull','never','--wait','--wait-timeout','90','core','console'],guard,whole=120,suffix=20)
+        need(rc==0,'ROLLBACK_COMMAND_UNKNOWN')
+        restored=self.inspect_services(binding,guard)
+        need(all(restored[r]['Image']==self.original[r]['Image'] and restored[r]['State']['Running'] is True
+                 and restored[r]['State'].get('Health',{}).get('Status')=='healthy' for r in ROLES),'ROLLBACK_RUNTIME_UNKNOWN')
+        # Use same semantic comparison with exact old IDs, no data restoration.
+        for role in ROLES:
+            old,new=stable(self.original[role]),stable(restored[role])
+            old['config']['Labels']['com.docker.compose.config-hash']=rollback_hashes[role]
+            old['config']['Labels']['com.docker.compose.image']=self.original[role]['Image']
+            old['config']['Labels']['com.docker.compose.project.config_files']=','.join(rollback_layers)
+            need(old==new,'ROLLBACK_SEMANTICS_UNKNOWN')
+        self.publish_control(binding,guard,outcome='ROLLED_BACK',layers=rollback_layers,images={r:self.original[r]['Image'] for r in ROLES})
+        return 'ROLLED_BACK'
+    def publish_control(self,binding,guard,*,outcome='PASS_PRODUCTION',layers=None,images=None):
+        self.phase='PUBLISH'
+        # Public metadata only. No env/DSN/private semantic digest is written.
+        path=Path(self.profile['active_control']);guard()
+        existing=self.control_value();need(existing==self.control,'PUBLISH_CONTROL_CAS')
+        value=copy.deepcopy(existing)
+        active_layers=layers or binding['current']['layers']+[self.override]
+        value.update(schema='authova-two-service-active-control/v1',compose_layers=active_layers,active_override=active_layers[-1],
+                     images=images or {r:binding['candidate'][r+'ID'] for r in ROLES},services_changed=list(ROLES),
+                     ci_last_attempt={'candidate':binding['candidate'],'outcome':outcome})
+        if outcome=='PASS_PRODUCTION':value['ci_candidate']=binding['candidate']
+        if 'public_release_summary' in value:value['previous_public_release_summary']=value.pop('public_release_summary')
+        parent=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY)
+        first=None
+        try:
+            temp=path.name+'.'+self.nonce+'.tmp';durable(parent,temp,value)
+            need(self.control_value()==existing,'PUBLISH_CONTROL_CAS')
+            os.rename(temp,path.name,src_dir_fd=parent,dst_dir_fd=parent);os.fsync(parent)
+        except BaseException as exc:first=exc;raise
+        finally:_close(parent,first,'CONTROL_PARENT_CLOSE')
+        guard()

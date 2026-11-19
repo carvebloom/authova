@@ -41,7 +41,7 @@ def _regular(s, uid):
 
 
 @contextmanager
-def directory(path, uid):
+def directory(path, uid, *, private=True):
     """Open absolute components without symlink traversal; retain final dirfd."""
     need(type(path) is str and path.startswith('/') and path != '/'
          and all(p not in ('', '.', '..') for p in path.split('/')[1:]), 'PRIVATE_DIRECTORY_PATH')
@@ -53,7 +53,7 @@ def directory(path, uid):
             previous, fd = fd, child
             os.close(previous)
         s = os.fstat(fd)
-        need(stat.S_IMODE(s.st_mode) == 0o700 and s.st_uid == uid, 'PRIVATE_DIRECTORY_METADATA')
+        need(stat.S_IMODE(s.st_mode) in ((0o700,) if private else (0o700,0o755)) and s.st_uid == uid, 'PRIVATE_DIRECTORY_METADATA')
         yield fd
     except BaseException as exc:
         first = exc
@@ -156,21 +156,22 @@ def validate_binding(binding, payload, state_root):
     need(type(binding) is dict and set(binding) == BINDING_KEYS
          and binding['schema'] == 'authova-owner-binding/v1', 'OWNER_BINDING')
     need(binding['action'] == payload['action'] and binding['candidate'] == payload['candidate'], 'OWNER_CANDIDATE')
-    need(type(binding['seconds']) is int and 60 <= binding['seconds'] <= 1800, 'OWNER_BUDGET')
+    need(type(binding['seconds']) is int and binding['seconds'] == (3600 if payload['action']=='test' else 1800), 'OWNER_BUDGET')
     if payload['action'] == 'production':
         need(binding['project'] == 'authova-local-production-20261114' and binding['fixture'] is None, 'PRODUCTION_PROJECT')
     else:
         need(binding['project'] == 'authova-ci-test-' + payload['candidate']['source'][:12]
              + '-' + str(payload['build_pipeline']), 'TEST_PROJECT')
         fixture = binding['fixture']
-        need(type(fixture) is dict and set(fixture) == {'schema', 'scope', 'root', 'network', 'mysql_volume', 'service_names'}, 'FIXTURE_KEYS')
+        need(type(fixture) is dict and set(fixture) == {'schema', 'scope', 'root', 'network', 'mysql_volume', 'secret_volumes', 'service_names'}, 'FIXTURE_KEYS')
         import re
-        need(fixture['schema'] == 'authova-ci-test-binding/v1' and type(fixture['scope']) is str
+        need(fixture['schema'] == 'authova-ci-test-binding/v2' and type(fixture['scope']) is str
              and re.fullmatch('[0-9a-f]{32}', fixture['scope']), 'FIXTURE_SCOPE')
         need(fixture['root'] == state_root + '/test/' + fixture['scope'], 'FIXTURE_ROOT')
         need(fixture['network'] == binding['project'] + '-network'
              and fixture['mysql_volume'] == binding['project'] + '-mysql'
-             and fixture['service_names'] == {k:binding['project']+'-'+k for k in ('core', 'console', 'mysql', 'valkey')}, 'FIXTURE_RESOURCES')
+             and fixture['service_names'] == {k:binding['project']+'-'+k for k in ('core', 'console', 'mysql', 'valkey','proxy')}
+             and fixture['secret_volumes'] == {k:binding['project']+'-'+k+'-credentials' for k in ('core','console','valkey','proxy')}, 'FIXTURE_RESOURCES')
         need(binding['current']['layers'] == [fixture['root'] + '/compose.json'], 'FIXTURE_COMPOSE')
     current = binding['current']
     need(type(current) is dict and set(current) == {'schema', 'project', 'schemaDigest', 'layers', 'services'}
@@ -218,6 +219,11 @@ def execute(binding, envelope, key, ledger_root, state_root, owner, *, receipt=N
             def guard():
                 lock_check()
                 return cap()
+            def full(whole, suffix=0):
+                guard()
+                need(type(whole) in (int,float) and type(suffix) in (int,float) and whole > 0 and suffix >= 0, 'OPERATION_WHOLE')
+                need(wall()+whole+suffix < original_i+seconds and mono()+whole+suffix < original_m+seconds, 'OPERATION_FULL_SUFFIX')
+            guard.full = full
             guard()
             ledger(issued, p, receipt, uid)
             try:
@@ -244,8 +250,8 @@ def execute(binding, envelope, key, ledger_root, state_root, owner, *, receipt=N
             verify(envelope, key, binding['candidate'], binding['action'], int(guard()))
             outcome = owner.apply(binding, guard)
             guard()
-            need(outcome in ('APPLIED', 'FAILED_KNOWN'), 'MUTATION_UNKNOWN')
-            result = 'FAIL_KNOWN'
+            need(outcome in ('APPLIED', 'FAILED_KNOWN', 'PREFLIGHT_REFUSED'), 'MUTATION_UNKNOWN')
+            result = 'REFUSED_PREFLIGHT' if outcome == 'PREFLIGHT_REFUSED' else 'FAIL_KNOWN'
             if outcome == 'APPLIED':
                 accepted = owner.accept(binding, guard)
                 guard()
@@ -282,14 +288,14 @@ def execute(binding, envelope, key, ledger_root, state_root, owner, *, receipt=N
 
 
 def execute_files(private_root, admission_name, ledger_root, state_root, owner, *,
-                  uid=None, wall=time.time, mono=time.monotonic):
+                  uid=None, wall=time.time, mono=time.monotonic, _origin=None):
     """Host-only fixed private binding/key, never supplied by a command step.
 
     root has immutable binding.json/key and (production only) test-receipt.json.
     Input is RAM-only; key is never hashed or serialized. The original operation
     I/M precede all file reads, and execute retains those exact origins.
     """
-    origin = (wall(), mono())
+    origin = (wall(), mono()) if _origin is None else _origin
     uid = os.getuid() if uid is None else uid
     with directory(private_root, uid) as root:
         binding = strict_json(read_private(root, 'binding.json', uid))
