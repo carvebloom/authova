@@ -3458,12 +3458,14 @@ func (x *OperatorPage) GetNextCursor() *wire.NullableString {
 }
 
 type OperatorPatch struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Reason        *string                `protobuf:"bytes,1,opt,name=reason,proto3,oneof" json:"reason,omitempty"`
-	Role          *string                `protobuf:"bytes,2,opt,name=role,proto3,oneof" json:"role,omitempty"`
-	Status        *string                `protobuf:"bytes,3,opt,name=status,proto3,oneof" json:"status,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Reason          *string                `protobuf:"bytes,1,opt,name=reason,proto3,oneof" json:"reason,omitempty"`
+	Role            *string                `protobuf:"bytes,2,opt,name=role,proto3,oneof" json:"role,omitempty"`
+	Status          *string                `protobuf:"bytes,3,opt,name=status,proto3,oneof" json:"status,omitempty"`
+	Password        *string                `protobuf:"bytes,4,opt,name=password,proto3,oneof" json:"password,omitempty"`
+	CurrentPassword *string                `protobuf:"bytes,5,opt,name=current_password,proto3,oneof" json:"current_password,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *OperatorPatch) Reset() {
@@ -3513,6 +3515,20 @@ func (x *OperatorPatch) GetRole() string {
 func (x *OperatorPatch) GetStatus() string {
 	if x != nil && x.Status != nil {
 		return *x.Status
+	}
+	return ""
+}
+
+func (x *OperatorPatch) GetPassword() string {
+	if x != nil && x.Password != nil {
+		return *x.Password
+	}
+	return ""
+}
+
+func (x *OperatorPatch) GetCurrentPassword() string {
+	if x != nil && x.CurrentPassword != nil {
+		return *x.CurrentPassword
 	}
 	return ""
 }
@@ -10031,7 +10047,7 @@ const file_api_authova_v1_management_proto_rawDesc = "" +
 	"\x06policy\x18\x02 \x01(\v2+.authova.management.v1.AuthenticationPolicyB\x06\xda\xf3\x18\x02{}R\x06policy\x12@\n" +
 	"\x06reason\x18\x03 \x01(\tB#\xda\xf3\x18\x1f{\"maxLength\":500,\"minLength\":1}H\x01R\x06reason\x88\x01\x01:R\xca\xf3\x18N{\"additionalProperties\":false,\"required\":[\"policy\",\"config_version\",\"reason\"]}B\x11\n" +
 	"\x0f_config_versionB\t\n" +
-	"\a_reason\"\xc4\v\n" +
+	"\a_reason\"\x87\f\n" +
 	"\x06Client\x12m\n" +
 	"\x11allowed_audiences\x18\x01 \x01(\v21.authova.management.v1.ClientAllowedAudiencesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x11allowed_audiences\x12\x96\x01\n" +
 	"\x1fallowed_introspection_audiences\x18\x02 \x01(\v2>.authova.management.v1.ClientAllowedIntrospectionAudiencesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x1fallowed_introspection_audiences\x12d\n" +
@@ -10041,8 +10057,8 @@ const file_api_authova_v1_management_proto_rawDesc = "" +
 	"\x0econfig_version\x18\x06 \x01(\x03B\x06\xda\xf3\x18\x02{}H\x02R\x0econfig_version\x88\x01\x01\x12?\n" +
 	"\n" +
 	"created_at\x18\a \x01(\tB\x1a\xda\xf3\x18\x16{\"format\":\"date-time\"}H\x03R\n" +
-	"created_at\x88\x01\x01\x12[\n" +
-	"\vgrant_types\x18\b \x01(\v2+.authova.management.v1.ClientGrantTypesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\vgrant_types\x12\x1b\n" +
+	"created_at\x88\x01\x01\x12\x9d\x01\n" +
+	"\vgrant_types\x18\b \x01(\v2+.authova.management.v1.ClientGrantTypesListBN\xda\xf3\x18\x02{}\xe2\xf3\x18D{\"enum\":[\"authorization_code\",\"refresh_token\",\"client_credentials\"]}R\vgrant_types\x12\x1b\n" +
 	"\x02id\x18\t \x01(\tB\x06\xda\xf3\x18\x02{}H\x04R\x02id\x88\x01\x01\x12?\n" +
 	"\x04kind\x18\n" +
 	" \x01(\tB&\xda\xf3\x18\"{\"enum\":[\"public\",\"confidential\"]}H\x05R\x04kind\x88\x01\x01\x12\x1f\n" +
@@ -10061,12 +10077,12 @@ const file_api_authova_v1_management_proto_rawDesc = "" +
 	"\x05_nameB\x1d\n" +
 	"\x1b_previous_secret_expires_atB\t\n" +
 	"\a_statusB\t\n" +
-	"\a_system\"\x85\f\n" +
+	"\a_system\"\xc8\f\n" +
 	"\fClientCreate\x12s\n" +
 	"\x11allowed_audiences\x18\x01 \x01(\v27.authova.management.v1.ClientCreateAllowedAudiencesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x11allowed_audiences\x12\x9c\x01\n" +
 	"\x1fallowed_introspection_audiences\x18\x02 \x01(\v2D.authova.management.v1.ClientCreateAllowedIntrospectionAudiencesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x1fallowed_introspection_audiences\x12j\n" +
-	"\x0eallowed_scopes\x18\x03 \x01(\v24.authova.management.v1.ClientCreateAllowedScopesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x0eallowed_scopes\x12a\n" +
-	"\vgrant_types\x18\x04 \x01(\v21.authova.management.v1.ClientCreateGrantTypesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\vgrant_types\x12?\n" +
+	"\x0eallowed_scopes\x18\x03 \x01(\v24.authova.management.v1.ClientCreateAllowedScopesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x0eallowed_scopes\x12\xa3\x01\n" +
+	"\vgrant_types\x18\x04 \x01(\v21.authova.management.v1.ClientCreateGrantTypesListBN\xda\xf3\x18\x02{}\xe2\xf3\x18D{\"enum\":[\"authorization_code\",\"refresh_token\",\"client_credentials\"]}R\vgrant_types\x12?\n" +
 	"\x04kind\x18\x05 \x01(\tB&\xda\xf3\x18\"{\"enum\":[\"public\",\"confidential\"]}H\x00R\x04kind\x88\x01\x01\x12\x1f\n" +
 	"\x04name\x18\x06 \x01(\tB\x06\xda\xf3\x18\x02{}H\x01R\x04name\x88\x01\x01\x12g\n" +
 	"\rredirect_uris\x18\a \x01(\v23.authova.management.v1.ClientCreateRedirectUrisListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\rredirect_uris\x12@\n" +
@@ -10094,13 +10110,13 @@ const file_api_authova_v1_management_proto_rawDesc = "" +
 	"\n" +
 	"ClientPage\x12N\n" +
 	"\x05items\x18\x01 \x01(\v2*.authova.management.v1.ClientPageItemsListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x05items\x12_\n" +
-	"\vnext_cursor\x18\x02 \x01(\v2\x1c.authova.wire.NullableStringB\x1f\xda\xf3\x18\x1b{\"x-authova-nullable\":true}R\vnext_cursor:E\xca\xf3\x18A{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}\"\xdc\x06\n" +
+	"\vnext_cursor\x18\x02 \x01(\v2\x1c.authova.wire.NullableStringB\x1f\xda\xf3\x18\x1b{\"x-authova-nullable\":true}R\vnext_cursor:E\xca\xf3\x18A{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}\"\x9f\a\n" +
 	"\vClientPatch\x12r\n" +
 	"\x11allowed_audiences\x18\x01 \x01(\v26.authova.management.v1.ClientPatchAllowedAudiencesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x11allowed_audiences\x12\x9b\x01\n" +
 	"\x1fallowed_introspection_audiences\x18\x02 \x01(\v2C.authova.management.v1.ClientPatchAllowedIntrospectionAudiencesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x1fallowed_introspection_audiences\x12i\n" +
 	"\x0eallowed_scopes\x18\x03 \x01(\v23.authova.management.v1.ClientPatchAllowedScopesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x0eallowed_scopes\x123\n" +
-	"\x0econfig_version\x18\x04 \x01(\x03B\x06\xda\xf3\x18\x02{}H\x00R\x0econfig_version\x88\x01\x01\x12`\n" +
-	"\vgrant_types\x18\x05 \x01(\v20.authova.management.v1.ClientPatchGrantTypesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\vgrant_types\x12#\n" +
+	"\x0econfig_version\x18\x04 \x01(\x03B\x06\xda\xf3\x18\x02{}H\x00R\x0econfig_version\x88\x01\x01\x12\xa2\x01\n" +
+	"\vgrant_types\x18\x05 \x01(\v20.authova.management.v1.ClientPatchGrantTypesListBN\xda\xf3\x18\x02{}\xe2\xf3\x18D{\"enum\":[\"authorization_code\",\"refresh_token\",\"client_credentials\"]}R\vgrant_types\x12#\n" +
 	"\x04name\x18\x06 \x01(\tB\n" +
 	"\xda\xf3\x18\x02{}\x80\xf4\x18\x01H\x01R\x04name\x88\x01\x01\x12f\n" +
 	"\rredirect_uris\x18\a \x01(\v22.authova.management.v1.ClientPatchRedirectUrisListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\rredirect_uris\x12C\n" +
@@ -10174,7 +10190,7 @@ const file_api_authova_v1_management_proto_rawDesc = "" +
 	"\fCreatedAgent\x12:\n" +
 	"\x05agent\x18\x01 \x01(\v2\x1c.authova.management.v1.AgentB\x06\xda\xf3\x18\x02{}R\x05agent\x12\x8f\x01\n" +
 	"\rclient_secret\x18\x02 \x01(\tBd\xda\xf3\x18`{\"description\":\"Only in create response and creator-scoped idempotency replay for ten minutes.\"}H\x00R\rclient_secret\x88\x01\x01:7\xca\xf3\x183{\"additionalProperties\":false,\"required\":[\"agent\"]}B\x10\n" +
-	"\x0e_client_secret\"\x98\r\n" +
+	"\x0e_client_secret\"\xdb\r\n" +
 	"\rCreatedClient\x12t\n" +
 	"\x11allowed_audiences\x18\x01 \x01(\v28.authova.management.v1.CreatedClientAllowedAudiencesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x11allowed_audiences\x12\x9d\x01\n" +
 	"\x1fallowed_introspection_audiences\x18\x02 \x01(\v2E.authova.management.v1.CreatedClientAllowedIntrospectionAudiencesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x1fallowed_introspection_audiences\x12k\n" +
@@ -10185,8 +10201,8 @@ const file_api_authova_v1_management_proto_rawDesc = "" +
 	"\x0econfig_version\x18\a \x01(\x03B\x06\xda\xf3\x18\x02{}H\x03R\x0econfig_version\x88\x01\x01\x12?\n" +
 	"\n" +
 	"created_at\x18\b \x01(\tB\x1a\xda\xf3\x18\x16{\"format\":\"date-time\"}H\x04R\n" +
-	"created_at\x88\x01\x01\x12b\n" +
-	"\vgrant_types\x18\t \x01(\v22.authova.management.v1.CreatedClientGrantTypesListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\vgrant_types\x12\x1b\n" +
+	"created_at\x88\x01\x01\x12\xa4\x01\n" +
+	"\vgrant_types\x18\t \x01(\v22.authova.management.v1.CreatedClientGrantTypesListBN\xda\xf3\x18\x02{}\xe2\xf3\x18D{\"enum\":[\"authorization_code\",\"refresh_token\",\"client_credentials\"]}R\vgrant_types\x12\x1b\n" +
 	"\x02id\x18\n" +
 	" \x01(\tB\x06\xda\xf3\x18\x02{}H\x05R\x02id\x88\x01\x01\x12?\n" +
 	"\x04kind\x18\v \x01(\tB&\xda\xf3\x18\"{\"enum\":[\"public\",\"confidential\"]}H\x06R\x04kind\x88\x01\x01\x12\x1f\n" +
@@ -10265,14 +10281,18 @@ const file_api_authova_v1_management_proto_rawDesc = "" +
 	"\f_totp_secret\"\x88\x02\n" +
 	"\fOperatorPage\x12P\n" +
 	"\x05items\x18\x01 \x01(\v2,.authova.management.v1.OperatorPageItemsListB\f\xda\xf3\x18\x02{}\xe2\xf3\x18\x02{}R\x05items\x12_\n" +
-	"\vnext_cursor\x18\x02 \x01(\v2\x1c.authova.wire.NullableStringB\x1f\xda\xf3\x18\x1b{\"x-authova-nullable\":true}R\vnext_cursor:E\xca\xf3\x18A{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}\"\xae\x02\n" +
+	"\vnext_cursor\x18\x02 \x01(\v2\x1c.authova.wire.NullableStringB\x1f\xda\xf3\x18\x1b{\"x-authova-nullable\":true}R\vnext_cursor:E\xca\xf3\x18A{\"additionalProperties\":false,\"required\":[\"items\",\"next_cursor\"]}\"\xba\a\n" +
 	"\rOperatorPatch\x120\n" +
 	"\x06reason\x18\x01 \x01(\tB\x13\xda\xf3\x18\x0f{\"minLength\":1}H\x00R\x06reason\x88\x01\x01\x12A\n" +
 	"\x04role\x18\x02 \x01(\tB(\xda\xf3\x18${\"enum\":[\"owner\",\"admin\",\"auditor\"]}H\x01R\x04role\x88\x01\x01\x12?\n" +
-	"\x06status\x18\x03 \x01(\tB\"\xda\xf3\x18\x1e{\"enum\":[\"active\",\"disabled\"]}H\x02R\x06status\x88\x01\x01:H\xca\xf3\x18D{\"additionalProperties\":false,\"required\":[\"role\",\"status\",\"reason\"]}B\t\n" +
+	"\x06status\x18\x03 \x01(\tB\"\xda\xf3\x18\x1e{\"enum\":[\"active\",\"disabled\"]}H\x02R\x06status\x88\x01\x01\x12F\n" +
+	"\bpassword\x18\x04 \x01(\tB%\xda\xf3\x18!{\"writeOnly\":true,\"minLength\":15}H\x03R\bpassword\x88\x01\x01\x12U\n" +
+	"\x10current_password\x18\x05 \x01(\tB$\xda\xf3\x18 {\"writeOnly\":true,\"minLength\":1}H\x04R\x10current_password\x88\x01\x01:\x92\x04\xca\xf3\x18\x8d\x04{\"additionalProperties\":false,\"required\":[\"reason\"],\"description\":\"Change role and status (owner only), or change password with the acting operator current_password (self or owner reset). Password changes revoke all target management sessions and preserve MFA. Do not combine the two operations.\",\"oneOf\":[{\"required\":[\"role\",\"status\"],\"not\":{\"anyOf\":[{\"required\":[\"password\"]},{\"required\":[\"current_password\"]}]}},{\"required\":[\"password\",\"current_password\"],\"not\":{\"anyOf\":[{\"required\":[\"role\"]},{\"required\":[\"status\"]}]}}]}B\t\n" +
 	"\a_reasonB\a\n" +
 	"\x05_roleB\t\n" +
-	"\a_status\"\xf6\x02\n" +
+	"\a_statusB\v\n" +
+	"\t_passwordB\x13\n" +
+	"\x11_current_password\"\xf6\x02\n" +
 	"\aProblem\x12\x1f\n" +
 	"\x04code\x18\x01 \x01(\tB\x06\xda\xf3\x18\x02{}H\x00R\x04code\x88\x01\x01\x12#\n" +
 	"\x06detail\x18\x02 \x01(\tB\x06\xda\xf3\x18\x02{}H\x01R\x06detail\x88\x01\x01\x12+\n" +

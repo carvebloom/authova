@@ -47,6 +47,9 @@ func run() error {
 		fmt.Println(version)
 		return nil
 	}
+	if len(os.Args) == 2 && os.Args[1] == "ci-oidc-proof" {
+		return ciOIDCProof(os.Stdin, os.Stdout)
+	}
 	c, e := config.Load()
 	if e != nil {
 		return e
@@ -77,6 +80,10 @@ func run() error {
 	e = store.CheckRuntime(startup)
 	startupDone()
 	if e != nil {
+		return e
+	}
+	if command == "schema-check" {
+		_, e = fmt.Fprintln(os.Stdout, "{\"schema\":\"authova-runtime-schema/v1\",\"result\":\"PASS\"}")
 		return e
 	}
 	if command == "rewrap" {

@@ -6,7 +6,14 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const web = path.join(root, 'web')
-const release = path.join(root, 'release')
+const selectedRelease = process.env.AUTHOVA_WEB_RELEASE_DIR
+if (selectedRelease !== undefined && (!path.isAbsolute(selectedRelease) || path.normalize(selectedRelease) !== selectedRelease)) throw new Error('Invalid explicit web release directory')
+const release = selectedRelease === undefined ? path.join(root, 'release') : selectedRelease
+const releaseRelative = target => {
+  const relative = path.relative(release, target).split(path.sep).join('/')
+  if (!relative || path.isAbsolute(relative) || relative.split('/').some(part => part === '..' || part === '')) throw new Error('Web release path escapes output root')
+  return relative
+}
 fs.mkdirSync(release, { recursive: true })
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 fs.writeFileSync(path.join(release, 'sbom-web.cdx.json'), execFileSync(npm, ['sbom', '--sbom-format', 'cyclonedx', '--omit=dev'], { cwd: web }))
@@ -20,14 +27,16 @@ for (const directory of paths) {
   const files = fs.readdirSync(directory).filter(name => /^(license|notice|copying|copyright)/i.test(name) && fs.statSync(path.join(directory, name)).isFile()).sort()
   if (!files.length) throw new Error('Missing upstream runtime notice for ' + pkg.name)
   const destination = path.join(release, 'notices', 'web', pkg.name.replaceAll('/', '__') + '@' + pkg.version)
+  releaseRelative(destination)
   fs.mkdirSync(destination, { recursive: true })
   sections.push(`\n=== ${pkg.name}@${pkg.version} ===\n`)
   for (const file of files) {
     const data = fs.readFileSync(path.join(directory, file))
     const target = path.join(destination, file)
+    const relative = releaseRelative(target)
     fs.writeFileSync(target, data)
     sections.push(data.toString('utf8') + '\n')
-    notices.push({ package: pkg.name, version: pkg.version, license: pkg.license, file: path.relative(root, target).split(path.sep).join('/'), sha256: createHash('sha256').update(data).digest('hex') })
+    notices.push({ package: pkg.name, version: pkg.version, license: pkg.license, file: relative, sha256: createHash('sha256').update(data).digest('hex') })
   }
   packages++
 }

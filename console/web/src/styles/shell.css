@@ -104,33 +104,6 @@
   color: var(--accent);
 }
 
-.side-apps {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.side-app-link {
-  justify-content: space-between;
-  gap: var(--space-2);
-}
-
-.side-app-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.side-note {
-  font-size: 12px;
-  color: var(--text-3);
-  padding: var(--space-1) var(--space-2);
-}
-
-.side-more {
-  font-size: 12.5px;
-}
-
 .side-footer {
   border-top: 1px solid var(--border);
   padding-top: var(--space-3);

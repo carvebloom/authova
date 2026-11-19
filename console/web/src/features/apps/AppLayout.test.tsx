@@ -80,3 +80,46 @@ describe('AppLayout 跨 App 切换', () => {
     expect(screen.getByText('概览内容')).toBeInTheDocument()
   })
 })
+
+describe('AppLayout 应用内导航', () => {
+  it('局部 tabs 准确导航并标记当前项，返回应用回到总览', async () => {
+    const user = userEvent.setup()
+    stubFetch((call) =>
+      call.url === '/bff/apps/app-1'
+        ? jsonResponse(app1)
+        : jsonResponse({ items: [], next_cursor: null }),
+    )
+    renderWithSession(
+      <Routes>
+        <Route path="/apps" element={<div>应用总览</div>} />
+        <Route path="/apps/:appId" element={<AppLayout />}>
+          <Route index element={<div>概览内容</div>} />
+          <Route path="settings" element={<div>配置内容</div>} />
+          <Route path="clients" element={<div>客户端内容</div>} />
+          <Route path="users" element={<div>用户内容</div>} />
+          <Route path="connections" element={<div>连接内容</div>} />
+          <Route path="agents" element={<div>Agent 访问内容</div>} />
+          <Route path="audit" element={<div>审计日志内容</div>} />
+        </Route>
+      </Routes>,
+      makeSession(),
+      ['/apps/app-1'],
+    )
+
+    expect(await screen.findByRole('heading', { name: '交易前台' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: '应用内导航' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '概览' })).toHaveAttribute('aria-current', 'page')
+
+    const destinations = ['配置', '客户端', '用户', '连接', 'Agent 访问', '审计日志']
+    for (const label of destinations) {
+      const link = screen.getByRole('link', { name: label })
+      await user.click(link)
+      expect(await screen.findByText(`${label}内容`)).toBeInTheDocument()
+      expect(link).toHaveAttribute('aria-current', 'page')
+    }
+
+    await user.click(screen.getByRole('link', { name: '返回应用' }))
+    expect(await screen.findByText('应用总览')).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: '应用内导航' })).not.toBeInTheDocument()
+  })
+})

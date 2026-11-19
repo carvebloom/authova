@@ -23,6 +23,7 @@ import type {
   KeyRevoked,
   ListResponse,
   OperatorPatch,
+  OperatorPasswordPatch,
   OperatorUpdated,
   PlatformOperator,
   ResourceConfig,
@@ -496,4 +497,21 @@ export function updatePlatformOperator(operatorId: string, patch: OperatorPatch)
     method: 'PATCH',
     body: patch,
   })
+}
+
+/** Passwords stay in this request only; never store them as pending mutations. */
+export async function updatePlatformOperatorPassword(
+  operatorId: string,
+  patch: OperatorPasswordPatch,
+) {
+  const result = await apiFetch<OperatorUpdated>(
+    `/platform/operators/${encodeURIComponent(operatorId)}`,
+    {
+      method: 'PATCH',
+      body: patch,
+    },
+  )
+  if (result?.updated !== true)
+    throw new ApiError({ status: 0, detail: '改密结果未确认，请勿重复提交。' })
+  return result
 }

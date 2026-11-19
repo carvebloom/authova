@@ -8,7 +8,7 @@
     "typescript": "openapi-typescript@7.10.1"
   },
   "sha256": {
-    "management.yaml": "92957f878d1b581ac1d595f58d12c6017fa98d148fd5b2fa2a1d2e2c7522b40e",
+    "management.yaml": "e133b654297d262bfe7b96aa100148ea9743b67a90fe6ce04fa6280c2b592d83",
     "sdk-client.go.txt": "c4628a773e02983fd133229173c33bf91520b41327e4e9aa12f5231c1bdb26a8"
   }
 }

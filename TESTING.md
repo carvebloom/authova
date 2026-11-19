@@ -249,3 +249,23 @@ selected Skip 被父 PASS 掩盖、tagged 消费者遗漏、Python 空发现、�
 这不回退或改写既有 MySQL/Go-error/登录任务成果，不删除失败证据或受管规则。
 Git revert 不会卸载本地 Skill；受管安装回退必须另用官方 plan/CAS，不能手删目录或 marker。
 安装前的 NOT_RUN 状态保留在历史提交 `db58b35`；当前安装已完成，其他未验证集合不因此变绿。
+
+## CI host-owner controls
+
+`python3 -B -m unittest discover -s scripts/tests -p 'test_ci*.py'` covers source
+admission/ledger/CAS/nonce and own temporary files/flock/fsync/short subprocess
+byte transport. It never supplies Docker, production private configuration or a
+product runtime. `TestCIOIDCPolicyBeforeNetwork` in `cmd/authova` checks the new
+private CI proof request's identity/state/UTC/full-budget policy before network;
+normal Go1.27.4 checks discover it. Missing exact toolchain is a blocked check, not
+a skipped/passed test or permission to change go.mod/tempmod. The separate real
+nine-gate ephemeral deployment runner, same-image acceptance and non-destructive
+production checks are defined in [the host contract](docs/cicd-host-adapter.md).
+Only its fresh CI binding may exercise password/session/account mutations.
+
+The two `TestPlatformPassword*Storage` cases are mandatory in the database profile:
+their names must remain registered, and a Skip/missing completion fails that gate.
+They use the fresh MySQL side in both `mysql` and `both` profiles. Only the generic
+no-database Go sweep may skip them when **all** database marker/DSN/dialect inputs
+are absent; partial or invalid explicit configuration still fails. That sweep is
+not evidence of password-write/revocation/audit storage atomicity.

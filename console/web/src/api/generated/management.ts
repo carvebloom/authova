@@ -847,7 +847,7 @@ export interface components {
             config_version: number;
             /** Format: date-time */
             created_at: string;
-            grant_types: string[];
+            grant_types: ("authorization_code" | "refresh_token" | "client_credentials")[];
             id: string;
             /** @enum {string} */
             kind: "public" | "confidential";
@@ -862,7 +862,7 @@ export interface components {
             allowed_audiences: string[];
             allowed_introspection_audiences?: string[];
             allowed_scopes: string[];
-            grant_types: string[];
+            grant_types: ("authorization_code" | "refresh_token" | "client_credentials")[];
             /** @enum {string} */
             kind: "public" | "confidential";
             name: string;
@@ -877,7 +877,7 @@ export interface components {
             allowed_introspection_audiences?: string[];
             allowed_scopes?: string[];
             config_version: number;
-            grant_types?: string[];
+            grant_types?: ("authorization_code" | "refresh_token" | "client_credentials")[];
             name?: string;
             redirect_uris?: string[];
             /** @enum {string} */
@@ -961,7 +961,7 @@ export interface components {
             config_version: number;
             /** Format: date-time */
             created_at: string;
-            grant_types: string[];
+            grant_types: ("authorization_code" | "refresh_token" | "client_credentials")[];
             id: string;
             /** @enum {string} */
             kind: "public" | "confidential";
@@ -1023,13 +1023,16 @@ export interface components {
             items: components["schemas"]["Operator"][];
             next_cursor: string | null;
         };
+        /** @description Change role and status (owner only), or change password with the acting operator current_password (self or owner reset). Password changes revoke all target management sessions and preserve MFA. Do not combine the two operations. */
         OperatorPatch: {
+            current_password?: string;
+            password?: string;
             reason: string;
             /** @enum {string} */
-            role: "owner" | "admin" | "auditor";
+            role?: "owner" | "admin" | "auditor";
             /** @enum {string} */
-            status: "active" | "disabled";
-        };
+            status?: "active" | "disabled";
+        } & (unknown | unknown);
         OperatorUpdated: {
             updated: boolean;
         };

@@ -16,8 +16,10 @@ import { useSession } from '../session/useSession'
 
 import { CreateOperatorDialog } from './CreateOperatorDialog'
 import { EditOperatorDialog } from './EditOperatorDialog'
+import { OperatorPasswordDialog } from './OperatorPasswordDialog'
 export function PlatformOperatorsPage() {
-  const { canViewPlatformOperators, canManageOperators } = useSession()
+  const { operator, canMutate, canViewPlatformOperators, canManageOperators, retryBootstrap } =
+    useSession()
   const list = usePagedList(
     'platform:operators',
     (cursor) => api.listPlatformOperators({ cursor, limit: 20 }),
@@ -25,6 +27,12 @@ export function PlatformOperatorsPage() {
   )
   const [createOpen, setCreateOpen] = useState(false)
   const [editing, setEditing] = useState<PlatformOperator | null>(null)
+  const [passwordTarget, setPasswordTarget] = useState<{ id: string; email: string } | null>(null)
+  const [unknownPasswords, setUnknownPasswords] = useState<Set<string>>(() => new Set())
+  useProtection(
+    unknownPasswords.size > 0,
+    '改密结果未知，请退出当前会话并核实目标账号，不要重复提交。',
+  )
   const [created, setCreated] = useState<CreatedOperator | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [unconfirmed, setUnconfirmed] = useState<{ email: string; error: ApiError } | null>(null)
@@ -46,6 +54,9 @@ export function PlatformOperatorsPage() {
         sub="独立的平台登录账号及其固定角色；无自定义权限。"
         actions={
           <>
+            {operator && canMutate ? (
+              <Button onClick={() => setPasswordTarget(operator)}>修改我的密码</Button>
+            ) : null}
             <IconButton icon="refresh" label="刷新列表" onClick={list.reload} />
             {canManageOperators ? (
               <Button
@@ -133,15 +144,22 @@ export function PlatformOperatorsPage() {
                         {op.status === 'quarantined' ? (
                           <span className="help">需部署管理员带外核验后恢复</span>
                         ) : (
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              setNotice(null)
-                              setEditing(op)
-                            }}
-                          >
-                            变更
-                          </Button>
+                          <>
+                            {!op.app_id ? (
+                              <Button size="sm" onClick={() => setPasswordTarget(op)}>
+                                重置密码
+                              </Button>
+                            ) : null}
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setNotice(null)
+                                setEditing(op)
+                              }}
+                            >
+                              变更
+                            </Button>
+                          </>
                         )}
                       </td>
                     ) : null}
@@ -160,7 +178,7 @@ export function PlatformOperatorsPage() {
       )}
 
       <CreateOperatorDialog
-        key={createOpen ? 'open' : 'closed'}
+        key={createOpen ? 'create-open' : 'create-closed'}
         open={createOpen}
         previousUnknown={unconfirmed}
         onUnknown={setUnconfirmed}
@@ -177,8 +195,28 @@ export function PlatformOperatorsPage() {
         }}
       />
 
+      {passwordTarget ? (
+        <OperatorPasswordDialog
+          key={`password-${passwordTarget.id}`}
+          target={passwordTarget}
+          self={passwordTarget.id === operator?.id}
+          previousUnknown={unknownPasswords.has(passwordTarget.id)}
+          onUnknown={() =>
+            setUnknownPasswords((previous) => new Set([...previous, passwordTarget.id]))
+          }
+          onClose={() => setPasswordTarget(null)}
+          onUpdated={() => {
+            const self = passwordTarget.id === operator?.id
+            setPasswordTarget(null)
+            setNotice(self ? '密码已修改，请重新登录。' : '密码已重置，目标账号须重新登录。')
+            if (self) retryBootstrap()
+            else list.reload()
+          }}
+        />
+      ) : null}
+
       <EditOperatorDialog
-        key={editing ? `edit-${editing.id}` : 'closed'}
+        key={editing ? `edit-${editing.id}` : 'edit-closed'}
         operator={editing}
         onClose={() => setEditing(null)}
         onUpdated={() => {

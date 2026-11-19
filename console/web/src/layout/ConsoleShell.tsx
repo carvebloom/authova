@@ -1,20 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { NavLink, Outlet, useMatch, useNavigate } from 'react-router-dom'
-import * as api from '../api/endpoints'
 import { ApiError } from '../api/client'
 import { useSession } from '../features/session/useSession'
-import { useAsync } from '../shared/hooks/useAsync'
 import { ErrorNotice } from '../shared/components/ErrorNotice'
 import { Drawer } from '../shared/components/Drawer'
 import { BrandMark, Icon } from '../shared/components/Icon'
 import { IconButton } from '../shared/components/Button'
-import { StatusBadge } from '../shared/components/StatusBadge'
 import { roleLabel } from '../shared/utils/format'
-import { APP_TABS, PLATFORM_NAV, appTabPath } from '../app/navigation'
+import { PLATFORM_NAV } from '../app/navigation'
 import { getThemeChoice, setThemeChoice, type ThemeChoice } from '../layout/theme'
 
 /**
- * 工作台外壳：稳定侧栏（平台上下文 + App 上下文导航）、窄屏顶栏 + 抽屉。
+ * 工作台外壳：稳定的全局侧栏，窄屏使用同一导航模型的顶栏 + 抽屉。
  * 账号区：邮箱/角色、主题切换、退出登录（失败显式报错且不离开当前页）。
  */
 export function ConsoleShell() {
@@ -22,15 +19,6 @@ export function ConsoleShell() {
   const navigate = useNavigate()
   const appMatch = useMatch('/apps/:appId/*')
   const currentAppId = appMatch?.params.appId ?? ''
-  const apps = useAsync('nav:apps', () => api.listApps({ limit: 8 }))
-  const reloadApps = apps.reload
-  useEffect(() => {
-    const refresh = () => {
-      void reloadApps()
-    }
-    window.addEventListener('authova:apps-changed', refresh)
-    return () => window.removeEventListener('authova:apps-changed', refresh)
-  }, [reloadApps])
   const [signOutError, setSignOutError] = useState<ApiError | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [theme, setTheme] = useState<ThemeChoice>(() => getThemeChoice())
@@ -66,54 +54,6 @@ export function ConsoleShell() {
           </NavLink>
         )
       })}
-      {currentAppId ? (
-        <>
-          <p className="side-section">当前应用</p>
-          {APP_TABS.map((tab) => (
-            <NavLink
-              key={tab.segment}
-              to={appTabPath(currentAppId, tab.segment)}
-              end={tab.segment === ''}
-              className="side-link"
-              onClick={onNavigate}
-            >
-              <Icon name={tab.icon} />
-              {tab.label}
-            </NavLink>
-          ))}
-        </>
-      ) : (
-        <>
-          <p className="side-section">应用</p>
-          {apps.loading ? (
-            <p className="side-note">加载中…</p>
-          ) : apps.error ? (
-            <p className="side-note">应用列表加载失败</p>
-          ) : (apps.data?.items.length ?? 0) === 0 ? (
-            <p className="side-note">暂无应用</p>
-          ) : (
-            <ul className="side-apps">
-              {apps.data!.items.map((app) => (
-                <li key={app.id}>
-                  <NavLink
-                    to={`/apps/${app.id}`}
-                    className="side-link side-app-link"
-                    onClick={onNavigate}
-                  >
-                    <span className="side-app-name">{app.name}</span>
-                    <StatusBadge status={app.status} />
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          )}
-          {apps.data?.next_cursor ? (
-            <p className="side-note">
-              显示前 {apps.data.items.length} 个，其余在「全部应用」中翻页查找
-            </p>
-          ) : null}
-        </>
-      )}
     </>
   )
 

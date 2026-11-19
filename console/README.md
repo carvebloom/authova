@@ -13,6 +13,10 @@ make check
 
 本地全流程从相邻 authova 执行 `make demo`。Console 地址 http://127.0.0.1:18090。当前前端 31 文件/235 项行为测试，真实 Chrome/BFF/Core 联调见 [重构验收](docs/console-redesign-acceptance.md)；单测不替代浏览器或真实供应商验证。平台 owner 可以管理运营账号，初始 TOTP secret 只显示一次。
 
+平台运营账号页提供「修改我的密码」：平台 owner/admin 可修改本人密码，owner 还可重置其他平台运营账号密码。操作需最近 10 分钟内完成 MFA 的有效会话、操作者本人的当前密码、两次一致的新密码及操作原因。新密码至少 15 个 Unicode 字符、最多 1024 字节。核心在同一事务内更新密码、撤销目标账号的全部管理会话并记审计，保留角色、状态及 TOTP；修改本人密码后须重新登录。隔离账号继续走带外恢复。密码仅用于当前请求，不进入待重试记录或浏览器存储；结果未知时锁定本次提交，不自动重试。
+
+客户端创建与编辑的 `grant_types` 使用多选，公开客户端不可选择 `client_credentials`；角色、状态、客户端类型、连接类型、Agent 模式沿用单选/多选。允许作用域与受众支持业务自定义值，仍使用文本输入。
+
 前端按 feature、API、外壳、共享交互组件和设计 tokens 拆分；支持亮/暗/系统主题、移动导航、版本冲突读回、未知结果冻结与一次性秘密的离开保护。长期维护规则见 [架构](docs/console-architecture.md)、[设计系统](docs/console-design-system.md)、[BFF 安全](docs/console-bff-security.md)。核心仍逐请求裁决角色与 App 隔离。
 
 Go BFF 的 API transport 和 TypeScript schema 由 contracts 生成并提交，运行构建不要求 SDK sibling repository。修改契约后 `make generate`，检查生成 diff、UI DTO 兼容断言和实际响应；不手改生成文件。

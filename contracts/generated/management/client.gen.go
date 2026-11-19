@@ -207,6 +207,27 @@ func (e AppStatus) Valid() bool {
 	}
 }
 
+// Defines values for ClientGrantTypes.
+const (
+	ClientGrantTypesAuthorizationCode ClientGrantTypes = "authorization_code"
+	ClientGrantTypesClientCredentials ClientGrantTypes = "client_credentials"
+	ClientGrantTypesRefreshToken      ClientGrantTypes = "refresh_token"
+)
+
+// Valid indicates whether the value is a known member of the ClientGrantTypes enum.
+func (e ClientGrantTypes) Valid() bool {
+	switch e {
+	case ClientGrantTypesAuthorizationCode:
+		return true
+	case ClientGrantTypesClientCredentials:
+		return true
+	case ClientGrantTypesRefreshToken:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ClientKind.
 const (
 	ClientKindConfidential ClientKind = "confidential"
@@ -243,6 +264,27 @@ func (e ClientStatus) Valid() bool {
 	}
 }
 
+// Defines values for ClientCreateGrantTypes.
+const (
+	ClientCreateGrantTypesAuthorizationCode ClientCreateGrantTypes = "authorization_code"
+	ClientCreateGrantTypesClientCredentials ClientCreateGrantTypes = "client_credentials"
+	ClientCreateGrantTypesRefreshToken      ClientCreateGrantTypes = "refresh_token"
+)
+
+// Valid indicates whether the value is a known member of the ClientCreateGrantTypes enum.
+func (e ClientCreateGrantTypes) Valid() bool {
+	switch e {
+	case ClientCreateGrantTypesAuthorizationCode:
+		return true
+	case ClientCreateGrantTypesClientCredentials:
+		return true
+	case ClientCreateGrantTypesRefreshToken:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ClientCreateKind.
 const (
 	ClientCreateKindConfidential ClientCreateKind = "confidential"
@@ -255,6 +297,27 @@ func (e ClientCreateKind) Valid() bool {
 	case ClientCreateKindConfidential:
 		return true
 	case ClientCreateKindPublic:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ClientPatchGrantTypes.
+const (
+	ClientPatchGrantTypesAuthorizationCode ClientPatchGrantTypes = "authorization_code"
+	ClientPatchGrantTypesClientCredentials ClientPatchGrantTypes = "client_credentials"
+	ClientPatchGrantTypesRefreshToken      ClientPatchGrantTypes = "refresh_token"
+)
+
+// Valid indicates whether the value is a known member of the ClientPatchGrantTypes enum.
+func (e ClientPatchGrantTypes) Valid() bool {
+	switch e {
+	case ClientPatchGrantTypesAuthorizationCode:
+		return true
+	case ClientPatchGrantTypesClientCredentials:
+		return true
+	case ClientPatchGrantTypesRefreshToken:
 		return true
 	default:
 		return false
@@ -363,6 +426,27 @@ func (e ConnectionPatchStatus) Valid() bool {
 	case ConnectionPatchStatusActive:
 		return true
 	case ConnectionPatchStatusDisabled:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreatedClientGrantTypes.
+const (
+	CreatedClientGrantTypesAuthorizationCode CreatedClientGrantTypes = "authorization_code"
+	CreatedClientGrantTypesClientCredentials CreatedClientGrantTypes = "client_credentials"
+	CreatedClientGrantTypesRefreshToken      CreatedClientGrantTypes = "refresh_token"
+)
+
+// Valid indicates whether the value is a known member of the CreatedClientGrantTypes enum.
+func (e CreatedClientGrantTypes) Valid() bool {
+	switch e {
+	case CreatedClientGrantTypesAuthorizationCode:
+		return true
+	case CreatedClientGrantTypesClientCredentials:
+		return true
+	case CreatedClientGrantTypesRefreshToken:
 		return true
 	default:
 		return false
@@ -817,22 +901,25 @@ type AuthenticationPolicyPatch struct {
 
 // Client defines model for Client.
 type Client struct {
-	AllowedAudiences              []string     `json:"allowed_audiences"`
-	AllowedIntrospectionAudiences []string     `json:"allowed_introspection_audiences"`
-	AllowedScopes                 []string     `json:"allowed_scopes"`
-	AppId                         string       `json:"app_id"`
-	ClientId                      string       `json:"client_id"`
-	ConfigVersion                 int          `json:"config_version"`
-	CreatedAt                     time.Time    `json:"created_at"`
-	GrantTypes                    []string     `json:"grant_types"`
-	Id                            string       `json:"id"`
-	Kind                          ClientKind   `json:"kind"`
-	Name                          string       `json:"name"`
-	PreviousSecretExpiresAt       int          `json:"previous_secret_expires_at"`
-	RedirectUris                  []string     `json:"redirect_uris"`
-	Status                        ClientStatus `json:"status"`
-	System                        bool         `json:"system"`
+	AllowedAudiences              []string           `json:"allowed_audiences"`
+	AllowedIntrospectionAudiences []string           `json:"allowed_introspection_audiences"`
+	AllowedScopes                 []string           `json:"allowed_scopes"`
+	AppId                         string             `json:"app_id"`
+	ClientId                      string             `json:"client_id"`
+	ConfigVersion                 int                `json:"config_version"`
+	CreatedAt                     time.Time          `json:"created_at"`
+	GrantTypes                    []ClientGrantTypes `json:"grant_types"`
+	Id                            string             `json:"id"`
+	Kind                          ClientKind         `json:"kind"`
+	Name                          string             `json:"name"`
+	PreviousSecretExpiresAt       int                `json:"previous_secret_expires_at"`
+	RedirectUris                  []string           `json:"redirect_uris"`
+	Status                        ClientStatus       `json:"status"`
+	System                        bool               `json:"system"`
 }
+
+// ClientGrantTypes defines model for Client.GrantTypes.
+type ClientGrantTypes string
 
 // ClientKind defines model for Client.Kind.
 type ClientKind string
@@ -842,14 +929,17 @@ type ClientStatus string
 
 // ClientCreate defines model for ClientCreate.
 type ClientCreate struct {
-	AllowedAudiences              []string         `json:"allowed_audiences"`
-	AllowedIntrospectionAudiences *[]string        `json:"allowed_introspection_audiences,omitempty"`
-	AllowedScopes                 []string         `json:"allowed_scopes"`
-	GrantTypes                    []string         `json:"grant_types"`
-	Kind                          ClientCreateKind `json:"kind"`
-	Name                          string           `json:"name"`
-	RedirectUris                  *[]string        `json:"redirect_uris,omitempty"`
+	AllowedAudiences              []string                 `json:"allowed_audiences"`
+	AllowedIntrospectionAudiences *[]string                `json:"allowed_introspection_audiences,omitempty"`
+	AllowedScopes                 []string                 `json:"allowed_scopes"`
+	GrantTypes                    []ClientCreateGrantTypes `json:"grant_types"`
+	Kind                          ClientCreateKind         `json:"kind"`
+	Name                          string                   `json:"name"`
+	RedirectUris                  *[]string                `json:"redirect_uris,omitempty"`
 }
+
+// ClientCreateGrantTypes defines model for ClientCreate.GrantTypes.
+type ClientCreateGrantTypes string
 
 // ClientCreateKind defines model for ClientCreate.Kind.
 type ClientCreateKind string
@@ -862,15 +952,18 @@ type ClientPage struct {
 
 // ClientPatch defines model for ClientPatch.
 type ClientPatch struct {
-	AllowedAudiences              *[]string          `json:"allowed_audiences,omitempty"`
-	AllowedIntrospectionAudiences *[]string          `json:"allowed_introspection_audiences,omitempty"`
-	AllowedScopes                 *[]string          `json:"allowed_scopes,omitempty"`
-	ConfigVersion                 int                `json:"config_version"`
-	GrantTypes                    *[]string          `json:"grant_types,omitempty"`
-	Name                          *string            `json:"name,omitempty"`
-	RedirectUris                  *[]string          `json:"redirect_uris,omitempty"`
-	Status                        *ClientPatchStatus `json:"status,omitempty"`
+	AllowedAudiences              *[]string                `json:"allowed_audiences,omitempty"`
+	AllowedIntrospectionAudiences *[]string                `json:"allowed_introspection_audiences,omitempty"`
+	AllowedScopes                 *[]string                `json:"allowed_scopes,omitempty"`
+	ConfigVersion                 int                      `json:"config_version"`
+	GrantTypes                    *[]ClientPatchGrantTypes `json:"grant_types,omitempty"`
+	Name                          *string                  `json:"name,omitempty"`
+	RedirectUris                  *[]string                `json:"redirect_uris,omitempty"`
+	Status                        *ClientPatchStatus       `json:"status,omitempty"`
 }
+
+// ClientPatchGrantTypes defines model for ClientPatch.GrantTypes.
+type ClientPatchGrantTypes string
 
 // ClientPatchStatus defines model for ClientPatch.Status.
 type ClientPatchStatus string
@@ -974,18 +1067,21 @@ type CreatedClient struct {
 	ClientId                      string   `json:"client_id"`
 
 	// ClientSecret Shown only on creation or creator-scoped idempotency replay for at most ten minutes.
-	ClientSecret            *string             `json:"client_secret,omitempty"`
-	ConfigVersion           int                 `json:"config_version"`
-	CreatedAt               time.Time           `json:"created_at"`
-	GrantTypes              []string            `json:"grant_types"`
-	Id                      string              `json:"id"`
-	Kind                    CreatedClientKind   `json:"kind"`
-	Name                    string              `json:"name"`
-	PreviousSecretExpiresAt int                 `json:"previous_secret_expires_at"`
-	RedirectUris            []string            `json:"redirect_uris"`
-	Status                  CreatedClientStatus `json:"status"`
-	System                  bool                `json:"system"`
+	ClientSecret            *string                   `json:"client_secret,omitempty"`
+	ConfigVersion           int                       `json:"config_version"`
+	CreatedAt               time.Time                 `json:"created_at"`
+	GrantTypes              []CreatedClientGrantTypes `json:"grant_types"`
+	Id                      string                    `json:"id"`
+	Kind                    CreatedClientKind         `json:"kind"`
+	Name                    string                    `json:"name"`
+	PreviousSecretExpiresAt int                       `json:"previous_secret_expires_at"`
+	RedirectUris            []string                  `json:"redirect_uris"`
+	Status                  CreatedClientStatus       `json:"status"`
+	System                  bool                      `json:"system"`
 }
+
+// CreatedClientGrantTypes defines model for CreatedClient.GrantTypes.
+type CreatedClientGrantTypes string
 
 // CreatedClientKind defines model for CreatedClient.Kind.
 type CreatedClientKind string
@@ -1066,11 +1162,14 @@ type OperatorPage struct {
 	NextCursor *string    `json:"next_cursor"`
 }
 
-// OperatorPatch defines model for OperatorPatch.
+// OperatorPatch Change role and status (owner only), or change password with the acting operator current_password (self or owner reset). Password changes revoke all target management sessions and preserve MFA. Do not combine the two operations.
 type OperatorPatch struct {
-	Reason string              `json:"reason"`
-	Role   OperatorPatchRole   `json:"role"`
-	Status OperatorPatchStatus `json:"status"`
+	CurrentPassword *string              `json:"current_password,omitempty"`
+	Password        *string              `json:"password,omitempty"`
+	Reason          string               `json:"reason"`
+	Role            *OperatorPatchRole   `json:"role,omitempty"`
+	Status          *OperatorPatchStatus `json:"status,omitempty"`
+	union           json.RawMessage
 }
 
 // OperatorPatchRole defines model for OperatorPatch.Role.
@@ -1078,6 +1177,12 @@ type OperatorPatchRole string
 
 // OperatorPatchStatus defines model for OperatorPatch.Status.
 type OperatorPatchStatus string
+
+// OperatorPatch0 defines model for OperatorPatch.0.
+type OperatorPatch0 = interface{}
+
+// OperatorPatch1 defines model for OperatorPatch.1.
+type OperatorPatch1 = interface{}
 
 // OperatorUpdated defines model for OperatorUpdated.
 type OperatorUpdated struct {
@@ -1519,6 +1624,156 @@ func (t *ConnectionCreate) UnmarshalJSON(b []byte) error {
 		err = json.Unmarshal(raw, &t.ProviderType)
 		if err != nil {
 			return fmt.Errorf("error reading 'provider_type': %w", err)
+		}
+	}
+
+	return err
+}
+
+// AsOperatorPatch0 returns the union data inside the OperatorPatch as a OperatorPatch0
+func (t OperatorPatch) AsOperatorPatch0() (OperatorPatch0, error) {
+	var body OperatorPatch0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOperatorPatch0 overwrites any union data inside the OperatorPatch as the provided OperatorPatch0
+func (t *OperatorPatch) FromOperatorPatch0(v OperatorPatch0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOperatorPatch0 performs a merge with any union data inside the OperatorPatch, using the provided OperatorPatch0
+func (t *OperatorPatch) MergeOperatorPatch0(v OperatorPatch0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsOperatorPatch1 returns the union data inside the OperatorPatch as a OperatorPatch1
+func (t OperatorPatch) AsOperatorPatch1() (OperatorPatch1, error) {
+	var body OperatorPatch1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOperatorPatch1 overwrites any union data inside the OperatorPatch as the provided OperatorPatch1
+func (t *OperatorPatch) FromOperatorPatch1(v OperatorPatch1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOperatorPatch1 performs a merge with any union data inside the OperatorPatch, using the provided OperatorPatch1
+func (t *OperatorPatch) MergeOperatorPatch1(v OperatorPatch1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t OperatorPatch) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if t.CurrentPassword != nil {
+		object["current_password"], err = json.Marshal(t.CurrentPassword)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'current_password': %w", err)
+		}
+	}
+
+	if t.Password != nil {
+		object["password"], err = json.Marshal(t.Password)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'password': %w", err)
+		}
+	}
+
+	object["reason"], err = json.Marshal(t.Reason)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'reason': %w", err)
+	}
+
+	if t.Role != nil {
+		object["role"], err = json.Marshal(t.Role)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'role': %w", err)
+		}
+	}
+
+	if t.Status != nil {
+		object["status"], err = json.Marshal(t.Status)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'status': %w", err)
+		}
+	}
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *OperatorPatch) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["current_password"]; found {
+		err = json.Unmarshal(raw, &t.CurrentPassword)
+		if err != nil {
+			return fmt.Errorf("error reading 'current_password': %w", err)
+		}
+	}
+
+	if raw, found := object["password"]; found {
+		err = json.Unmarshal(raw, &t.Password)
+		if err != nil {
+			return fmt.Errorf("error reading 'password': %w", err)
+		}
+	}
+
+	if raw, found := object["reason"]; found {
+		err = json.Unmarshal(raw, &t.Reason)
+		if err != nil {
+			return fmt.Errorf("error reading 'reason': %w", err)
+		}
+	}
+
+	if raw, found := object["role"]; found {
+		err = json.Unmarshal(raw, &t.Role)
+		if err != nil {
+			return fmt.Errorf("error reading 'role': %w", err)
+		}
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &t.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
 		}
 	}
 

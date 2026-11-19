@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { jsonResponse, makeSession, renderWithSession, stubFetch } from '../test/utils'
 import { ConsoleShell } from './ConsoleShell'
 
-function renderShell(session = makeSession()) {
+function renderShell(session = makeSession(), initialEntry = '/apps') {
   renderWithSession(
     <Routes>
       <Route element={<ConsoleShell />}>
@@ -14,12 +14,38 @@ function renderShell(session = makeSession()) {
       </Route>
     </Routes>,
     session,
-    ['/apps'],
+    [initialEntry],
   )
 }
 
 afterEach(() => {
   vi.unstubAllGlobals()
+})
+
+describe('ConsoleShell 全局导航', () => {
+  it('应用详情中保留全局侧栏与移动导航，应用项始终高亮', async () => {
+    const user = userEvent.setup()
+    renderShell(makeSession(), '/apps/app-1/clients')
+
+    const desktopNav = screen.getByRole('navigation', { name: '主导航' })
+    expect(within(desktopNav).getByRole('link', { name: '应用' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect(within(desktopNav).getByRole('link', { name: '应用' })).toHaveClass('active')
+    expect(within(desktopNav).getByRole('link', { name: '平台运营账号' })).toBeInTheDocument()
+    expect(within(desktopNav).queryByText('当前应用')).not.toBeInTheDocument()
+    expect(within(desktopNav).queryByRole('link', { name: '客户端' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '打开导航' }))
+    const mobileNav = await screen.findByRole('navigation', { name: '移动端导航' })
+    expect(within(mobileNav).getByRole('link', { name: '应用' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect(within(mobileNav).getByRole('link', { name: '平台运营账号' })).toBeInTheDocument()
+    expect(within(mobileNav).queryByRole('link', { name: '客户端' })).not.toBeInTheDocument()
+  })
 })
 
 describe('ConsoleShell 角色门控', () => {

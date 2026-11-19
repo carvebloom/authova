@@ -7,7 +7,7 @@ import { Button } from '../../shared/components/Button'
 import { Dialog } from '../../shared/components/Dialog'
 import { ErrorNotice } from '../../shared/components/ErrorNotice'
 import { SelectField, TextAreaField, TextField } from '../../shared/components/Field'
-import { formatTime } from '../../shared/utils/format'
+import { formatTime, splitList } from '../../shared/utils/format'
 import {
   isReplayWindowOpen,
   randomIdempotencyKey,
@@ -15,7 +15,7 @@ import {
   type PendingCreate,
 } from '../../shared/utils/idempotency'
 
-import { payloadFromForm, stateFromClient, stateFromPending } from './formModel'
+import { GRANT_TYPES, payloadFromForm, stateFromClient, stateFromPending } from './formModel'
 import type { ClientFormState } from './formModel'
 export function ClientFormDialog({
   open,
@@ -114,6 +114,14 @@ export function ClientFormDialog({
     if (currentPayload.allowed_audiences.length === 0)
       next.audiences = '填写业务 API 的受众标识，例如 https://api.example.com 或 urn:example:api'
     if (currentPayload.grant_types.length === 0) next.grantTypes = '至少选择一个授权类型'
+    else if (
+      currentPayload.grant_types.some(
+        (value) => !GRANT_TYPES.some((choice) => choice.value === value),
+      )
+    )
+      next.grantTypes = '存在不支持的授权类型，请核对客户端配置'
+    else if (form.kind === 'public' && currentPayload.grant_types.includes('client_credentials'))
+      next.grantTypes = '公开客户端不能使用客户端凭据授权，请取消该选项'
     if (currentPayload.allowed_audiences.some((value) => !/^[a-z][a-z0-9+.-]*:/i.test(value)))
       next.audiences = '受众应为 URI，例如 https://api.example.com 或 urn:example:api'
     setErrors(next)
@@ -248,14 +256,40 @@ export function ClientFormDialog({
               hint="每行一个，例如 https://app.example.com/callback"
               rows={3}
             />
-            <TextField
-              label="授权类型（grant_types）"
-              value={form.grantTypes}
-              onChange={(e) => set({ grantTypes: e.target.value })}
-              hint="以空格分隔，如 authorization_code refresh_token"
-              error={errors.grantTypes}
-              required
-            />
+            <fieldset className="fieldset" aria-describedby="grant-types-hint grant-types-error">
+              <legend>授权类型（grant_types）</legend>
+              {GRANT_TYPES.map(({ value, label }) => (
+                <label key={value} className="check-row">
+                  <input
+                    type="checkbox"
+                    checked={splitList(form.grantTypes).includes(value)}
+                    disabled={
+                      value === 'client_credentials' &&
+                      form.kind === 'public' &&
+                      !splitList(form.grantTypes).includes(value)
+                    }
+                    onChange={(e) => {
+                      const selected = splitList(form.grantTypes).filter((item) => item !== value)
+                      if (e.target.checked) selected.push(value)
+                      set({ grantTypes: selected.join(' ') })
+                    }}
+                  />
+                  <span>
+                    {label}（{value}）
+                  </span>
+                </label>
+              ))}
+              <p className="field-hint" id="grant-types-hint">
+                可多选；客户端凭据授权仅适用于机密客户端。
+              </p>
+              <p
+                className="field-error-text"
+                id="grant-types-error"
+                role={errors.grantTypes ? 'alert' : undefined}
+              >
+                {errors.grantTypes}
+              </p>
+            </fieldset>
           </fieldset>
           <fieldset className="fieldset">
             <legend>作用域与受众</legend>
