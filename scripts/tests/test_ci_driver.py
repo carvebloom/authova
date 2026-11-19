@@ -6,6 +6,48 @@ def module(name):
  sys.path.insert(0,str(ROOT/'scripts/ci'))
  spec=importlib.util.spec_from_file_location(name,ROOT/'scripts/ci'/(name+'.py'));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
 class CIDriverTests(unittest.TestCase):
+ def test_private_make_log_projects_only_fixed_observations_or_unknown(self):
+  m=module('driver');fmt=b'test -z "$(gofmt -l cmd internal)"\n';vet=fmt+b'go vet ./...\n';race=vet+b'go test -race -count=1 ./...\n'
+  killed=b'github.com/carvebloom/authova/internal/ent: /usr/local/go/pkg/tool/linux_arm64/compile: signal: killed\n'
+  vcs=b'error obtaining VCS status: exit status 128\n'
+  cases=[(fmt,'CHECK_GOFMT'),(vet+b'PRIVATE_CANARY\n','CHECK_VET'),(race+b'--- FAIL: OWN_ONLY\n','CHECK_RACE'),
+         (vet+killed,'COMPILE_SIGNAL_KILLED'),(vet+vcs,'VCS_STATUS_ERROR'),(b'PRIVATE_CANARY\n','UNKNOWN'),
+         (b'test said: '+vcs,'UNKNOWN'),(race+b'go vet ./...\n','UNKNOWN'),(vet+killed+vcs,'UNKNOWN'),(b'\xff','UNKNOWN')]
+  with tempfile.TemporaryDirectory() as tmp:
+   p=Path(tmp)/'own-private.log'
+   for body,expected in cases:
+    with self.subTest(expected=expected,body_length=len(body)):
+     p.write_bytes(body);p.chmod(0o600);value=m.make_diagnostic(p)
+     self.assertEqual(value,expected);self.assertIn(value,m.MAKE_DIAGNOSTICS)
+   p.write_bytes(vet+vcs);p.chmod(0o644);self.assertEqual(m.make_diagnostic(p),'UNKNOWN');p.chmod(0o600)
+   link=Path(tmp)/'link.log';link.symlink_to(p);self.assertEqual(m.make_diagnostic(link),'UNKNOWN')
+   p.write_bytes(b'x'*1048577)
+   with patch.object(m.os,'read',side_effect=AssertionError('NO_READ_OVERSIZED_LOG')):self.assertEqual(m.make_diagnostic(p),'UNKNOWN')
+   p.write_bytes(vet+vcs);original_close=m.os.close
+   def badclose(fd):original_close(fd);raise OSError('PRIVATE_CLOSE_CANARY')
+   with patch.object(m.os,'close',badclose):self.assertEqual(m.make_diagnostic(p),'UNKNOWN')
+ def test_make_diagnostic_preserves_native_failure_and_skips_successful_logs(self):
+  m=module('driver');body=b'test -z "$(gofmt -l cmd internal)"\ngo vet ./...\nerror obtaining VCS status: exit status 128\nPRIVATE_CANARY\n'
+  for timeout in (False,True):
+   with self.subTest(timeout=timeout),tempfile.TemporaryDirectory() as tmp:
+    calls=[]
+    def fake(argv,**kw):
+     calls.append(argv)
+     if argv==['make','check']:
+      kw['stdout'].write(body)
+      if timeout:raise subprocess.TimeoutExpired(argv,1500,output=b'PRIVATE_CANARY')
+      return type('Return',(),{'returncode':2})()
+     return type('Return',(),{'returncode':0})()
+    with self.assertRaisesRegex(m.Refused,'GATE_FAILED') as caught:m.run_gate('checks','a'*40,Path(tmp),fake)
+    raw=(Path(tmp)/'checks.json').read_bytes();receipt=json.loads(raw)
+    self.assertEqual(calls,[['python3','scripts/migration/check-boundaries.py'],['make','check']])
+    self.assertEqual(receipt['diagnostic'],'VCS_STATUS_ERROR');self.assertEqual(caught.exception.diagnostic,'VCS_STATUS_ERROR')
+    self.assertEqual(receipt['failure'],'UNKNOWN_TIMEOUT' if timeout else 'COMMAND_EXIT')
+    self.assertEqual(receipt['commands'][-1]['exit_code'],None if timeout else 2)
+    self.assertEqual(receipt['commands'][-1]['known_return'],not timeout);self.assertNotIn(b'CANARY',raw)
+  with tempfile.TemporaryDirectory() as tmp,patch.object(m,'make_diagnostic',side_effect=AssertionError('NO_DIAGNOSTIC_READ_ON_SUCCESS')):
+   m.run_gate('checks','a'*40,Path(tmp),lambda *a,**k:type('Return',(),{'returncode':0})())
+   self.assertNotIn('diagnostic',json.loads((Path(tmp)/'checks.json').read_bytes()))
  def test_prepare_checkpoints_success_nonzero_timeout_and_exception_before_next_command(self):
   m=module('prepare_tools')
   for outcome in ('success','nonzero','timeout','exception'):
