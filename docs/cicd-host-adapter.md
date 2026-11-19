@@ -113,8 +113,19 @@ No production private configuration is needed to sign off this source contract.
 
 `archive` is exact `{path,identity}` for the worker-sealed docker-save file; identity
 uses the tuple above and archive SHA comes from the signed candidate. The consumer
-bounds512MiB/4096members, sameFD/hash/endpath/close, and exact two config IDs before
-loading. It does not execute a Dockerfile or rebuild. Images load only **after**
+bounds512MiB/4096members, sameFD/hash/endpath/close, and the exact two candidate image graph roots before
+loading. The selected Docker29 containerd save format has two candidate OCI index
+IDs, each binding one Linux/arm64 manifest/config/layer graph and its
+unknown/unknown attestation manifest. Every referenced blob is read with bounded
+chunks and checked against descriptor SHA256/size; shared blobs still require
+identical descriptor sizes. Index IDs must exactly equal the two signed candidate
+IDs. Docker `manifest.json` Config/Layers must match those runtime branches.
+Only canonical metadata/blob paths and the two fixed blob directories are allowed;
+duplicates, links/devices, external descriptors, missing/unreachable members, wrong
+platforms and attestation references refuse. Unsupported archive layouts refuse
+rather than treating an index digest as a config ID. Layers remain opaque hashed
+bytes (no extraction/decompression); attestations confer no provenance grade.
+It does not execute a Dockerfile or rebuild. Images load only **after**
 intent consumption. The archive and three fixture image existence are actual inputs,
 not granted by a source hash.
 
