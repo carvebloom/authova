@@ -1,0 +1,101 @@
+# Fixed Authova source contract; no app socket, host mount or deployment credential.
+when:
+  - event: manual
+    branch: main
+workspace:
+  base: /woodpecker
+  path: src
+labels:
+  platform: linux/arm64
+  repo: carvebloom/authova
+  lane: authova
+concurrency: 1
+depends_on: [authova-mysql]
+steps:
+  - name: prepare-workspace
+    image: sha256:b8678913e1f8e9af59ee49092042147eb3beb3743f3381dafa19bbff0b5115cd
+    commands:
+      - |
+        umask 077
+        : "$${CI_COMMIT_SHA:?missing commit}"
+        : "$${CI_EXPECTED_SHA:?missing trusted expected}"
+        for value in "$$CI_COMMIT_SHA" "$$CI_EXPECTED_SHA"; do
+          test "$${#value}" -eq 40
+          case "$$value" in *[!0-9a-f]*) exit 1 ;; esac
+        done
+        test "$$CI_COMMIT_SHA" = "$$CI_EXPECTED_SHA"
+        test "$$(git rev-parse HEAD)" = "$$CI_EXPECTED_SHA"
+        test -z "$$(git status --porcelain --untracked-files=all)"
+        test ! -e /woodpecker/authova-ci-out
+        install -d -m 0700 -o 1000 -g 1000 /woodpecker/authova-ci-out
+        chown -R 1000:1000 -- .
+  - name: build-and-check
+    image: sha256:b8678913e1f8e9af59ee49092042147eb3beb3743f3381dafa19bbff0b5115cd
+    backend_options:
+      docker:
+        user: "1000:1000"
+    environment:
+      HOME: /tmp/authova-home
+      GOMAXPROCS: "2"
+      GOMEMLIMIT: 512MiB
+      GOCACHE: /tmp/authova-gocache
+      GOMODCACHE: /tmp/authova-gomod
+      GOTOOLCHAIN: local
+      GOFLAGS: -p=2
+      NODE_OPTIONS: --max-old-space-size=512
+      PYTHONDONTWRITEBYTECODE: "1"
+      AUTHOVA_CI_MYSQL_ROOT_PASSWORD: authova-ci-only
+      AUTHOVA_CI_POSTGRES_PASSWORD: authova-ci-only
+    commands:
+      - |
+        timeout --signal=TERM --kill-after=5s 4920s sh -eu <<'AUTHOVA_CI'
+        umask 077
+        : "$${CI_COMMIT_SHA:?missing commit}"
+        : "$${CI_EXPECTED_SHA:?missing trusted expected}"
+        for value in "$$CI_COMMIT_SHA" "$$CI_EXPECTED_SHA"; do
+          test "$${#value}" -eq 40
+          case "$$value" in *[!0-9a-f]*) exit 1 ;; esac
+        done
+        test "$$CI_COMMIT_SHA" = "$$CI_EXPECTED_SHA"
+        test "$$(git rev-parse HEAD)" = "$$CI_EXPECTED_SHA"
+        test -z "$$(git status --porcelain --untracked-files=all)"
+        test "$$(id -u)" = 1000
+        mkdir -p "$$HOME"
+        export PATH="$$PWD/.tools/bin:$$PATH"
+        test "$$(go version | cut -d ' ' -f3)" = go1.27.4
+        test "$$(node --version)" = v26.13.0
+        test "$$(protoc --version)" = 'libprotoc 36.2'
+        timeout --signal=TERM --kill-after=5s 1000s python3 scripts/ci/prepare_tools.py --out /woodpecker/authova-ci-out/prepare
+        timeout --signal=TERM --kill-after=5s 130s python3 /opt/cicd/authova-readiness.py --dialect both
+        timeout --signal=TERM --kill-after=5s 700s python3 scripts/ci/fixture.py --dialect both --out /woodpecker/authova-ci-out/both-fixture
+        timeout --signal=TERM --kill-after=5s 1800s python3 scripts/ci/driver.py postgres-both --fixture-context /woodpecker/authova-ci-out/both-fixture/context.json --out /woodpecker/authova-ci-out/postgres
+        AUTHOVA_CI
+  - name: store-receipts
+    image: sha256:463fd66d0959db4312edee768a929afdc11c7757cda9ff846c913ba85c6853b3
+    backend_options:
+      docker:
+        user: "1000:1000"
+    when:
+      - status: [success, failure]
+    settings:
+      mode: receipts
+      workflow: authova-postgres
+      upload_token:
+        from_secret: authova_upload_token
+services:
+  - name: authova-ci-mysql
+    image: docker.io/library/mysql@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70
+    environment:
+      MYSQL_ROOT_PASSWORD: authova-ci-only
+      MYSQL_ROOT_HOST: "%"
+    entrypoint: [docker-entrypoint.sh, mysqld, --innodb-buffer-pool-size=201326592, --performance-schema=OFF, --max-connections=32]
+  - name: authova-ci-valkey
+    image: docker.io/valkey/valkey@sha256:56729e68bdda139cbd3f6a2538683dc3523325fc5711ea1a379938f1b37893f0
+    entrypoint: [valkey-server, --save, "", --appendonly, "no", --maxmemory, 64mb, --maxmemory-policy, noeviction]
+  - name: authova-ci-postgres
+    image: docker.io/library/postgres@sha256:526f86d93c6ea08fd3f1fe5605650cacc781b2c6013169a0ad8f42c7d3d84f32
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: authova-ci-only
+      POSTGRES_DB: postgres
+    entrypoint: [docker-entrypoint.sh, postgres, -c, shared_buffers=64MB, -c, max_connections=16, -c, work_mem=4MB]
