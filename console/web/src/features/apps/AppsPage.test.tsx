@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import type { App } from '../../api/types'
@@ -47,6 +47,41 @@ describe('AppsPage', () => {
     expect(await screen.findByText('交易前台')).toBeInTheDocument()
     expect(screen.getByText('活跃')).toBeInTheDocument()
     expect(screen.getByText('trade-web')).toBeInTheDocument()
+  })
+
+  it('分页统计只覆盖已加载应用，加载完成后更新数值与范围', async () => {
+    const user = userEvent.setup()
+    const appB: App = {
+      ...appA,
+      id: 'app-2',
+      name: '支付后台',
+      slug: 'pay-admin',
+      status: 'suspended',
+      require_mfa: true,
+    }
+    const { calls } = stubFetch((call) => {
+      const cursor = new URL(call.url, 'http://localhost').searchParams.get('cursor')
+      return cursor === 'page-2'
+        ? jsonResponse({ items: [appB], next_cursor: null })
+        : jsonResponse({ items: [appA], next_cursor: 'page-2' })
+    })
+    renderApps()
+
+    const summary = await screen.findByRole('region', { name: '应用统计' })
+    expect(within(summary).getByText('已加载应用').parentElement).toHaveTextContent('1 个')
+    expect(within(summary).getByText('活跃状态').parentElement).toHaveTextContent('1 个')
+    expect(within(summary).getByText('要求用户 MFA').parentElement).toHaveTextContent('0 个')
+    expect(summary).toHaveTextContent('不代表可访问应用总量')
+
+    await user.click(screen.getByRole('button', { name: '加载更多' }))
+    expect(await screen.findByText('支付后台')).toBeInTheDocument()
+    expect(within(summary).getByText('可访问应用').parentElement).toHaveTextContent('2 个')
+    expect(within(summary).getByText('活跃状态').parentElement).toHaveTextContent('1 个')
+    expect(within(summary).getByText('要求用户 MFA').parentElement).toHaveTextContent('1 个')
+    expect(summary).toHaveTextContent('已加载全部可访问应用')
+    expect(summary).not.toHaveTextContent('不代表可访问应用总量')
+    expect(calls).toHaveLength(2)
+    expect(new URL(calls[1]!.url, 'http://localhost').searchParams.get('cursor')).toBe('page-2')
   })
 
   it('空列表展示空态，管理员可见创建入口', async () => {

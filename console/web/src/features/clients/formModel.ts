@@ -1,6 +1,17 @@
-import type { Client, ClientInput, ClientKind } from '../../api/types'
+import type { Client, ClientGrantType, ClientInput, ClientKind } from '../../api/types'
 import { splitList } from '../../shared/utils/format'
 import type { PendingCreate } from '../../shared/utils/idempotency'
+// Exhaustive against the generated enum: a new server grant needs an explicit UI label.
+const GRANT_LABELS: Record<ClientGrantType, string> = {
+  authorization_code: '授权码',
+  refresh_token: '刷新令牌',
+  client_credentials: '客户端凭据',
+}
+export const GRANT_TYPES = (Object.keys(GRANT_LABELS) as ClientGrantType[]).map((value) => ({
+  value,
+  label: GRANT_LABELS[value],
+}))
+
 export interface ClientFormState {
   status: string
   name: string

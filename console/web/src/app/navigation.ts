@@ -1,8 +1,8 @@
 import type { IconName } from '../shared/components/Icon'
 
 /**
- * 导航注册表：侧栏与抽屉的唯一来源。
- * 平台项面向平台上下文；App 版块在进入 /apps/:appId 后展示（label 静态，路由含 appId）。
+ * 导航注册表：全局项用于侧栏与移动抽屉，App 版块用于主内容页头。
+ * 全局“应用”在 /apps/:appId 子路由保持当前态，不替换为应用内导航。
  */
 
 export interface PlatformNavItem {
@@ -15,7 +15,7 @@ export interface PlatformNavItem {
 }
 
 export const PLATFORM_NAV: PlatformNavItem[] = [
-  { to: '/apps', label: '全部应用', icon: 'apps', end: true },
+  { to: '/apps', label: '应用', icon: 'apps' },
   {
     to: '/platform/operators',
     label: '平台运营账号',

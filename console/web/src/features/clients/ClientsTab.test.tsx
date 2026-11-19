@@ -92,7 +92,7 @@ describe('ClientsTab', () => {
     await user.type(screen.getByLabelText('名称'), '服务端')
     await user.selectOptions(screen.getByLabelText('类型'), 'confidential')
     await user.type(screen.getByLabelText(/回调地址/), 'https://api.example.com/cb')
-    await user.type(screen.getByLabelText(/授权类型/), 'authorization_code')
+    expect(screen.getByRole('checkbox', { name: /authorization_code/ })).toBeChecked()
     await user.click(screen.getByRole('button', { name: '创建' }))
 
     // 创建请求携带契约要求的幂等键

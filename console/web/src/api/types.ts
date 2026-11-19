@@ -34,6 +34,12 @@ export interface OperatorPatch {
   reason: string
 }
 
+export interface OperatorPasswordPatch {
+  current_password: string
+  password: string
+  reason: string
+}
+
 export interface OperatorUpdated {
   updated: boolean
 }
@@ -78,6 +84,7 @@ export interface AppPatch {
 }
 
 export type ClientKind = 'public' | 'confidential'
+export type ClientGrantType = components['schemas']['ClientCreate']['grant_types'][number]
 
 export interface Client {
   config_version: number

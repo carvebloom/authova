@@ -32,12 +32,15 @@ export function AppsPage() {
   const releasePending = useProtection(pending !== null)
 
   const openCreate = () => setCreateOpen(true)
+  const activeCount = list.items.filter((app) => app.status === 'active').length
+  const mfaCount = list.items.filter((app) => app.require_mfa).length
+  const hasMore = list.nextCursor !== null
 
   return (
     <section aria-label="应用列表">
       <PageHeader
         title="应用"
-        sub="管理接入 Authova 的全部应用。"
+        sub="查看和管理当前账号可访问的应用。"
         actions={
           <>
             <IconButton icon="refresh" label="刷新列表" onClick={list.reload} />
@@ -72,6 +75,30 @@ export function AppsPage() {
             </Button>
           </div>
         </div>
+      ) : null}
+
+      {list.items.length > 0 ? (
+        <section className="apps-summary" aria-label="应用统计">
+          <dl className="apps-summary-grid">
+            <div className="apps-stat">
+              <dt>{hasMore ? '已加载应用' : '可访问应用'}</dt>
+              <dd>{list.items.length} 个</dd>
+            </div>
+            <div className="apps-stat">
+              <dt>活跃状态</dt>
+              <dd>{activeCount} 个</dd>
+            </div>
+            <div className="apps-stat">
+              <dt>要求用户 MFA</dt>
+              <dd>{mfaCount} 个</dd>
+            </div>
+          </dl>
+          <p className="apps-summary-note">
+            {hasMore
+              ? `统计仅覆盖当前已加载的 ${list.items.length} 个应用，不代表可访问应用总量；加载更多后更新。`
+              : '已加载全部可访问应用，统计覆盖当前完整列表。'}
+          </p>
+        </section>
       ) : null}
 
       {list.loading ? (

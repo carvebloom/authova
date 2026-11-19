@@ -181,7 +181,17 @@ func (m *managementService) UpdatePlatformOperator(ctx context.Context, in *v1.U
 	if !validReason(b.GetReason()) {
 		return nil, domain.ErrInvalid
 	}
-	err = m.server.Service.SetOperator(ctx, bearer(r), in.GetOperatorId(), b.GetRole(), b.GetStatus(), b.GetReason())
+	if b.Password != nil {
+		if b.Role != nil || b.Status != nil || b.CurrentPassword == nil {
+			return nil, domain.ErrInvalid
+		}
+		err = m.server.Service.SetOperatorPassword(ctx, bearer(r), in.GetOperatorId(), b.GetCurrentPassword(), b.GetPassword(), b.GetReason())
+	} else {
+		if b.CurrentPassword != nil || b.Role == nil || b.Status == nil {
+			return nil, domain.ErrInvalid
+		}
+		err = m.server.Service.SetOperator(ctx, bearer(r), in.GetOperatorId(), b.GetRole(), b.GetStatus(), b.GetReason())
+	}
 	return managementOutput(new(v1.OperatorUpdated), map[string]bool{"updated": true}, err)
 }
 func (m *managementService) GetApp(ctx context.Context, in *v1.GetAppRequest) (*v1.App, error) {

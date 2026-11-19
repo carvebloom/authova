@@ -910,6 +910,11 @@
           },
           "grant_types": {
             "items": {
+              "enum": [
+                "authorization_code",
+                "refresh_token",
+                "client_credentials"
+              ],
               "type": "string"
             },
             "type": "array"
@@ -989,6 +994,11 @@
           },
           "grant_types": {
             "items": {
+              "enum": [
+                "authorization_code",
+                "refresh_token",
+                "client_credentials"
+              ],
               "type": "string"
             },
             "type": "array"
@@ -1067,6 +1077,11 @@
           },
           "grant_types": {
             "items": {
+              "enum": [
+                "authorization_code",
+                "refresh_token",
+                "client_credentials"
+              ],
               "type": "string"
             },
             "type": "array"
@@ -1409,6 +1424,11 @@
           },
           "grant_types": {
             "items": {
+              "enum": [
+                "authorization_code",
+                "refresh_token",
+                "client_credentials"
+              ],
               "type": "string"
             },
             "type": "array"
@@ -1673,7 +1693,60 @@
       },
       "OperatorPatch": {
         "additionalProperties": false,
+        "description": "Change role and status (owner only), or change password with the acting operator current_password (self or owner reset). Password changes revoke all target management sessions and preserve MFA. Do not combine the two operations.",
+        "oneOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "password"
+                  ]
+                },
+                {
+                  "required": [
+                    "current_password"
+                  ]
+                }
+              ]
+            },
+            "required": [
+              "role",
+              "status"
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "role"
+                  ]
+                },
+                {
+                  "required": [
+                    "status"
+                  ]
+                }
+              ]
+            },
+            "required": [
+              "password",
+              "current_password"
+            ]
+          }
+        ],
         "properties": {
+          "current_password": {
+            "minLength": 1,
+            "type": "string",
+            "writeOnly": true
+          },
+          "password": {
+            "minLength": 15,
+            "type": "string",
+            "writeOnly": true
+          },
           "reason": {
             "minLength": 1,
             "type": "string"
@@ -1695,8 +1768,6 @@
           }
         },
         "required": [
-          "role",
-          "status",
           "reason"
         ],
         "type": "object"

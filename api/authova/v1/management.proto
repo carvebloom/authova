@@ -209,7 +209,7 @@ message Client {
   optional string client_id = 5 [json_name = "client_id", (authova.wire.property) = "{}"];
   optional int64 config_version = 6 [json_name = "config_version", (authova.wire.property) = "{}"];
   optional string created_at = 7 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
-  ClientGrantTypesList grant_types = 8 [json_name = "grant_types", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  ClientGrantTypesList grant_types = 8 [json_name = "grant_types", (authova.wire.property) = "{}", (authova.wire.item) = "{\"enum\":[\"authorization_code\",\"refresh_token\",\"client_credentials\"]}"];
   optional string id = 9 [json_name = "id", (authova.wire.property) = "{}"];
   optional string kind = 10 [json_name = "kind", (authova.wire.property) = "{\"enum\":[\"public\",\"confidential\"]}"];
   optional string name = 11 [json_name = "name", (authova.wire.property) = "{}"];
@@ -223,7 +223,7 @@ message ClientCreate {
   ClientCreateAllowedAudiencesList allowed_audiences = 1 [json_name = "allowed_audiences", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
   ClientCreateAllowedIntrospectionAudiencesList allowed_introspection_audiences = 2 [json_name = "allowed_introspection_audiences", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
   ClientCreateAllowedScopesList allowed_scopes = 3 [json_name = "allowed_scopes", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
-  ClientCreateGrantTypesList grant_types = 4 [json_name = "grant_types", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  ClientCreateGrantTypesList grant_types = 4 [json_name = "grant_types", (authova.wire.property) = "{}", (authova.wire.item) = "{\"enum\":[\"authorization_code\",\"refresh_token\",\"client_credentials\"]}"];
   optional string kind = 5 [json_name = "kind", (authova.wire.property) = "{\"enum\":[\"public\",\"confidential\"]}"];
   optional string name = 6 [json_name = "name", (authova.wire.property) = "{}"];
   ClientCreateRedirectUrisList redirect_uris = 7 [json_name = "redirect_uris", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
@@ -249,7 +249,7 @@ message ClientPatch {
   ClientPatchAllowedIntrospectionAudiencesList allowed_introspection_audiences = 2 [json_name = "allowed_introspection_audiences", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
   ClientPatchAllowedScopesList allowed_scopes = 3 [json_name = "allowed_scopes", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
   optional int64 config_version = 4 [json_name = "config_version", (authova.wire.property) = "{}"];
-  ClientPatchGrantTypesList grant_types = 5 [json_name = "grant_types", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  ClientPatchGrantTypesList grant_types = 5 [json_name = "grant_types", (authova.wire.property) = "{}", (authova.wire.item) = "{\"enum\":[\"authorization_code\",\"refresh_token\",\"client_credentials\"]}"];
   optional string name = 6 [(authova.wire.null_clears) = true, json_name = "name", (authova.wire.property) = "{}"];
   ClientPatchRedirectUrisList redirect_uris = 7 [json_name = "redirect_uris", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
   optional string status = 8 [(authova.wire.null_clears) = true, json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"disabled\"]}"];
@@ -315,7 +315,7 @@ message CreatedClient {
   optional string client_secret = 6 [json_name = "client_secret", (authova.wire.property) = "{\"description\":\"Shown only on creation or creator-scoped idempotency replay for at most ten minutes.\"}"];
   optional int64 config_version = 7 [json_name = "config_version", (authova.wire.property) = "{}"];
   optional string created_at = 8 [json_name = "created_at", (authova.wire.property) = "{\"format\":\"date-time\"}"];
-  CreatedClientGrantTypesList grant_types = 9 [json_name = "grant_types", (authova.wire.property) = "{}", (authova.wire.item) = "{}"];
+  CreatedClientGrantTypesList grant_types = 9 [json_name = "grant_types", (authova.wire.property) = "{}", (authova.wire.item) = "{\"enum\":[\"authorization_code\",\"refresh_token\",\"client_credentials\"]}"];
   optional string id = 10 [json_name = "id", (authova.wire.property) = "{}"];
   optional string kind = 11 [json_name = "kind", (authova.wire.property) = "{\"enum\":[\"public\",\"confidential\"]}"];
   optional string name = 12 [json_name = "name", (authova.wire.property) = "{}"];
@@ -376,10 +376,12 @@ message OperatorPage {
   authova.wire.NullableString next_cursor = 2 [json_name = "next_cursor", (authova.wire.property) = "{\"x-authova-nullable\":true}"];
 }
 message OperatorPatch {
-  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"role\",\"status\",\"reason\"]}";
+  option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"reason\"],\"description\":\"Change role and status (owner only), or change password with the acting operator current_password (self or owner reset). Password changes revoke all target management sessions and preserve MFA. Do not combine the two operations.\",\"oneOf\":[{\"required\":[\"role\",\"status\"],\"not\":{\"anyOf\":[{\"required\":[\"password\"]},{\"required\":[\"current_password\"]}]}},{\"required\":[\"password\",\"current_password\"],\"not\":{\"anyOf\":[{\"required\":[\"role\"]},{\"required\":[\"status\"]}]}}]}";
   optional string reason = 1 [json_name = "reason", (authova.wire.property) = "{\"minLength\":1}"];
   optional string role = 2 [json_name = "role", (authova.wire.property) = "{\"enum\":[\"owner\",\"admin\",\"auditor\"]}"];
   optional string status = 3 [json_name = "status", (authova.wire.property) = "{\"enum\":[\"active\",\"disabled\"]}"];
+  optional string password = 4 [json_name = "password", (authova.wire.property) = "{\"writeOnly\":true,\"minLength\":15}"];
+  optional string current_password = 5 [json_name = "current_password", (authova.wire.property) = "{\"writeOnly\":true,\"minLength\":1}"];
 }
 message Problem {
   option (authova.wire.schema) = "{\"additionalProperties\":false,\"required\":[\"type\",\"title\",\"status\",\"code\"]}";

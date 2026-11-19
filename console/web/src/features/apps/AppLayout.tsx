@@ -1,4 +1,4 @@
-import { Link, Outlet, useParams } from 'react-router-dom'
+import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import * as api from '../../api/endpoints'
 import { useAsync } from '../../shared/hooks/useAsync'
 import { ErrorNotice } from '../../shared/components/ErrorNotice'
@@ -6,12 +6,14 @@ import { ForbiddenState, Loading } from '../../shared/components/States'
 import { StatusBadge } from '../../shared/components/StatusBadge'
 import { CopyButton } from '../../shared/components/CopyButton'
 import { IconButton } from '../../shared/components/Button'
+import { Icon } from '../../shared/components/Icon'
 import { AppSwitcher } from '../../layout/AppSwitcher'
 import { useState } from 'react'
 import type { AppContextValue } from '../../app/appContext'
+import { APP_TABS, appTabPath } from '../../app/navigation'
 
 /**
- * App 上下文头：面包屑（应用 / 当前应用）、名称与状态、应用切换器；
+ * App 上下文头：返回总览、面包屑、名称与状态、应用切换器和主内容局部导航；
  * 技术元数据（Slug / App Key / Issuer）收进可折叠区，主界面以名称/状态/动作组织。
  */
 export function AppLayout() {
@@ -28,15 +30,21 @@ export function AppLayout() {
 
   return (
     <section aria-label={`应用 ${app.name}`}>
-      <nav className="crumbs" aria-label="面包屑">
-        <Link className="crumb" to="/apps">
-          应用
+      <div className="app-context-nav">
+        <Link className="btn btn-sm app-back-link" to="/apps">
+          <Icon name="arrow-left" size={16} />
+          返回应用
         </Link>
-        <span className="crumb-sep" aria-hidden="true">
-          /
-        </span>
-        <span className="crumb-current">{app.name}</span>
-      </nav>
+        <nav className="crumbs" aria-label="面包屑">
+          <Link className="crumb" to="/apps">
+            应用
+          </Link>
+          <span className="crumb-sep" aria-hidden="true">
+            /
+          </span>
+          <span className="crumb-current">{app.name}</span>
+        </nav>
+      </div>
 
       <div className="app-head">
         <div className="app-title-row">
@@ -69,6 +77,20 @@ export function AppLayout() {
           </dl>
         </details>
       </div>
+
+      <nav className="tabs app-tabs" aria-label="应用内导航">
+        {APP_TABS.map((tab) => (
+          <NavLink
+            key={tab.segment}
+            to={appTabPath(app.id, tab.segment)}
+            end={tab.segment === ''}
+            className={({ isActive }) => `tab${isActive ? ' tab-active' : ''}`}
+          >
+            <Icon name={tab.icon} size={16} />
+            {tab.label}
+          </NavLink>
+        ))}
+      </nav>
 
       {state.error ? <ErrorNotice error={state.error} onRetry={state.reload} /> : null}
       <Outlet context={{ app, reloadApp: state.reload } satisfies AppContextValue} />
