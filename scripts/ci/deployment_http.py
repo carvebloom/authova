@@ -17,6 +17,21 @@ from private_native import Unknown
 from release_contract import Refused, need
 
 
+HTTP_CHECKPOINTS=('NONE','APP_CREATE','CLIENT_CREATE','AUTHORIZE','CHALLENGE','MAIL','VERIFY','REGISTER','PASSWORD','USER_READBACK','CONSENT','REPLAY','LOGOUT')
+HTTP_STAGES=('normal-tls-health-and-static-assets','guest-and-authorization-boundaries','management-password-mfa-logout',
+             'oidc-register','oidc-password','oidc-consent','oidc-replay-logout','operator-password-and-session-revocation','owned-test-io-and-session-closure')
+
+
+def valid_failure_frame(value,rc):
+    return (type(rc) is int and type(value) is dict and set(value)=={'result','code','checkpoint','status','ordinal'}
+            and ((rc==1 and value['result']=='FAIL' and value['code']=='CI_HTTP_ASSERTION')
+                 or (rc==2 and value['result']=='UNKNOWN' and value['code']=='CI_HTTP_OUTCOME_UNKNOWN'))
+            and type(value['checkpoint']) is str and value['checkpoint'] in HTTP_CHECKPOINTS
+            and (value['status'] is None or type(value['status']) is int and 100<=value['status']<=599)
+            and type(value['ordinal']) is int and 0<=value['ordinal']<=256)
+
+
+
 class KnownUnhealthy(Refused):pass
 
 

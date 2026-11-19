@@ -214,10 +214,16 @@ class TestOwner(CoreConsoleOwner):
         rc,raw=self.native.run('CI_HTTP_ACTOR',['exec','-i',self.proxy,'python3','-I','-B','/run/ci/code/test_http.py',stage],guard,body=canonical(self.context),whole=whole,suffix=240)
         value=strict_json(raw)
         if rc!=0:
-            if rc==1 and value=={'result':'FAIL','code':'CI_HTTP_ASSERTION'}:
-                from deployment_http import KnownUnhealthy
-                raise KnownUnhealthy('CI_HTTP_ASSERTION')
-            raise Unknown('CI_HTTP_OUTCOME_UNKNOWN')
+            from deployment_http import KnownUnhealthy, HTTP_STAGES, valid_failure_frame
+            first=KnownUnhealthy('CI_HTTP_ASSERTION') if rc==1 and valid_failure_frame(value,rc) else Unknown('CI_HTTP_OUTCOME_UNKNOWN')
+            if stage in HTTP_STAGES and valid_failure_frame(value,rc):
+                try:
+                    guard()
+                    self.write('http-failure.json',{'schema':'authova-ci-http-failure/v1','stage':stage,'observation':value})
+                    guard()
+                except BaseException:
+                    first.close_secondary=getattr(first,'close_secondary',())+('HTTP_FAILURE_REPORT',)
+            raise first
         need(set(value)=={'context','evidence'} and value['context']['project']==self.context['project'] and value['context']['scope']==self.context['scope'],'CI_HTTP_CONTEXT')
         self.context=value['context'];return value['evidence']
     def prepare_proof(self,binding,guard,tag):

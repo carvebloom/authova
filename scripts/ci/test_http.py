@@ -18,10 +18,24 @@ import time
 import urllib.parse
 
 sys.path.insert(0,str(Path(__file__).parent))
-from deployment_http import Browser, KnownUnhealthy, context, static_assets
+from deployment_http import Browser, KnownUnhealthy, context, static_assets, HTTP_CHECKPOINTS, HTTP_STAGES, valid_failure_frame
 from host_admission import canonical, strict_json
 from private_native import Unknown
 from release_contract import need
+
+ACTIVE_ACTOR=None
+
+
+def failure_frame(actor,known):
+    # Only fixed stages and numeric response metadata. Never derive public
+    # values from exception args, request URLs, form data or private context.
+    checkpoint=getattr(actor,'checkpoint','NONE');status=getattr(actor,'last_status',None);ordinal=getattr(actor,'request_ordinal',0)
+    return {'result':'FAIL' if known else 'UNKNOWN','code':'CI_HTTP_ASSERTION' if known else 'CI_HTTP_OUTCOME_UNKNOWN',
+            'checkpoint':checkpoint if type(checkpoint) is str and checkpoint in HTTP_CHECKPOINTS else 'NONE',
+            'status':status if type(status) is int and 100<=status<=599 else None,
+            'ordinal':ordinal if type(ordinal) is int and 0<=ordinal<=256 else 0}
+
+
 
 
 class Fields(HTMLParser):
@@ -51,6 +65,7 @@ class Acceptance:
         self.c=c;self.state=c['state'];self.origins=(c['core'],c['console']);self.ssl=context(c['ca_pem']);self.ports=ports
         self.i,self.m=time.time(),time.monotonic();self.calls=[]
         self.cap=230
+        self.checkpoint='NONE';self.last_status=None;self.request_ordinal=0
     def guard(self):
         need(self.i<=time.time()<self.i+self.cap and self.m<=time.monotonic()<self.m+self.cap,'CI_HTTP_ACTOR_EXPIRED')
     def full(self,whole,suffix):
@@ -62,8 +77,10 @@ class Acceptance:
                   cookies=self.state.get('cookies-'+key,[]) if key and cookies is None else (cookies or []))
         original=b.request
         def request(*args,**kw):
+            self.request_ordinal+=1;self.last_status=None;offset=len(b.calls)
             try:return original(*args,**kw)
             finally:
+                if len(b.calls)>offset:self.last_status=b.calls[-1]['status']
                 if key:self.state['cookies-'+key]=b.cookie_state()
         b.request=request
         self.calls.append(b)
@@ -91,6 +108,7 @@ class Acceptance:
         if method=='POST':headers['Idempotency-Key']='ci-'+secrets.token_hex(16)
         return self.browser().json(self.c['core']+'/api/v1'+path,method=method,body=body,headers=headers,expected=expected)
     def flow(self):
+        self.checkpoint='AUTHORIZE'
         a=self.state['app'];client=self.state['client'];verifier=secrets.token_urlsafe(32)
         state=secrets.token_urlsafe(32);nonce=secrets.token_urlsafe(32);now=time.time()
         self.state['flow']={'state':state,'nonce':nonce,'verifier':verifier,'origin':now}
@@ -98,7 +116,10 @@ class Acceptance:
                  'response_type':'code','scope':'openid profile email','state':state,'nonce':nonce,
                  'code_challenge':base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip('='),'code_challenge_method':'S256'})
         b=self.browser('oidc');body,url=self.follow(b,a['issuer']+'/authorize?'+query)
-        need('/ui/flows/' in urllib.parse.urlsplit(url).path and Fields(body).inputs.get('_csrf'),'CI_FLOW')
+        u=urllib.parse.urlsplit(url);prefix='/a/'+a['app_key']+'/ui/flows/'
+        need(u.scheme+'://'+u.netloc==self.c['core'] and u.path.startswith(prefix)
+             and re.fullmatch('[A-Za-z0-9_-]{43}',u.path[len(prefix):]) and not u.query and not u.fragment
+             and Fields(body).inputs.get('_csrf'),'CI_FLOW')
         self.state['flow'].update(url=url,page=body.decode())
         return b,body,url
     def follow(self,b,url,*,method='GET',form=None):
@@ -122,11 +143,24 @@ class Acceptance:
             method='GET';form=None
         raise Unknown('CI_FLOW_REDIRECT_LIMIT')
     def form(self,b,url,body,action,data):
-        fields=Fields(body);target=urllib.parse.urljoin(url,action)
+        actions={'challenges':'CHALLENGE','verify':'VERIFY','register':'REGISTER','password':'PASSWORD','complete':'CONSENT'}
+        need(action in actions,'CI_FORM_ACTION')
+        self.checkpoint=actions[action];self.last_status=None
+        # POST renders at /flows/id/action (200), but every subsequent form
+        # remains rooted at /flows/id. Do not concatenate onto the response URL.
+        base=self.state['flow']['url']
+        need(re.fullmatch(re.escape(self.state['app']['issuer'])+'/ui/flows/[A-Za-z0-9_-]{43}',base) is not None,'CI_FLOW')
+        target=base+'/'+action;fields=Fields(body)
         need(urllib.parse.urlsplit(target).scheme+'://'+urllib.parse.urlsplit(target).netloc==self.c['core'],'CI_FORM_ORIGIN')
+        need(sum(urllib.parse.urljoin(url,a)==target for a in fields.actions)==1,'CI_FORM_ACTION')
         values=dict(data,_csrf=fields.inputs['_csrf'])
         return self.follow(b,target,method='POST',form=values)
+    def consent(self,body):
+        self.checkpoint='CONSENT'
+        target=self.state['flow']['url']+'/complete';fields=Fields(body)
+        need(sum(urllib.parse.urljoin(self.state['flow']['url'],a)==target for a in fields.actions)==1,'CI_EXPLICIT_CONSENT_REQUIRED')
     def read_user(self):
+        self.checkpoint='USER_READBACK';self.last_status=None
         query=urllib.parse.urlencode({'q':self.c['recipient'],'limit':2})
         users=self.api('/apps/'+self.state['app']['id']+'/users?'+query)
         need(len(users['items'])==1 and users['next_cursor'] is None,'CI_UNIQUE_USER')
@@ -157,15 +191,18 @@ class Acceptance:
             b.request(self.c['console']+'/bff/logout',method='POST',body={},headers={'Origin':self.c['console'],'X-CSRF-Token':result['csrf_token']},expected=(204,))
             self.browser(cookies=old).request(self.c['console']+'/bff/me',expected=(401,))
         elif stage=='oidc-register':
+            self.checkpoint='APP_CREATE'
             self.state['app']=self.api('/apps',method='POST',body={'name':'Isolated CI acceptance','slug':'ci-'+self.c['scope'][:16]},expected=(201,))
             app=self.state['app'];need(app['issuer']==self.c['core']+'/a/'+app['app_key'],'CI_EXACT_ISSUER')
+            self.checkpoint='CLIENT_CREATE';self.last_status=None
             self.state['client']=self.api('/apps/'+app['id']+'/clients',method='POST',body={'name':'CI single ordinary user','kind':'confidential',
                'redirect_uris':[self.c['core']+'/ci/callback'],'allowed_scopes':['openid','profile','email'],'allowed_audiences':['urn:authova:ci:'+self.c['scope']],
                'allowed_introspection_audiences':[],'grant_types':['authorization_code']},expected=(201,))
             self.state['user-password']=secrets.token_urlsafe(32)
             b,page,url=self.flow();sent=time.time()
-            page,url=self.form(b,url,page,url+'/challenges',{'purpose':'register','channel':'email','destination':self.c['recipient']})
+            page,url=self.form(b,url,page,'challenges',{'purpose':'register','channel':'email','destination':self.c['recipient']})
             challenge=Fields(page).inputs['challenge_id']
+            self.checkpoint='MAIL';self.last_status=None
             code=None;deadline=time.monotonic()+45
             for _ in range(46):
                 raw,_,status=b.request(self.c['core']+'/_ci/mail',headers={'X-CI-Control':self.c['control'],'X-CI-Since':str(sent)},expected=(200,202))
@@ -175,25 +212,27 @@ class Acceptance:
                 if time.monotonic()>=deadline:break
                 self.pause(1)
             need(code is not None,'CI_MAIL_NOT_DELIVERED')
-            page,url=self.form(b,url,page,url+'/verify',{'challenge_id':challenge,'code':code})
-            page,url=self.form(b,url,page,url+'/register',{'password':self.state['user-password'],'display_name':'CI ordinary user'})
-            self.read_user();need(url+'/complete' in Fields(page).actions or urllib.parse.urlsplit(url).path+'/complete' in Fields(page).actions,'CI_EXPLICIT_CONSENT_REQUIRED')
-            self.state['flow'].update(page=page.decode(),url=url)
+            page,url=self.form(b,url,page,'verify',{'challenge_id':challenge,'code':code})
+            page,url=self.form(b,url,page,'register',{'password':self.state['user-password'],'display_name':'CI ordinary user'})
+            self.read_user();self.consent(page)
+            self.state['flow'].update(page=page.decode())
         elif stage=='oidc-password':
             b,page,url=self.flow()
-            page,url=self.form(b,url,page,url+'/password',{'kind':'email','identifier':self.c['recipient'],'password':self.state['user-password']})
-            self.read_user();need(urllib.parse.urlsplit(url).path+'/complete' in Fields(page).actions or url+'/complete' in Fields(page).actions,'CI_EXPLICIT_CONSENT_REQUIRED')
-            self.state['flow'].update(page=page.decode(),url=url)
+            page,url=self.form(b,url,page,'password',{'kind':'email','identifier':self.c['recipient'],'password':self.state['user-password']})
+            self.read_user();self.consent(page)
+            self.state['flow'].update(page=page.decode())
         elif stage=='oidc-consent':
             f=self.state['flow'];b=self.browser('oidc')
-            self.form(b,f['url'],f['page'].encode(),f['url']+'/complete',{})
+            self.form(b,f['url'],f['page'].encode(),'complete',{})
             need('proof' in self.state and self.state['proof']['expected_state']==f['state'],'CI_CODE_NOT_OBSERVED')
         elif stage=='oidc-replay-logout':
+            self.checkpoint='REPLAY'
             r=self.state['proof'];client=self.state['client'];b=self.browser('oidc')
             auth=base64.b64encode((client['client_id']+':'+client['client_secret']).encode()).decode()
             b.request(self.state['app']['issuer']+'/oauth/token',method='POST',form={'grant_type':'authorization_code','code':r['code'],'redirect_uri':r['redirect_uri'],'code_verifier':r['code_verifier']},headers={'Authorization':'Basic '+auth},expected=(400,))
             # An App-user cookie is never a management session.
             b.request(self.c['console']+'/bff/apps',expected=(401,))
+            self.checkpoint='LOGOUT';self.last_status=None
             url=self.state['app']['issuer']+'/ui/logout';page,_,_=b.request(url);old=b.cookie_state()
             b.request(url,method='POST',form={'_csrf':Fields(page).inputs['_csrf']},headers={'Origin':self.c['core']})
             self.browser(cookies=old).request(self.state['app']['issuer']+'/ui/account',expected=(401,))
@@ -232,9 +271,11 @@ class Acceptance:
 
 
 def main():
+    global ACTIVE_ACTOR
     raw=sys.stdin.buffer.read(262145)
     need(len(raw)<=262144 and len(sys.argv)==2,'CI_HTTP_INPUT')
     actor=Acceptance(strict_json(raw))
+    ACTIVE_ACTOR=actor
     actor.cap=230 if sys.argv[1]=='operator-password-and-session-revocation' else (45 if sys.argv[1]=='oidc-consent' else 170)
     signal.signal(signal.SIGALRM,lambda *_:(_ for _ in ()).throw(Unknown('CI_HTTP_ACTOR_TIMEOUT')))
     signal.alarm(actor.cap+3)
@@ -246,6 +287,6 @@ def main():
 if __name__=='__main__':
     try:main()
     except KnownUnhealthy:
-        sys.stdout.write('{"result":"FAIL","code":"CI_HTTP_ASSERTION"}');raise SystemExit(1) from None
+        sys.stdout.buffer.write(canonical(failure_frame(ACTIVE_ACTOR,True)));raise SystemExit(1) from None
     except BaseException:
-        sys.stdout.write('{"result":"UNKNOWN","code":"CI_HTTP_OUTCOME_UNKNOWN"}');raise SystemExit(2) from None
+        sys.stdout.buffer.write(canonical(failure_frame(ACTIVE_ACTOR,False)));raise SystemExit(2) from None

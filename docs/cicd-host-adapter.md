@@ -281,3 +281,28 @@ traversal, encoded escapes, query/fragment and nested asset paths refuse. A page
 without assets still refuses in both gates. Transport/CA/SNI/header/body/timing
 checks and production's anonymous `/bff/me`401 check are unchanged. This is asset
 output consumption, not tracked-source normalization or a skipped static gate.
+
+### Official ordinary-user forms and failed HTTP observation
+
+The actor keeps the canonical `/a/<app_key>/ui/flows/<id>` URL separately from
+the last response URL. Official form POSTs render200 at their action URL; the
+next action must still match exactly one form rooted at that same flow. Register,
+verify, password and explicit consent use this rule, current CSRF and the same
+browser cookies. No automatic consent, account shortcut or relaxed code proof.
+
+On failure the private actor emits only exact five fields
+`result,code,checkpoint,status,ordinal`. Result/code retain FAIL/CI_HTTP_ASSERTION
+or UNKNOWN/CI_HTTP_OUTCOME_UNKNOWN. `checkpoint` is one of the source-fixed
+`HTTP_CHECKPOINTS`; status is an HTTP100..599 integer or null, ordinal0..256 is
+the actor-local request number. No exception text, URL, private context or body
+is projected. The held owner validates this closed frame and, only within its
+original guard, writes `http-failure.json` with schema
+`authova-ci-http-failure/v1`, closed stage and observation. A reporting failure
+remains secondary to the first actor failure. The original outer six-field
+failure frame, native records and nine PASS requirements are unchanged.
+
+Test17's recorded failure has no such inner observation and remains unknown at
+the endpoint/status level. Its five services plus extra `oidc-a` proof ACK need
+their own complete fresh ownership CAS before any known recovery; the earlier
+test16 five-service cleanup is not sufficient. This host-only repair does not
+rebuild or adopt images, replay17 or authorize production.
