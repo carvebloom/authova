@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -18,6 +19,99 @@ import (
 	"github.com/carvebloom/authova/internal/secure"
 	mysql "github.com/go-sql-driver/mysql"
 )
+
+func maintenanceRuntimeTarget(dialect, target, runtimeInput string) (string, string, error) {
+	invalid := errors.New("invalid owned maintenance runtime configuration")
+	// Preserve the existing standalone default; CI always supplies runtimeInput.
+	user, password := "authova_runtime", "authova-local-runtime-only"
+	if dialect == "postgres" {
+		u, err := url.Parse(target)
+		if err != nil || (u.Scheme != "postgres" && u.Scheme != "postgresql") || u.Host == "" {
+			return "", "", invalid
+		}
+		for key := range u.Query() {
+			switch strings.ToLower(key) {
+			case "user", "password", "dbname", "host", "hostaddr", "port", "service", "servicefile":
+				return "", "", invalid
+			}
+		}
+		credentials := url.UserPassword(user, password)
+		if runtimeInput != "" {
+			input, err := url.Parse(runtimeInput)
+			if err != nil || (input.Scheme != "postgres" && input.Scheme != "postgresql") || input.User == nil {
+				return "", "", invalid
+			}
+			credentials = input.User
+		}
+		user = credentials.Username()
+		if user == "" || strings.ContainsRune(user, 0) {
+			return "", "", invalid
+		}
+		u.User = credentials
+		return u.String(), `"` + strings.ReplaceAll(user, `"`, `""`) + `"`, nil
+	}
+	if dialect != "mysql" {
+		return "", "", invalid
+	}
+	cfg, err := mysql.ParseDSN(target)
+	if err != nil {
+		return "", "", invalid
+	}
+	if runtimeInput != "" {
+		input, err := mysql.ParseDSN(runtimeInput)
+		if err != nil {
+			return "", "", invalid
+		}
+		user, password = input.User, input.Passwd
+	}
+	if user == "" || strings.ContainsRune(user, 0) {
+		return "", "", invalid
+	}
+	cfg.User, cfg.Passwd = user, password
+	return cfg.FormatDSN(), "`" + strings.ReplaceAll(user, "`", "``") + "`@`%`", nil
+}
+
+func TestMaintenanceRuntimeIdentity(t *testing.T) {
+	for _, tc := range []struct {
+		user, mysqlPrincipal, postgresPrincipal string
+	}{
+		{"authova_runtime", "`authova_runtime`@`%`", `"authova_runtime"`},
+		{"authova_quality_0123456789ab", "`authova_quality_0123456789ab`@`%`", `"authova_quality_0123456789ab"`},
+		{"owned'\"`\\;--", "`owned'\"``\\;--`@`%`", "\"owned'\"\"`\\;--\""},
+	} {
+		user := tc.user
+		cfg := mysql.NewConfig()
+		cfg.User, cfg.Passwd, cfg.Net, cfg.Addr, cfg.DBName = "admin", "admin-secret", "tcp", "owned.invalid:3306", "owned_gate"
+		target := cfg.FormatDSN()
+		cfg.User, cfg.Passwd, cfg.Addr, cfg.DBName = user, "synthetic-runtime-secret", "ignored.invalid:3306", "original_fixture"
+		dsn, principal, err := maintenanceRuntimeTarget("mysql", target, cfg.FormatDSN())
+		actual, parseErr := mysql.ParseDSN(dsn)
+		if err != nil || parseErr != nil || actual.User != user || actual.Passwd != cfg.Passwd || actual.Addr != "owned.invalid:3306" || actual.DBName != "owned_gate" || principal != tc.mysqlPrincipal {
+			t.Fatal("MySQL runtime connection and grant identity diverged")
+		}
+		input := &url.URL{Scheme: "postgres", Host: "ignored.invalid:5432", Path: "/original_fixture", User: url.UserPassword(user, cfg.Passwd)}
+		dsn, principal, err = maintenanceRuntimeTarget("postgres", "postgres://admin:admin-secret@owned.invalid:5432/owned_gate?sslmode=disable", input.String())
+		actualURL, parseErr := url.Parse(dsn)
+		if err != nil || parseErr != nil || actualURL.User == nil {
+			t.Fatal("invalid PostgreSQL runtime fixture projection")
+		}
+		actualPassword, _ := actualURL.User.Password()
+		if actualURL.User.Username() != user || actualPassword != cfg.Passwd || actualURL.Host != "owned.invalid:5432" || actualURL.Path != "/owned_gate" || actualURL.Query().Get("sslmode") != "disable" || principal != tc.postgresPrincipal {
+			t.Fatal("PostgreSQL runtime connection and grant identity diverged")
+		}
+	}
+	for _, args := range [][3]string{
+		{"mysql", "invalid@tcp(", ""}, {"mysql", "admin@tcp(owned.invalid)/owned_gate", "invalid@tcp("},
+		{"mysql", "admin@tcp(owned.invalid)/owned_gate", "@tcp(owned.invalid)/owned_gate"},
+		{"postgres", "://invalid", ""}, {"postgres", "postgres://admin@owned.invalid/owned_gate", "postgres://owned.invalid/fixture"},
+		{"postgres", "postgres://admin@owned.invalid/owned_gate?user=admin", "postgres://runtime@owned.invalid/fixture"},
+		{"postgres", "postgres://admin@owned.invalid/owned_gate", "postgres://bad%00role@owned.invalid/fixture"},
+	} {
+		if _, _, err := maintenanceRuntimeTarget(args[0], args[1], args[2]); err == nil || err.Error() != "invalid owned maintenance runtime configuration" {
+			t.Fatal("unsupported maintenance runtime configuration accepted or leaked")
+		}
+	}
+}
 
 func TestMySQLRuntimeGrantAllowlist(t *testing.T) {
 	for grant, want := range map[string]bool{
@@ -153,32 +247,17 @@ func TestMaintenanceGates(t *testing.T) {
 			if e = migrator.db.QueryRowContext(ctx, "SELECT kind,introspection_count FROM clients WHERE app_id='app'").Scan(&kind, &count); e != nil || kind != "confidential" || count != 1 {
 				t.Fatalf("client preservation: %s %d %v", kind, count, e)
 			}
-			runtimeDSN := target
 			runtimeInput := os.Getenv("AUTHOVA_TEST_" + strings.ToUpper(dialect) + "_DSN")
+			runtimeDSN, runtimePrincipal, e := maintenanceRuntimeTarget(dialect, target, runtimeInput)
+			if e != nil {
+				t.Fatal(e)
+			}
 			if dialect == "postgres" {
-				exec(migrator, "GRANT USAGE ON SCHEMA public TO authova_runtime")
-				exec(migrator, "GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO authova_runtime")
-				u, _ := url.Parse(target)
-				u.User = url.UserPassword("authova_runtime", "authova-local-runtime-only")
-				if runtimeInput != "" {
-					input, _ := url.Parse(runtimeInput)
-					u.User = input.User
-				}
-				runtimeDSN = u.String()
+				exec(migrator, "GRANT USAGE ON SCHEMA public TO "+runtimePrincipal)
+				exec(migrator, "GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO "+runtimePrincipal)
 			} else {
-				exec(admin, "GRANT SELECT,INSERT,UPDATE,DELETE ON "+name+".* TO 'authova_runtime'@'%'")
-				defer admin.db.ExecContext(context.Background(), "REVOKE SELECT,INSERT,UPDATE,DELETE ON "+name+".* FROM 'authova_runtime'@'%'")
-				c, _ := mysql.ParseDSN(target)
-				c.User = "authova_runtime"
-				c.Passwd = "authova-local-runtime-only"
-				if runtimeInput != "" {
-					input, e := mysql.ParseDSN(runtimeInput)
-					if e != nil {
-						t.Fatal(e)
-					}
-					c.User, c.Passwd = input.User, input.Passwd
-				}
-				runtimeDSN = c.FormatDSN()
+				exec(admin, "GRANT SELECT,INSERT,UPDATE,DELETE ON "+name+".* TO "+runtimePrincipal)
+				defer admin.db.ExecContext(context.Background(), "REVOKE SELECT,INSERT,UPDATE,DELETE ON "+name+".* FROM "+runtimePrincipal)
 			}
 			runtime, e := Open(ctx, dialect, runtimeDSN, "https://identity.example", vault, 8)
 			if e != nil {
@@ -225,7 +304,7 @@ func TestMaintenanceGates(t *testing.T) {
 			exec(migrator, "UPDATE authova_migration_history SET checksum=? WHERE version=1", checksum)
 			if dialect == "postgres" {
 				exec(migrator, "CREATE SCHEMA authova_gate_shadow")
-				exec(migrator, "GRANT USAGE ON SCHEMA authova_gate_shadow TO authova_runtime")
+				exec(migrator, "GRANT USAGE ON SCHEMA authova_gate_shadow TO "+runtimePrincipal)
 				u, _ := url.Parse(runtimeDSN)
 				q := u.Query()
 				q.Set("search_path", "authova_gate_shadow,public")
@@ -247,13 +326,13 @@ func TestMaintenanceGates(t *testing.T) {
 				exec(migrator, "CREATE POLICY unsafe ON clients USING(true)")
 				reject()
 				exec(migrator, "DROP POLICY unsafe ON clients")
-				exec(migrator, "GRANT CREATE ON SCHEMA public TO authova_runtime")
+				exec(migrator, "GRANT CREATE ON SCHEMA public TO "+runtimePrincipal)
 				reject()
-				exec(migrator, "REVOKE CREATE ON SCHEMA public FROM authova_runtime")
+				exec(migrator, "REVOKE CREATE ON SCHEMA public FROM "+runtimePrincipal)
 			} else {
-				exec(admin, "GRANT CREATE ON "+name+".* TO 'authova_runtime'@'%'")
+				exec(admin, "GRANT CREATE ON "+name+".* TO "+runtimePrincipal)
 				reject()
-				exec(admin, "REVOKE CREATE ON "+name+".* FROM 'authova_runtime'@'%'")
+				exec(admin, "REVOKE CREATE ON "+name+".* FROM "+runtimePrincipal)
 			}
 			healthy()
 			// Three expired chains, batch=2: exercise FK order and bounded committed counts.
