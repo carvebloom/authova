@@ -118,6 +118,32 @@ Repository go.sum/npm lockfiles remain authoritative. Plugins must be in the
 `.tools/bin` location expected by `scripts/generate-api.py`. The image needs the
 complete build/generation/audit graph; version strings alone are not qualification.
 
+
+### Prepared generator consumption
+
+`prepare_tools.py` is the explicit networked producer: its seven commands and
+version pins are unchanged. It installs five Go tools in `.tools/bin` and warms
+the pinned `openapi-typescript@7.10.1` npm package. Generation consumes the three
+prepared generator binaries there, verifies their Go buildinfo pins, and passes
+the checked Proto plugin paths explicitly to protoc. Scanners stay on the same
+`.tools/bin` PATH. A partial or wrong-version prepared set fails rather than
+mixing it with legacy binaries.
+
+Standalone `generate-api.py --install-tools` still explicitly installs in `.tools`.
+Existing two-plugin standalone layouts remain supported with the pinned oapi Go
+source invocation; check mode requires its modules already cached. Ordinary
+API/Ent checks use `GOPROXY=off`, `GOTOOLCHAIN=local`, `GOWORK=off`, and API/Console
+TypeScript checks use pinned `npm exec --offline`. Missing prepared/cache inputs
+fail without an implicit install/download. The Go wrapper respects an explicitly
+set `GOPROXY`, including `off`; its historical host-cache fallback applies only
+when unset. This narrows generation checks, not all CI/network behavior.
+
+The `scripts/tests/test_generator_tools.py` component actor runs the actual
+prepare → contract entry → nested generation/verification Python chain with
+synthetic owned tools/files, plus standalone, wrong/partial layout and wrapper
+controls. It proves path/env consumption and refusal behavior, not real Go/npm,
+DB or generated-output compatibility. Those gates still run in fresh CI.
+
 ## Dedicated test fixture
 
 Use `authova-ci-test-<sha12>-<runID>`, fresh outside-checkout state, random

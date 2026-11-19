@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate/check bindings from this repository's explicitly pinned inputs."""
 from pathlib import Path
-import argparse, hashlib, json, subprocess, tempfile
+import argparse, hashlib, json, os, subprocess, tempfile
 root=Path(__file__).resolve().parents[1]
 p=argparse.ArgumentParser(); p.add_argument('--check',action='store_true'); args=p.parse_args()
 inputs=root/'contract-inputs'
@@ -15,7 +15,7 @@ source=(inputs/'sdk-client.go.txt').read_text()
 go=source.replace('package sdk','package coreapi').replace('// Package sdk','// Code generated from authova-contracts/sdk/client.go; DO NOT EDIT.\n// Package coreapi').encode()
 with tempfile.TemporaryDirectory() as directory:
     ts=Path(directory)/'management.ts'
-    subprocess.run(['npx','--yes','openapi-typescript@7.10.1',str(inputs/'management.yaml'),'-o',str(ts)],cwd=root,check=True)
+    subprocess.run(['npm','exec']+(['--offline'] if args.check else [])+['--yes','--package=openapi-typescript@7.10.1','--','openapi-typescript',str(inputs/'management.yaml'),'-o',str(ts)],cwd=root,env=os.environ.copy(),check=True)
     outputs={root/'internal/coreapi/client.go':go,root/'web/src/api/generated/management.ts':ts.read_bytes()}
     for target,data in outputs.items():
         if args.check:
