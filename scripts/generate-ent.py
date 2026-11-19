@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Reproduce the pinned Ent generator without modifying checked-in files."""
 from pathlib import Path
-import argparse,subprocess,tempfile
+import argparse,os,subprocess,tempfile
 root=Path(__file__).resolve().parents[1]
 p=argparse.ArgumentParser();p.add_argument('--check',action='store_true');args=p.parse_args()
+env=os.environ.copy()
+if args.check:env.update(GOPROXY='off',GOTOOLCHAIN='local',GOWORK='off')
 with tempfile.TemporaryDirectory() as d:
  temp=Path(d)
- subprocess.run([str(root/'scripts/migration/go.sh'),'run','./cmd/entgen','--target',d],cwd=root,check=True)
+ subprocess.run([str(root/'scripts/migration/go.sh'),'run','./cmd/entgen','--target',d],cwd=root,env=env,check=True)
  for source in temp.rglob('*.go'):
   target=root/'internal/ent'/source.relative_to(temp)
   if args.check:

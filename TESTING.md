@@ -177,8 +177,9 @@ profile 将顶层 Go 限于 GOMAXPROCS=2、-p=2、-parallel=2、-count=1，单�
 （保持 Go 旧默认上限）。unit/component 子进程移除 AUTHOVA_/COMPOSE_ 输入，
 避免自动接到调用者实例；GOWORK=off、GOTOOLCHAIN=local、GOPROXY=off。
 先显式准备固定 Go 依赖；CI 增加具名 `go mod download` 联网步骤。
-现有 integration helper 会调用 `scripts/migration/go.sh`，其本机缓存代理可能回退公网，
-因此 **GOPROXY=off 不是完整集成离线保证**；需要离线证明时由受审外层固定材料/网络另验。
+现有 integration helper 会调用 `scripts/migration/go.sh`；wrapper 保留显式 `GOPROXY`
+（包括 `off`），仅未设置时使用历史本机缓存代理及公网 fallback。
+这不构成完整集成离线证明；需要时由受审外层固定材料/网络另验。
 npm ci、浏览器安装、API --install-tools 和 OCI pull/build 均是独立授权动作，入口不暗装。
 
 CI job deadline 为 checks/console 30m、DB 各 40m，覆盖准备与多个 Go 包；它们是防挂边界，
