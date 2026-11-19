@@ -268,3 +268,16 @@ Worker hookup/real API signer, complete checks/build/packaging, installed owner
 execution, combined resource fit, same-image test and separately human-reviewed
 production are still actual acceptance stages. No actual key, signer installation,
 5ops, product request or service action was performed for this source handoff.
+
+
+### Static entry consumption
+
+CI's normal-TLS/static gate and production's read-only acceptance share the same
+HTML attribute consumer. It accepts only `/assets/<filename>` or
+`./assets/<filename>` at the Console root, deduplicates the canonical root paths,
+and actually requests every selected asset. Absolute entries remain supported.
+External script/stylesheet URLs, base-href overrides, ambiguous attributes,
+traversal, encoded escapes, query/fragment and nested asset paths refuse. A page
+without assets still refuses in both gates. Transport/CA/SNI/header/body/timing
+checks and production's anonymous `/bff/me`401 check are unchanged. This is asset
+output consumption, not tracked-source normalization or a skipped static gate.

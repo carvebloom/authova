@@ -2,7 +2,9 @@
 import http.client
 import http.cookiejar
 from http.cookies import SimpleCookie
+from html.parser import HTMLParser
 import json
+import re
 import socket
 import ssl
 import time
@@ -16,6 +18,34 @@ from release_contract import Refused, need
 
 
 class KnownUnhealthy(Refused):pass
+
+
+def static_assets(page):
+    """Resolve only root asset files; never URL-join arbitrary document input."""
+    need(type(page) is bytes and len(page)<=4*1024*1024,'STATIC_ASSET_BODY')
+    assets={}
+    class Entries(HTMLParser):
+        def handle_starttag(self,tag,attrs):
+            if tag=='base':need(not any(k=='href' for k,_ in attrs),'STATIC_ASSET_BASE')
+            if tag in ('script','link'):
+                need(all(sum(k==name for k,_ in attrs)<=1 for name in ('src','href','rel')),'STATIC_ASSET_PATH')
+            values=dict(attrs)
+            entry='src' if tag=='script' and 'src' in values else (
+                'href' if tag=='link' and 'stylesheet' in (values.get('rel') or '').lower().split() else None)
+            for key,value in attrs:
+                selected=key==entry or (key in ('src','href') and type(value) is str
+                    and value.startswith(('/assets/','./assets/')))
+                if not selected:continue
+                need(sum(k==key for k,_ in attrs)==1 and type(value) is str,'STATIC_ASSET_PATH')
+                path=value[1:] if value.startswith('./assets/') else value
+                need(re.fullmatch('/assets/[A-Za-z0-9_-][A-Za-z0-9_.-]*',path) is not None
+                     and '..' not in path,'STATIC_ASSET_PATH')
+                assets[path]=None
+            if entry is not None:need(entry in values,'STATIC_ASSET_PATH')
+    try:text=page.decode('utf-8')
+    except UnicodeDecodeError:raise KnownUnhealthy('STATIC_ASSET_HTML') from None
+    parser=Entries();parser.feed(text);parser.close()
+    return list(assets)
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -98,9 +128,8 @@ def readonly_acceptance(profile,guard):
     browser.request(profile['core_origin']+'/readyz')
     browser.request(profile['console_origin']+'/healthz')
     page,_,_=browser.request(profile['console_origin']+'/')
-    import re
-    assets=re.findall(rb'(?:src|href)="(/assets/[A-Za-z0-9_.-]+)"',page)
+    assets=static_assets(page)
     if not assets:raise KnownUnhealthy('STATIC_ASSET_ENTRY')
-    for path in dict.fromkeys(assets):browser.request(profile['console_origin']+path.decode('ascii'))
+    for path in assets:browser.request(profile['console_origin']+path)
     browser.request(profile['console_origin']+'/bff/me',expected=(401,))
     return browser.calls
