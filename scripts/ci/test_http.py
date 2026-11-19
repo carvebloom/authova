@@ -18,7 +18,7 @@ import time
 import urllib.parse
 
 sys.path.insert(0,str(Path(__file__).parent))
-from deployment_http import Browser, KnownUnhealthy, context
+from deployment_http import Browser, KnownUnhealthy, context, static_assets
 from host_admission import canonical, strict_json
 from private_native import Unknown
 from release_contract import need
@@ -137,9 +137,9 @@ class Acceptance:
         if stage=='normal-tls-health-and-static-assets':
             b=self.browser();b.request(self.c['core']+'/readyz');b.request(self.c['console']+'/healthz')
             page,_,_=b.request(self.c['console']+'/')
-            assets=list(dict.fromkeys(re.findall(rb'(?:src|href)="(/assets/[A-Za-z0-9_.-]+)"',page)))
+            assets=static_assets(page)
             need(assets,'CI_STATIC_ENTRY')
-            for path in assets:b.request(self.c['console']+path.decode('ascii'))
+            for path in assets:b.request(self.c['console']+path)
         elif stage=='guest-and-authorization-boundaries':
             b=self.browser();b.request(self.c['core']+'/api/v1/apps',expected=(401,))
             b.request(self.c['console']+'/bff/me',expected=(401,))
