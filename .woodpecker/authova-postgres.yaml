@@ -101,4 +101,4 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: authova-ci-only
       POSTGRES_DB: postgres
-    entrypoint: [docker-entrypoint.sh, postgres, -c, shared_buffers=64MB, -c, max_connections=16, -c, work_mem=4MB]
+    entrypoint: [docker-entrypoint.sh, postgres, -c, shared_buffers=64MB, -c, max_connections=64, -c, work_mem=4MB]
