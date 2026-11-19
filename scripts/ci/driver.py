@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Exact-source CI gates and config-free compile bundle. No Docker or release."""
-import argparse, datetime, hashlib, json, os, re, subprocess, sys, time
+import argparse, datetime, hashlib, json, os, re, stat, subprocess, sys, time
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 REPO = 'carvebloom/authova'
@@ -39,6 +39,42 @@ def ci_environment(source):
  env.update(GOMAXPROCS='1',GOFLAGS='-p=1',GOMEMLIMIT='256MiB',AUTHOVA_CI_RESOURCE_PROFILE='serial768')
  return env
 
+MAKE_DIAGNOSTICS=frozenset({'CHECK_GOFMT','CHECK_VET','CHECK_RACE','COMPILE_SIGNAL_KILLED','VCS_STATUS_ERROR','UNKNOWN'})
+def make_diagnostic(path):
+ # First-current bounded observation of this command's private log, not a raw
+ # export, content hash or proof of its complete historical first cause.
+ fd=None;answer='UNKNOWN'
+ try:
+  fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK);s=os.fstat(fd)
+  if not (stat.S_ISREG(s.st_mode) and stat.S_IMODE(s.st_mode)==0o600 and s.st_uid==os.geteuid() and s.st_nlink==1 and s.st_size<=1048576):return 'UNKNOWN'
+  body=bytearray()
+  while True:
+   part=os.read(fd,min(65536,1048577-len(body)))
+   if not part:break
+   body.extend(part)
+   if len(body)>1048576:return 'UNKNOWN'
+  token=lambda v:(v.st_dev,v.st_ino,v.st_mode,v.st_nlink,v.st_uid,v.st_gid,v.st_size,v.st_mtime_ns,v.st_ctime_ns)
+  if len(body)!=s.st_size or token(s)!=token(os.fstat(fd)) or token(s)!=token(os.stat(path,follow_symlinks=False)):return 'UNKNOWN'
+  body.decode('utf-8')
+  echoes=[b'test -z "$(gofmt -l cmd internal)"',b'go vet ./...',b'go test -race -count=1 ./...']
+  stages=['CHECK_GOFMT','CHECK_VET','CHECK_RACE'];stage=-1;families=set()
+  for line in body.splitlines():
+   if len(line)>16384 or b'\x00' in line:return 'UNKNOWN'
+   if line in echoes:
+    next_stage=echoes.index(line)
+    if next_stage!=stage+1:return 'UNKNOWN'
+    stage=next_stage
+   if re.fullmatch(rb'(?:go: )?error obtaining VCS status: exit status [1-9][0-9]{0,2}',line):families.add('VCS_STATUS_ERROR')
+   if re.fullmatch(rb'(?:[A-Za-z0-9_./@+-]+: )?(?:/[A-Za-z0-9_.@+-]+)+/pkg/tool/linux_arm64/compile: signal: killed',line):families.add('COMPILE_SIGNAL_KILLED')
+  if len(families)>1:return 'UNKNOWN'
+  answer=next(iter(families)) if families else stages[stage] if stage>=0 else 'UNKNOWN'
+ except BaseException:answer='UNKNOWN'
+ finally:
+  if fd is not None:
+   try:os.close(fd)
+   except BaseException:answer='UNKNOWN'
+ return answer
+
 def run_gate(phase,sha,out,runner=subprocess.run,fixture=None):
  env={k:v for k,v in os.environ.items() if not k.startswith(('AUTHOVA_','COMPOSE_'))};env.update(GOTOOLCHAIN='local',GOWORK='off',AUTHOVA_WEB_RELEASE_DIR=str(out/'web-release'),NODE_OPTIONS='--max-old-space-size=512')
  if fixture is not None:env.update(fixture)
@@ -48,17 +84,23 @@ def run_gate(phase,sha,out,runner=subprocess.run,fixture=None):
   need(env.get('AUTHOVA_TEST_DATABASE_DIALECT')==dialect,'FIXTURE_DIALECT')
   need(re.fullmatch('authova_quality_[0-9a-f]{12}',env.get('AUTHOVA_TEST_DISPOSABLE_DATABASE','')) is not None,'OWNED_FIXTURE_REQUIRED')
   # Existing test_profiles preflight checks required DSNs/keys and no unselected engine.
- started=time.time();mono=time.monotonic();commands=[];first=None
+ started=time.time();mono=time.monotonic();commands=[];first=None;diagnostic='UNKNOWN'
  for number,argv in enumerate(PHASES[phase]):
   path=out/('private-%s-%03d.log'%(phase,number));I=time.time();M=time.monotonic()
   try:
    with path.open('xb') as log:
     os.chmod(path,0o600);p=runner(argv,cwd=ROOT,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=1500)
    commands.append({'ordinal':number,'exit_code':p.returncode,'known_return':True,'I':I,'elapsed':time.monotonic()-M})
-   if p.returncode: first='COMMAND_EXIT';break
+   if p.returncode:
+    first='COMMAND_EXIT'
+    if phase=='checks' and argv==['make','check']:diagnostic=make_diagnostic(path)
+    break
   except subprocess.TimeoutExpired:
-   commands.append({'ordinal':number,'exit_code':None,'known_return':False,'I':I,'elapsed':time.monotonic()-M});first='UNKNOWN_TIMEOUT';break
+   commands.append({'ordinal':number,'exit_code':None,'known_return':False,'I':I,'elapsed':time.monotonic()-M});first='UNKNOWN_TIMEOUT'
+   if phase=='checks' and argv==['make','check']:diagnostic=make_diagnostic(path)
+   break
  result={'schema':'authova-ci-gate/v1','repo':REPO,'source':sha,'gate':phase,'result':'PASS' if first is None else 'FAIL','failure':first,'commands':commands,'I':started,'elapsed':time.monotonic()-mono}
+ if first is not None:result['diagnostic']=diagnostic
  if first is None and phase=='console-generation':
   result['artifacts']={}
   for label,folder in [('web',ROOT/'console/web/dist'),('legal',out/'web-release')]:
@@ -68,7 +110,10 @@ def run_gate(phase,sha,out,runner=subprocess.run,fixture=None):
     if f.is_file():
      data=f.read_bytes();items.append({'path':f.relative_to(folder).as_posix(),'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()})
    need(bool(items),'ARTIFACT_EMPTY');result['artifacts'][label]=items
- dump(out/(phase+'.json'),result);need(first is None,'GATE_FAILED');return result
+ dump(out/(phase+'.json'),result)
+ if first is not None:
+  error=Refused('GATE_FAILED');error.diagnostic=diagnostic;raise error
+ return result
 
 def schema_digest(root=ROOT):
  paths=sorted(p for p in (root/'internal/migrations').rglob('*') if p.is_file() and p.suffix in ('.sql','.sum'))
@@ -132,4 +177,7 @@ def main():
   run_gate(a.phase,sha,a.out,fixture=context)
 if __name__=='__main__':
  try:main()
- except Refused as e: print(json.dumps({'result':'REFUSED','code':e.args[0]}));sys.exit(1)
+ except Refused as e:
+  value={'result':'REFUSED','code':e.args[0]}
+  if getattr(e,'diagnostic',None) in MAKE_DIAGNOSTICS:value['diagnostic']=e.diagnostic
+  print(json.dumps(value));sys.exit(1)
