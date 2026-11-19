@@ -182,6 +182,46 @@ func TestIntrospectionReadsOnlyCommittedAuthority(t *testing.T) {
 	})
 }
 
+func introspectionWaitQuery(dialect, runtimeDSN string) (string, []any, error) {
+	if dialect == "postgres" {
+		return "SELECT COUNT(*) FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE 'SELECT c.payload,c.status,x.id,%'", nil, nil
+	}
+	if dialect != "mysql" {
+		return "", nil, errors.New("unsupported authority wait observer dialect")
+	}
+	cfg, err := mysql.ParseDSN(runtimeDSN)
+	if err != nil || cfg.User == "" {
+		return "", nil, errors.New("invalid owned MySQL runtime configuration")
+	}
+	// CI deliberately disables Performance Schema. The server thread list also
+	// works for the fixed MySQL 8.4 fixture without enabling instrumentation.
+	// Bind the actual owned runtime user, not a historical fixture account.
+	return "SELECT COUNT(*) FROM information_schema.processlist WHERE DB=DATABASE() AND USER=? AND STATE LIKE 'Waiting for table%'", []any{cfg.User}, nil
+}
+
+func TestIntrospectionWaitQueryUsesOwnedRuntime(t *testing.T) {
+	for _, user := range []string{"authova_runtime", "authova_quality_0123456789ab", "owned' OR 1=1--"} {
+		cfg := mysql.NewConfig()
+		cfg.User, cfg.Passwd, cfg.Net, cfg.Addr, cfg.DBName = user, "synthetic-private-password", "tcp", "owned.invalid:3306", "owned_schema"
+		query, args, err := introspectionWaitQuery("mysql", cfg.FormatDSN())
+		if err != nil || !reflect.DeepEqual(args, []any{user}) || !strings.Contains(query, "USER=?") ||
+			!strings.Contains(query, "information_schema.processlist") || !strings.Contains(query, "DB=DATABASE()") ||
+			!strings.Contains(query, "STATE LIKE 'Waiting for table%'") ||
+			strings.Contains(query, "performance_schema") || strings.Contains(query, user) || strings.Contains(query, cfg.Passwd) {
+			t.Fatal("authority wait observer lost owned identity or query scope")
+		}
+	}
+	for _, dsn := range []string{"", "invalid@tcp("} {
+		if _, _, err := introspectionWaitQuery("mysql", dsn); err == nil {
+			t.Fatal("invalid owned runtime configuration accepted")
+		}
+	}
+	query, args, err := introspectionWaitQuery("postgres", "")
+	if err != nil || len(args) != 0 || query != "SELECT COUNT(*) FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE 'SELECT c.payload,c.status,x.id,%'" {
+		t.Fatal("PostgreSQL authority wait observer changed")
+	}
+}
+
 func TestIntrospectionCancellationDuringDatabaseRead(t *testing.T) {
 	agentDatabases(t, func(t *testing.T, f *fixture) {
 		dialect := f.store.Dialect()
@@ -227,11 +267,16 @@ func TestIntrospectionCancellationDuringDatabaseRead(t *testing.T) {
 			unlock = func() { _, _ = conn.ExecContext(context.Background(), "UNLOCK TABLES") }
 			defer unlock()
 		}
-		reader, err := sqlstore.Open(context.Background(), dialect, os.Getenv("AUTHOVA_TEST_"+strings.ToUpper(dialect)+"_DSN"), f.server.URL, f.service.Vault, 1)
+		runtimeDSN := os.Getenv("AUTHOVA_TEST_" + strings.ToUpper(dialect) + "_DSN")
+		reader, err := sqlstore.Open(context.Background(), dialect, runtimeDSN, f.server.URL, f.service.Vault, 1)
 		if err != nil {
 			t.Fatal(err)
 		}
 		defer reader.Close()
+		query, queryArgs, err := introspectionWaitQuery(dialect, runtimeDSN)
+		if err != nil {
+			t.Fatal(err)
+		}
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		type outcome struct {
@@ -243,14 +288,10 @@ func TestIntrospectionCancellationDuringDatabaseRead(t *testing.T) {
 			_, _, active, err := reader.ReadIntrospection(ctx, f.scope1, f.client.ClientID, id)
 			result <- outcome{active, err}
 		}()
-		query := "SELECT COUNT(*) FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE 'SELECT c.payload,c.status,x.id,%'"
-		if dialect == "mysql" {
-			query = "SELECT COUNT(*) FROM performance_schema.processlist WHERE DB=DATABASE() AND USER='authova_runtime' AND STATE LIKE 'Waiting for table%'"
-		}
 		blocked := false
 		for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); {
 			var count int
-			if err := admin.QueryRowContext(context.Background(), query).Scan(&count); err != nil {
+			if err := admin.QueryRowContext(context.Background(), query, queryArgs...).Scan(&count); err != nil {
 				t.Fatal(err)
 			}
 			if count > 0 {
