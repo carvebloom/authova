@@ -56,6 +56,102 @@ INTEGRATION_CASES = frozenset({
 })
 PASSWORD_STORAGE_CASES = frozenset({"TestPlatformPasswordStorage", "TestPlatformPasswordReproofStorage"})
 PYTHON_UNIT_FILES = ("test_local_test.py", "test_test_profiles.py")
+SAFE_PREFIX = "AUTHOVA_TEST_PROFILE_SAFE_V1 "
+SAFE_FAILURES = {
+    None: "NONE",
+    "invalid Go JSON evidence": "INVALID_GO_JSON",
+    "invalid Go event shape": "INVALID_EVENT_SHAPE",
+    "unexpected Skip in required profile; inspect private Go evidence": "UNEXPECTED_SKIP",
+    "native Go failure; inspect private Go evidence": "NATIVE_OR_TEST_FAILURE",
+    "required Go package did not complete": "PACKAGE_INCOMPLETE",
+    "required Go test did not pass; empty/mismatched selection is not success": "REQUIRED_TEST_INCOMPLETE",
+}
+
+
+class SafeObservation:
+    """Observe the verifier's existing owned, closed Go-JSON inputs; no new IO.
+
+    Names are exact source-registered top-level tests, never subtest prefixes.
+    Observation limits affect only this optional projection, not the Go gate.
+    """
+    def __init__(self, selected):
+        self.registered = {(MODULE + p, n) for p, names in selected.items() for n in names
+                           if re.fullmatch(r"Test[A-Za-z0-9_]+", n) and len(n) <= 128}
+        self.packages = {MODULE + p for p in selected}
+        self.states = {k: set() for k in ("run", "pass", "fail", "skip")}
+        self.package_passed, self.fail_events, self.events = set(), 0, 0
+        self.usable, self.complete = len(self.registered) <= 1024, False
+
+    def observe(self, event):
+        self.events += 1
+        if not self.usable or self.events > 100000:
+            self.usable = False
+            return
+        if type(event) is not dict:
+            self.usable = False
+            return
+        action, package, name = event.get("Action"), event.get("Package"), event.get("Test")
+        if type(action) is not str or (package is not None and type(package) is not str) or (name is not None and type(name) is not str):
+            self.usable = False
+            return
+        if action == "fail":
+            self.fail_events += 1
+        if package in self.packages and not name and action == "pass":
+            self.package_passed.add(package)
+        if (package, name) in self.registered and action in self.states:
+            self.states[action].add((package, name))
+
+    def summary(self, profile, dialect, native_exits, failure):
+        counts = {"registered_top_level": len(self.registered), "package_passed": len(self.package_passed),
+                  "fail_events": self.fail_events}
+        tests = {}
+        for action, label in (("run", "started"), ("pass", "passed"), ("fail", "failed"), ("skip", "skipped")):
+            counts[label + "_top_level"] = len(self.states[action])
+            tests[label] = sorted({n for _, n in self.states[action]})
+        return {"schema": "authova-test-profile-summary/v1", "profile": profile,
+                "dialect": dialect if profile in {"database", "contract"} else None,
+                "native_exits": native_exits, "verification": "FAIL" if failure else "PASS",
+                "verification_failure": SAFE_FAILURES.get(failure, "UNKNOWN"),
+                "evidence_state": ("COMPLETE" if self.complete else "PARTIAL") if self.usable else "UNAVAILABLE",
+                "counts": counts if self.usable else None, "tests": tests if self.usable else None}
+
+
+def valid_safe_summary(value, selected, profile, dialect):
+    """Closed consumer shape. No raw evidence locator or caller-supplied names."""
+    keys = {"schema", "profile", "dialect", "native_exits", "verification", "verification_failure", "evidence_state", "counts", "tests"}
+    if type(value) is not dict or set(value) != keys or value["schema"] != "authova-test-profile-summary/v1":
+        return False
+    if value["profile"] != profile or value["dialect"] != (dialect if profile in {"database", "contract"} else None):
+        return False
+    exits = value["native_exits"]
+    if type(exits) is not list or not 1 <= len(exits) <= (2 if profile == "database" else 1) or any(type(n) is not int or not -255 <= n <= 255 for n in exits):
+        return False
+    if value["verification"] not in ("PASS", "FAIL") or value["verification_failure"] not in (*SAFE_FAILURES.values(), "UNKNOWN"):
+        return False
+    if (value["verification"] == "PASS") != (value["verification_failure"] == "NONE"):
+        return False
+    if value["verification"] == "PASS" and any(exits):
+        return False
+    if value["evidence_state"] == "UNAVAILABLE":
+        return value["counts"] is None and value["tests"] is None
+    if value["evidence_state"] not in ("COMPLETE", "PARTIAL") or (value["verification"] == "PASS" and value["evidence_state"] != "COMPLETE"):
+        return False
+    registered = {(p, n) for p, names in selected.items() for n in names if re.fullmatch(r"Test[A-Za-z0-9_]+", n) and len(n) <= 128}
+    names = {n for _, n in registered}
+    counts, tests = value["counts"], value["tests"]
+    count_keys = {"registered_top_level", "package_passed", "fail_events", "started_top_level", "passed_top_level", "failed_top_level", "skipped_top_level"}
+    if type(counts) is not dict or set(counts) != count_keys or any(type(n) is not int or not 0 <= n <= 100000 for n in counts.values()):
+        return False
+    if counts["registered_top_level"] != len(registered) or counts["package_passed"] > len(selected):
+        return False
+    if type(tests) is not dict or set(tests) != {"started", "passed", "failed", "skipped"}:
+        return False
+    for label, values in tests.items():
+        if type(values) is not list or len(values) > 1024 or any(type(n) is not str or n not in names for n in values):
+            return False
+        if values != sorted(set(values)) or not len(values) <= counts[label + "_top_level"] <= len(registered):
+            return False
+    return True
 
 
 def source_tests(root=ROOT, contract=False):
@@ -220,11 +316,16 @@ def run(profile, dialect, race):
             native_exit = result.returncode
             break
     summary, failure = {}, None
+    observed = SafeObservation(selected)
     try:
         def events():
             for path in outputs:
                 with path.open() as stream:
-                    yield from (json.loads(line) for line in stream)
+                    for line in stream:
+                        event = json.loads(line)
+                        observed.observe(event)
+                        yield event
+            observed.complete = True
         summary = check_events(events(), selected, profile, dialect, native_exit)
     except json.JSONDecodeError:
         failure = "invalid Go JSON evidence"
@@ -239,6 +340,11 @@ def run(profile, dialect, race):
     with private_file("result.json") as output:
         json.dump(record, output)
     print(json.dumps({**record, "evidence": str(evidence.relative_to(ROOT))}))
+    safe = observed.summary(profile, dialect, native_exits, failure)
+    if valid_safe_summary(safe, selected, profile, dialect):
+        frame = json.dumps(safe, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        if len(frame.encode("utf-8")) <= 65536:
+            print(SAFE_PREFIX + frame)
     if failure:
         raise ValueError("Go gate failed; private evidence: " + str(evidence.relative_to(ROOT))) from None
 

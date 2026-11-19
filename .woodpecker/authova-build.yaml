@@ -70,7 +70,7 @@ steps:
         timeout --signal=TERM --kill-after=5s 1260s python3 scripts/ci/driver.py bundle --receipts /woodpecker/authova-ci-out/console --out /woodpecker/authova-ci-out/compile
         AUTHOVA_CI
   - name: store-receipts
-    image: sha256:5ecb68b13796a5a0b40fba1665ba5238fe4f91a5aee477bb130fbc20c6815e40
+    image: sha256:392c7700f05ea4c7dbf43e70454eb872ef5566a7cd78f211c014098271f5c0b5
     backend_options:
       docker:
         user: "1000:1000"
@@ -83,7 +83,7 @@ steps:
       upload_token:
         from_secret: authova_upload_token
   - name: store-compile
-    image: sha256:5ecb68b13796a5a0b40fba1665ba5238fe4f91a5aee477bb130fbc20c6815e40
+    image: sha256:392c7700f05ea4c7dbf43e70454eb872ef5566a7cd78f211c014098271f5c0b5
     backend_options:
       docker:
         user: "1000:1000"

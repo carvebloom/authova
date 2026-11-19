@@ -58,6 +58,54 @@ Go1.27.4/Linux/arm64/CGO0. The trusted packager augments (not forges/rewrites) t
 compile manifest provenance with API-verified four-workflow gates and image/archive
 bindings. Test and production subsequently use those identical image IDs.
 
+## Optional failed database-profile observation
+
+`test_profiles.py` observes the same Go JSON iterator already consumed by its
+verifier, after the attempted native groups have returned and closed their files.
+It adds no Go invocation, evidence-path traversal, retry or test selection. The
+original private result and gate decision remain unchanged. One bounded stdout
+frame has prefix `AUTHOVA_TEST_PROFILE_SAFE_V1 `; the failed first database command
+in `driver.py` may consume that frame into optional `test_profile_summary` on its
+existing safe gate receipt. This is diagnostic evidence, not a replacement gate.
+
+The summary is a closed nine-field object:
+
+| Field | Contract |
+| --- | --- |
+| `schema` | `authova-test-profile-summary/v1` |
+| `profile` | `database` for this driver consumer |
+| `dialect` | `mysql` for `mysql-primary`, `both` for `postgres-both` |
+| `native_exits` | Original attempted Go-group exit codes, 1–2 integers in -255..255; booleans rejected |
+| `verification` | Original `PASS` or `FAIL`, independent of outer make status |
+| `verification_failure` | `NONE`, `INVALID_GO_JSON`, `INVALID_EVENT_SHAPE`, `UNEXPECTED_SKIP`, `NATIVE_OR_TEST_FAILURE`, `PACKAGE_INCOMPLETE`, `REQUIRED_TEST_INCOMPLETE`, or `UNKNOWN` |
+| `evidence_state` | `COMPLETE`, `PARTIAL`, or `UNAVAILABLE` |
+| `counts` | Closed counters below, or null when unavailable |
+| `tests` | Closed source-registered identifier arrays below, or null when unavailable |
+
+`counts` contains only `registered_top_level`, `package_passed`, `fail_events`,
+`started_top_level`, `passed_top_level`, `failed_top_level`, `skipped_top_level`.
+Counters are nonboolean integers in 0..100000. Top-level counts distinguish the
+registered package/test pairs internally; `tests` deliberately exports no package
+paths and contains only sorted unique `started`, `passed`, `failed`, `skipped`
+arrays. Each identifier must exactly match an ASCII `Test[A-Za-z0-9_]+` name
+(at most 128 characters) in the selected public source inventory. Dynamic subtests,
+unknown names, messages, output, DSNs, paths and content hashes are never exported.
+Same-named tests in different packages may make a counter exceed its array length.
+
+`COMPLETE` means the verifier reached EOF on the attempted groups' Go JSON, not
+that all required groups/tests passed. `PARTIAL` marks a prefix when verification
+stopped early; missing events cannot become failed tests. Shape/observation-limit
+failure gives `UNAVAILABLE`. A native nonzero alone never adds a failed Test ID.
+The observer stops collecting after 100000 events or 1024 registered identifiers;
+these limits do not weaken or stop the existing verifier.
+
+The frame is at most 64KiB. Driver reads only its own closed command log (at most
+1MiB), with nofollow, regular0600/owner/singlelink and stable FD/endpath checks.
+Missing, duplicate, malformed or unregistered frames omit the optional field;
+they cannot change native status, failure, ordinal or timing. Platform projection
+must omit an invalid optional summary and its receiver must reject malformed
+present summaries. Existing seven-value `diagnostic` semantics are unchanged.
+
 ## Tool image interface
 
 Go **1.27.4**, Node **26.13.0** and its npm, Python >=3.9 (platform image 3.11.2), make/git/OpenSSL,

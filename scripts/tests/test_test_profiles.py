@@ -2,6 +2,7 @@
 import importlib.util
 import contextlib
 import io
+import json
 import os
 from pathlib import Path
 import tempfile
@@ -21,6 +22,85 @@ def event(package, action, name=None):
 
 
 class RequiredResults(unittest.TestCase):
+    def test_safe_summary_uses_only_registered_top_level_events_and_keeps_gate_failure(self):
+        selected = {"internal/domain": {"TestConstraint"}}
+        inputs = [event("internal/domain", "run", "TestConstraint"),
+                  event("internal/domain", "fail", "TestConstraint/PRIVATE_CANARY"),
+                  event("internal/domain", "fail", "TestConstraint"),
+                  event("internal/domain", "fail", "TestCallerForged"),
+                  event("internal/domain", "fail")]
+        observed = profiles.SafeObservation(selected)
+        for value in inputs:
+            value["Output"] = "PRIVATE_MESSAGE_CANARY"
+            observed.observe(value)
+        observed.complete = True
+        result = observed.summary("database", "mysql", [1], "native Go failure; inspect private Go evidence")
+        self.assertEqual(result["verification_failure"], "NATIVE_OR_TEST_FAILURE")
+        self.assertEqual(result["native_exits"], [1])
+        self.assertEqual(result["tests"], {"started": ["TestConstraint"], "passed": [], "failed": ["TestConstraint"], "skipped": []})
+        self.assertEqual(result["counts"]["failed_top_level"], 1)
+        self.assertEqual(result["counts"]["fail_events"], 4)
+        self.assertNotIn("CANARY", json.dumps(result))
+        self.assertNotIn("TestCallerForged", json.dumps(result))
+        self.assertTrue(profiles.valid_safe_summary(result, selected, "database", "mysql"))
+        for change in ({"native_exits": [True]}, {"verification_failure": "PRIVATE_CANARY"},
+                       {"dialect": "both"}, {"path": "/PRIVATE_CANARY"},
+                       {"tests": {**result["tests"], "failed": ["TestConstraint/PRIVATE_CANARY"]}},
+                       {"counts": {**result["counts"], "fail_events": True}}):
+            self.assertFalse(profiles.valid_safe_summary(result | change, selected, "database", "mysql"))
+        observed.complete = False
+        self.assertEqual(observed.summary("database", "mysql", [1], "unknown")["evidence_state"], "PARTIAL")
+        observed.events = 100000
+        observed.observe(inputs[0])
+        unavailable = observed.summary("database", "mysql", [1], "unknown")
+        self.assertEqual(unavailable["evidence_state"], "UNAVAILABLE")
+        self.assertIsNone(unavailable["tests"])
+        self.assertTrue(profiles.valid_safe_summary(unavailable, selected, "database", "mysql"))
+
+    def test_run_projects_original_go_json_without_changing_native_or_skip_verification(self):
+        selected = {"internal/domain": {"TestConstraint"}}
+        for mode in ("pass", "native", "skip", "compile", "invalid"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as tmp:
+                def fake(argv, **kwargs):
+                    rows = [event("internal/domain", "run", "TestConstraint")]
+                    if mode != "compile":
+                        rows += [event("internal/domain", "skip" if mode == "skip" else "pass", "TestConstraint"),
+                                 event("internal/domain", "pass")]
+                    for row in rows:
+                        row["Output"] = "PRIVATE_CANARY"
+                        kwargs["stdout"].write(json.dumps(row) + "\n")
+                    if mode == "invalid":
+                        kwargs["stdout"].write("INVALID_PRIVATE_CANARY\n")
+                    return type("Return", (), {"returncode": 1 if mode in ("native", "compile") else 0})()
+                output = io.StringIO()
+                with patch.object(profiles, "ROOT", Path(tmp)), patch.object(profiles, "selection", return_value=(selected, [])), \
+                     patch.object(profiles, "source_tests", return_value={}), patch.object(profiles.subprocess, "run", fake), \
+                     contextlib.redirect_stdout(output):
+                    if mode == "pass":
+                        profiles.run("component", "mysql", True)
+                    else:
+                        with self.assertRaisesRegex(ValueError, "Go gate failed"):
+                            profiles.run("component", "mysql", True)
+                lines = output.getvalue().splitlines()
+                original = json.loads(lines[0])
+                self.assertIn("evidence", original)  # Original private record is unchanged.
+                frames = [line[len(profiles.SAFE_PREFIX):] for line in lines if line.startswith(profiles.SAFE_PREFIX)]
+                self.assertEqual(len(frames), 1)
+                safe = json.loads(frames[0])
+                self.assertTrue(profiles.valid_safe_summary(safe, selected, "component", "mysql"))
+                self.assertEqual(safe["native_exits"], original["native_exits"])
+                self.assertNotIn("CANARY", frames[0])
+                self.assertNotIn("evidence", safe)
+                self.assertEqual(safe["verification"], "PASS" if mode == "pass" else "FAIL")
+                if mode in ("native", "compile"):
+                    self.assertEqual(safe["tests"]["failed"], [])  # Native failure is not a Test FAIL.
+                if mode == "skip":
+                    self.assertEqual(safe["verification_failure"], "UNEXPECTED_SKIP")
+                    self.assertEqual(safe["evidence_state"], "PARTIAL")
+                if mode == "invalid":
+                    self.assertEqual(safe["verification_failure"], "INVALID_GO_JSON")
+                    self.assertEqual(safe["evidence_state"], "PARTIAL")
+
     def test_serial_ci_resources_do_not_change_required_selection_or_race(self):
         inventory=profiles.source_tests()
         calls=[]

@@ -131,6 +131,48 @@ class CIDriverTests(unittest.TestCase):
     self.assertEqual(receipt['failure'],{'success':None,'nonzero':'PREPARE_FAILED','timeout':'PREPARE_TIMEOUT','exception':'PREPARE_EXCEPTION'}[outcome])
     self.assertEqual(last['known_return'],outcome in ('success','nonzero'))
     self.assertEqual(last['exit_code'],0 if outcome=='success' else 7 if outcome=='nonzero' else None)
+ def test_database_failure_consumes_only_closed_source_bound_profile_frame(self):
+  m=module('driver');spec=importlib.util.spec_from_file_location('own_profiles',ROOT/'scripts/test_profiles.py')
+  p=importlib.util.module_from_spec(spec);spec.loader.exec_module(p)
+  selected,_=p.selection('database',p.source_tests());observed=p.SafeObservation(selected)
+  observed.observe({'Package':p.MODULE+'internal/integration','Action':'run','Test':'TestDatabases','Output':'PRIVATE_CANARY'})
+  observed.complete=True
+  safe=observed.summary('database','mysql',[1],'native Go failure; inspect private Go evidence')
+  fixture={'AUTHOVA_TEST_DATABASE_DIALECT':'mysql','AUTHOVA_TEST_DISPOSABLE_DATABASE':'authova_quality_123456abcdef'}
+  for mode in ('valid','forged-test','dynamic-test','extra','dialect','duplicate','bad-json','bool-exit'):
+   with self.subTest(mode=mode),tempfile.TemporaryDirectory() as tmp:
+    value=json.loads(json.dumps(safe))
+    if mode in ('forged-test','dynamic-test'):value['tests']['started']=['TestCallerForged' if mode=='forged-test' else 'TestDatabases/PRIVATE_CANARY']
+    if mode=='extra':value['evidence']='/PRIVATE_CANARY'
+    if mode=='dialect':value['dialect']='both'
+    if mode=='bool-exit':value['native_exits']=[True]
+    frame=p.SAFE_PREFIX+json.dumps(value)
+    if mode=='duplicate':frame+='\n'+frame
+    if mode=='bad-json':frame=p.SAFE_PREFIX+'{"schema":1,"schema":2}'
+    calls=[];logs=[];original=m.profile_summary
+    def fake(argv,**kw):
+     calls.append(argv);logs.append(kw['stdout']);kw['stdout'].write(('PRIVATE_CANARY /not-a-descriptor\n'+frame+'\n').encode())
+     return type('Return',(),{'returncode':2})()
+    def consume(path,phase):
+     self.assertTrue(logs[-1].closed);return original(path,phase)
+    with patch.object(m,'profile_summary',consume),self.assertRaisesRegex(m.Refused,'GATE_FAILED'):
+     m.run_gate('mysql-primary','a'*40,Path(tmp),fake,fixture)
+    raw=(Path(tmp)/'mysql-primary.json').read_bytes();receipt=json.loads(raw)
+    self.assertEqual(calls,[['make','test-integration','TEST_DATABASE_DIALECT=mysql']])
+    self.assertEqual(receipt['failure'],'COMMAND_EXIT');self.assertEqual(receipt['commands'][0]['exit_code'],2)
+    self.assertEqual(receipt['commands'][0]['known_return'],True);self.assertNotIn(b'CANARY',raw)
+    if mode=='valid':
+     self.assertEqual(receipt['test_profile_summary'],safe)
+     self.assertEqual(receipt['test_profile_summary']['native_exits'],[1])
+     self.assertEqual(receipt['test_profile_summary']['tests']['failed'],[])
+    else:self.assertNotIn('test_profile_summary',receipt)
+  with tempfile.TemporaryDirectory() as tmp:
+   path=Path(tmp)/'own.log';path.write_text(p.SAFE_PREFIX+json.dumps(safe)+'\n');path.chmod(0o600)
+   close=m.os.close
+   def closefault(fd):close(fd);raise OSError('PRIVATE_CLOSE_CANARY')
+   with patch.object(m.os,'close',closefault):self.assertIsNone(m.profile_summary(path,'mysql-primary'))
+   with patch.object(m.os,'open',side_effect=AssertionError('NO_READ_UNSELECTED_PHASE')):
+    self.assertIsNone(m.profile_summary(path,'checks'))
  def test_prepare_keeps_first_on_close_or_receipt_fault_and_prints_only_fixed_fields(self):
   m=module('prepare_tools');original_open=Path.open
   class CloseFault:
