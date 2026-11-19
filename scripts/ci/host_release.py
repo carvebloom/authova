@@ -4,17 +4,10 @@ No production execution or approval synthesis in an untrusted checkout/job.
 """
 import argparse,hashlib,json,re
 from pathlib import Path
-ROLES={'core','console'}
-class Refused(Exception):pass
-def need(ok,code):
- if not ok:raise Refused(code)
+from release_contract import Refused,need,candidate as validate_candidate,test_receipt as validate_test_receipt
 def plan(candidate,control,test_receipt,review):
- need(set(candidate)=={'schema','repo','source','coreID','consoleID','manifest','archive','schemaDigest'},'CANDIDATE_KEYS')
- need(candidate['schema']=='authova-image-candidate/v1' and candidate['repo']=='carvebloom/authova','CANDIDATE_SCHEMA')
- need(re.fullmatch('[0-9a-f]{40}',candidate['source']) is not None,'SOURCE')
- for role in ROLES:need(re.fullmatch('sha256:[0-9a-f]{64}',candidate[role+'ID']) is not None,'IMAGE')
- for k in ('manifest','archive','schemaDigest'):need(re.fullmatch('[0-9a-f]{64}',candidate[k]) is not None,'DIGEST')
- need(type(test_receipt) is dict and test_receipt.get('schema')=='authova-test-deployment/v1' and test_receipt.get('candidate')==candidate and test_receipt.get('result')=='PASS','TEST_BINDING')
+ validate_candidate(candidate)
+ validate_test_receipt(test_receipt,candidate)
  need(review is not None and review.get('schema')=='authova-host-verified-production-review/v1' and review.get('candidate')==candidate and review.get('reviewed_by')=='rwasayc' and review.get('deployment')=='production' and type(review.get('reviewed_at')) is str and bool(review['reviewed_at']),'REVIEW_BINDING')
  # This object is only produced after the host service independently checks WP API.
  # CLI below only emits a plan: passing a JSON dict does NOT authorize execution.

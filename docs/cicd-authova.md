@@ -122,15 +122,16 @@ Host candidate exact keys:
 schema=`authova-image-candidate/v1`, repo=`carvebloom/authova`.
 Manifest/archive/schemaDigest are SHA256; source is exact main40; image IDs use sha256:.
 
-`scripts/ci/host_release.py` currently validates this contract and **emits a plan
-only**. It deliberately cannot deploy. Its reviewed-by field is not an authorization
-proof. A trusted host service must independently consume the real Woodpecker
-production deployment/review (`rwasayc`, timestamp, numeric build/test records and
-whole candidate binding) and install/validate the private signed receipt. Never
-run arbitrary checkout shell on the host or accept a job-written approval boolean.
-Actual fixed host CAS/preflight/known-only rollback execution is the next adapter
-piece after this platform receipt/packager binding is frozen; do not enable a lane
-based on this plan helper alone.
+`scripts/ci/host_release.py` remains a plan-only inspector. Actual host admission
+and durable execution boundaries are in `host_admission.py` / `host_adapter.py`,
+imported only by a pinned installed host worker. They independently verify the fixed
+platform HMAC v1, private nonce-keyed immutable ledger and whole test receipt,
+same-inode lock/current CAS, then EXCL/fsync nonce+intent before mutation. They do
+not authorize themselves from a job's review fields. The exact private binding,
+nine required test checks, native-evidence receipt and still-missing installed
+operations wiring are in [the host contract](cicd-host-adapter.md). The lane remains
+held until the private operations, actual test runner, worker ledger and packager
+are connected and qualified; a model backend or plan helper cannot close that gap.
 
 The host-controlled current configuration must supply `schemaDigest` from the
 adopted source and preserve **all** current active layers referenced by
