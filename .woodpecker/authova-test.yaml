@@ -1,0 +1,27 @@
+when:
+  - event: manual
+    branch: main
+workspace:
+  base: /woodpecker
+  path: src
+labels:
+  platform: linux/arm64
+  repo: carvebloom/authova
+  lane: authova
+concurrency: 1
+steps:
+  - name: await-test
+    image: sha256:23f7b41a95f4fbddd4b32dc35386a9d6fd4a2acd001901491f4246297285b737
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+    commands:
+      - |
+        : "$${CI_COMMIT_SHA:?missing commit}"
+        : "$${CI_EXPECTED_SHA:?missing expected}"
+        for value in "$$CI_COMMIT_SHA" "$$CI_EXPECTED_SHA"; do
+          test "$${#value}" -eq 40
+          case "$$value" in *[!0-9a-f]*) exit 1 ;; esac
+        done
+        test "$$CI_COMMIT_SHA" = "$$CI_EXPECTED_SHA"
+        test "$$(git rev-parse HEAD)" = "$$CI_EXPECTED_SHA"
+        timeout --signal=TERM --kill-after=5s 4100s python3 -I -B /opt/cicd/authova-await.py test
