@@ -39,24 +39,36 @@ def ci_environment(source):
  env.update(GOMAXPROCS='1',GOFLAGS='-p=1',GOMEMLIMIT='256MiB',AUTHOVA_CI_RESOURCE_PROFILE='serial768')
  return env
 
-DIAGNOSTICS=frozenset({'CHECK_GOFMT','CHECK_VET','CHECK_RACE','COMPILE_SIGNAL_KILLED','VCS_STATUS_ERROR','DISK_SPACE_ERROR','UNKNOWN'})
-def command_diagnostic(path,argv):
- # First-current bounded observation of this command's private log, not a raw
- # export, content hash or proof of its complete historical first cause.
- make_check=argv==['make','check']
- if not make_check and argv!=['go','build','-trimpath','./cmd/...']:return 'UNKNOWN'
- fd=None;answer='UNKNOWN'
+def closed_log_bytes(path):
+ # Only a command's own closed log, never a locator extracted from its output.
+ fd=None;answer=None
  try:
   fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK);s=os.fstat(fd)
-  if not (stat.S_ISREG(s.st_mode) and stat.S_IMODE(s.st_mode)==0o600 and s.st_uid==os.geteuid() and s.st_nlink==1 and s.st_size<=1048576):return 'UNKNOWN'
+  if not (stat.S_ISREG(s.st_mode) and stat.S_IMODE(s.st_mode)==0o600 and s.st_uid==os.geteuid() and s.st_nlink==1 and s.st_size<=1048576):return None
   body=bytearray()
   while True:
    part=os.read(fd,min(65536,1048577-len(body)))
    if not part:break
    body.extend(part)
-   if len(body)>1048576:return 'UNKNOWN'
+   if len(body)>1048576:return None
   token=lambda v:(v.st_dev,v.st_ino,v.st_mode,v.st_nlink,v.st_uid,v.st_gid,v.st_size,v.st_mtime_ns,v.st_ctime_ns)
-  if len(body)!=s.st_size or token(s)!=token(os.fstat(fd)) or token(s)!=token(os.stat(path,follow_symlinks=False)):return 'UNKNOWN'
+  if len(body)!=s.st_size or token(s)!=token(os.fstat(fd)) or token(s)!=token(os.stat(path,follow_symlinks=False)):return None
+  answer=bytes(body)
+ except BaseException:answer=None
+ finally:
+  if fd is not None:
+   try:os.close(fd)
+   except BaseException:answer=None
+ return answer
+
+DIAGNOSTICS=frozenset({'CHECK_GOFMT','CHECK_VET','CHECK_RACE','COMPILE_SIGNAL_KILLED','VCS_STATUS_ERROR','DISK_SPACE_ERROR','UNKNOWN'})
+def command_diagnostic(path,argv):
+ # A fixed observation, not proof of a complete historical first cause.
+ make_check=argv==['make','check']
+ if not make_check and argv!=['go','build','-trimpath','./cmd/...']:return 'UNKNOWN'
+ try:
+  body=closed_log_bytes(path)
+  if body is None:return 'UNKNOWN'
   body.decode('utf-8')
   echoes=[b'test -z "$(gofmt -l cmd internal)"',b'go vet ./...',b'go test -race -count=1 ./...']
   stages=['CHECK_GOFMT','CHECK_VET','CHECK_RACE'];stage=-1;families=set()
@@ -74,11 +86,31 @@ def command_diagnostic(path,argv):
   if len(families)>1:return 'UNKNOWN'
   answer=next(iter(families)) if families else stages[stage] if stage>=0 else 'UNKNOWN'
  except BaseException:answer='UNKNOWN'
- finally:
-  if fd is not None:
-   try:os.close(fd)
-   except BaseException:answer='UNKNOWN'
  return answer
+
+def profile_summary(path,phase):
+ # The frame has no evidence locator; registered identifiers come from this
+ # guarded checkout, never from a dynamic subtest or the private log itself.
+ if phase not in ('mysql-primary','postgres-both'):return None
+ try:
+  body=closed_log_bytes(path)
+  if body is None:return None
+  import importlib.util
+  spec=importlib.util.spec_from_file_location('authova_ci_profiles',ROOT/'scripts/test_profiles.py')
+  module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+  prefix=module.SAFE_PREFIX.encode();frames=[line[len(prefix):] for line in body.split(b'\n') if line.startswith(prefix)]
+  if len(frames)!=1 or len(frames[0])>65536:return None
+  def pairs(items):
+   result={}
+   for key,value in items:
+    if key in result:raise ValueError('DUPLICATE')
+    result[key]=value
+   return result
+  value=json.loads(frames[0].decode('utf-8'),object_pairs_hook=pairs,parse_constant=lambda _:(_ for _ in ()).throw(ValueError('NONFINITE')))
+  selected,_=module.selection('database',module.source_tests())
+  dialect='mysql' if phase=='mysql-primary' else 'both'
+  return value if module.valid_safe_summary(value,selected,'database',dialect) else None
+ except BaseException:return None
 
 def run_gate(phase,sha,out,runner=subprocess.run,fixture=None):
  env={k:v for k,v in os.environ.items() if not k.startswith(('AUTHOVA_','COMPOSE_'))};env.update(GOTOOLCHAIN='local',GOWORK='off',AUTHOVA_WEB_RELEASE_DIR=str(out/'web-release'),NODE_OPTIONS='--max-old-space-size=512')
@@ -89,7 +121,7 @@ def run_gate(phase,sha,out,runner=subprocess.run,fixture=None):
   need(env.get('AUTHOVA_TEST_DATABASE_DIALECT')==dialect,'FIXTURE_DIALECT')
   need(re.fullmatch('authova_quality_[0-9a-f]{12}',env.get('AUTHOVA_TEST_DISPOSABLE_DATABASE','')) is not None,'OWNED_FIXTURE_REQUIRED')
   # Existing test_profiles preflight checks required DSNs/keys and no unselected engine.
- started=time.time();mono=time.monotonic();commands=[];first=None;diagnostic='UNKNOWN'
+ started=time.time();mono=time.monotonic();commands=[];first=None;diagnostic='UNKNOWN';test_profile=None
  for number,argv in enumerate(PHASES[phase]):
   path=out/('private-%s-%03d.log'%(phase,number));I=time.time();M=time.monotonic()
   try:
@@ -99,13 +131,16 @@ def run_gate(phase,sha,out,runner=subprocess.run,fixture=None):
    if p.returncode:
     first='COMMAND_EXIT'
     if phase=='checks':diagnostic=command_diagnostic(path,argv)
+    if phase in ('mysql-primary','postgres-both') and number==0:test_profile=profile_summary(path,phase)
     break
   except subprocess.TimeoutExpired:
    commands.append({'ordinal':number,'exit_code':None,'known_return':False,'I':I,'elapsed':time.monotonic()-M});first='UNKNOWN_TIMEOUT'
    if phase=='checks':diagnostic=command_diagnostic(path,argv)
+   if phase in ('mysql-primary','postgres-both') and number==0:test_profile=profile_summary(path,phase)
    break
  result={'schema':'authova-ci-gate/v1','repo':REPO,'source':sha,'gate':phase,'result':'PASS' if first is None else 'FAIL','failure':first,'commands':commands,'I':started,'elapsed':time.monotonic()-mono}
  if first is not None:result['diagnostic']=diagnostic
+ if test_profile is not None:result['test_profile_summary']=test_profile
  if first is None and phase=='console-generation':
   result['artifacts']={}
   for label,folder in [('web',ROOT/'console/web/dist'),('legal',out/'web-release')]:
