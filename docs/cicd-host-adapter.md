@@ -101,6 +101,23 @@ Compose executes its physical plugin directly, not empty-HOME plugin discovery.
 `docker_config` is exactly `.../docker-config/<test|production>`, owner0700 and
 initially empty; neither host config nor registry credentials are inherited.
 `fixture_images` is exactly the fixed MySQL/Valkey/tools digests in `host_runner.py`.
+
+Test preflight consumes these through a separate `fixture_image(role)` method.
+The two fixed repository@sha256 references require the resolved local Id to equal
+the pinned digest, Linux/arm64, and a nonempty unique RepoDigests list containing
+only the role's explicitly enumerated Docker Hub canonical/short aliases at that
+same digest. No tag, foreign repository, config-ID substitution or caller ref is
+accepted. The tools fixture is already a fixed sha256 content ID and uses the
+original exact-ID consumer, as do all application/rollback images.
+
+If full inspect supplies Descriptor, its digest must match that same fixed digest,
+its image/index media type is closed, size is a nonboolean positive bounded integer,
+and any platform must be exactly Linux/arm64. A supplied null/malformed descriptor
+refuses. Classic inspect JSON omitting this field is admitted only with all the
+mandatory exact Id/repository digest/platform checks above; a failed separate CLI
+projection never establishes absence or relaxes any guard. Fixtures still use the
+same single local inspect command and `--pull never` consumers; no resolution pull,
+additional service action, profile field, timeout or candidate image change.
 For test, active_control/core_origin/console_origin/ca_pem are null.
 
 For production, role is `application-production`, fixture_images null, endpoint
