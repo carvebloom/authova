@@ -269,3 +269,11 @@ They use the fresh MySQL side in both `mysql` and `both` profiles. Only the gene
 no-database Go sweep may skip them when **all** database marker/DSN/dialect inputs
 are absent; partial or invalid explicit configuration still fails. That sweep is
 not evidence of password-write/revocation/audit storage atomicity.
+
+CI's closed `AUTHOVA_CI_RESOURCE_PROFILE=serial768` selects `GOMAXPROCS=1`,
+`GOFLAGS=-p=1`, `GOMEMLIMIT=256MiB` and test `-parallel=1`; other profile values
+fail before Go. CI preparation/gates/fixture migration/bundle use the same fixed
+environment, including nested test-profile calls after AUTHOVA env sanitization.
+The profile replaces caller Go flags and changes no required selection, race,
+count, skip policy or timeout. Calls without it retain ordinary local/Actions
+defaults. Resource-control OWN tests do not prove a 768MiB native race run fits.

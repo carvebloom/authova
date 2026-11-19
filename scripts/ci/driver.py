@@ -33,9 +33,16 @@ def guard(expected):
  need(not git('status','--porcelain','--untracked-files=all'),'DIRTY_SOURCE')
  return expected
 
+def ci_environment(source):
+ # A closed resource profile, not a caller-supplied Go flag/selection interface.
+ env=dict(source)
+ env.update(GOMAXPROCS='1',GOFLAGS='-p=1',GOMEMLIMIT='256MiB',AUTHOVA_CI_RESOURCE_PROFILE='serial768')
+ return env
+
 def run_gate(phase,sha,out,runner=subprocess.run,fixture=None):
- env={k:v for k,v in os.environ.items() if not k.startswith(('AUTHOVA_','COMPOSE_'))};env.update(GOMAXPROCS='2',GOFLAGS='-p=2',GOTOOLCHAIN='local',GOWORK='off',AUTHOVA_WEB_RELEASE_DIR=str(out/'web-release'),GOMEMLIMIT='512MiB',NODE_OPTIONS='--max-old-space-size=512')
+ env={k:v for k,v in os.environ.items() if not k.startswith(('AUTHOVA_','COMPOSE_'))};env.update(GOTOOLCHAIN='local',GOWORK='off',AUTHOVA_WEB_RELEASE_DIR=str(out/'web-release'),NODE_OPTIONS='--max-old-space-size=512')
  if fixture is not None:env.update(fixture)
+ env=ci_environment(env)
  if phase in ('mysql-primary','postgres-both'):
   dialect='mysql' if phase=='mysql-primary' else 'both'
   need(env.get('AUTHOVA_TEST_DATABASE_DIALECT')==dialect,'FIXTURE_DIALECT')
@@ -78,7 +85,7 @@ def checked_gates(directory,sha,required=REQUIRED):
 
 def bundle(sha,out,receipts,runner=subprocess.run):
  gates=checked_gates(receipts,sha,required=('console-generation',));build_records=[];dest=out/'bundle';dest.mkdir(mode=0o700)
- env=dict(os.environ);env.update(GOOS='linux',GOARCH='arm64',CGO_ENABLED='0',GOTOOLCHAIN='local',GOWORK='off')
+ env=ci_environment(os.environ);env.update(GOOS='linux',GOARCH='arm64',CGO_ENABLED='0',GOTOOLCHAIN='local',GOWORK='off')
  versions={}
  for tool,args in [('go',['go','version']),('node',['node','--version']),('npm',['npm','--version']),('protoc',['protoc','--version'])]:
   value=subprocess.check_output(args,cwd=ROOT,env=env).decode().strip();need(len(value)<256,'VERSION_BOUND');versions[tool]=value

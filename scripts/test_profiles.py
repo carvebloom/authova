@@ -172,6 +172,9 @@ def check_events(events, selected, profile, dialect, native_exit):
 
 
 def run(profile, dialect, race):
+    ci_resources = os.environ.get("AUTHOVA_CI_RESOURCE_PROFILE")
+    if ci_resources not in (None, "serial768"):
+        raise ValueError("unsupported CI resource profile; no custom Go flags or selection")
     selected, excluded = selection(profile, source_tests(contract=profile == "contract"))
     env = os.environ.copy()
     if profile in {"database", "contract"}:
@@ -182,8 +185,12 @@ def run(profile, dialect, race):
         env = {k: v for k, v in env.items() if not k.startswith(("AUTHOVA_", "COMPOSE_"))}
     # Top-level Go never downloads dependencies. Existing CLI test helpers also
     # invoke migration/go.sh; its cache/network fallback is documented separately.
-    env.update(GOMAXPROCS="2", GOTOOLCHAIN="local", GOPROXY="off", GOWORK="off")
-    command = ["go", "test", "-json", "-count=1", "-p=2", "-parallel=2", "-timeout=10m"]
+    parallel = 1 if ci_resources == "serial768" else 2
+    env.update(GOMAXPROCS=str(parallel), GOTOOLCHAIN="local", GOPROXY="off", GOWORK="off")
+    if ci_resources == "serial768":
+        env.update(GOFLAGS="-p=1", GOMEMLIMIT="256MiB",
+                   AUTHOVA_CI_RESOURCE_PROFILE="serial768")
+    command = ["go", "test", "-json", "-count=1", f"-p={parallel}", f"-parallel={parallel}", "-timeout=10m"]
     if profile == "contract":
         command.extend(("-tags=contractcombo", "-run=^TestPinnedContractCombination"))
     if race:
@@ -199,7 +206,7 @@ def run(profile, dialect, race):
         fd = os.open(evidence / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         return os.fdopen(fd, "w")
     # Preserve CI's ordering: integration mutations finish before storage/DDL
-    # cases use the same owned schema. -p=2 is not database isolation.
+    # cases use the same owned schema. Compiler parallelism is not DB isolation.
     base_command = command[:-len(selected)]
     groups = [["internal/integration"], [p for p in selected if p != "internal/integration"]] if profile == "database" else [list(selected)]
     native_exit, outputs, native_exits = 0, [], []

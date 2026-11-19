@@ -39,7 +39,7 @@ def write_receipt(out,value,ordinal):
 def prepare(sha,out,runner=None):
  runner=subprocess.run if runner is None else runner
  tools=driver.ROOT/'.tools/bin';tools.mkdir(parents=True,exist_ok=True)
- env=dict(os.environ);env.update(GOBIN=str(tools),GOMAXPROCS='2',GOFLAGS='-p=2',GOMEMLIMIT='512MiB',GOTOOLCHAIN='local',GOWORK='off');records=[]
+ env=driver.ci_environment(os.environ);env.update(GOBIN=str(tools),GOTOOLCHAIN='local',GOWORK='off');records=[]
  commands=[['go','mod','download']]+[['go','install',module+'@'+version] for module,version in GO_TOOLS]+[['npm','exec','--yes','--package=openapi-typescript@7.10.1','--','openapi-typescript','--version']]
  for number,argv in enumerate(commands):
   I=time.time();M=time.monotonic();code=None;known=False;first=None;failure=None;log=None

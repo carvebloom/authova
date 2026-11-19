@@ -6,7 +6,7 @@ import driver
 
 def initialize(sha,dialect,out,runner=subprocess.run):
  schema='authova_quality_'+secrets.token_hex(6);password=secrets.token_hex(24)
- env={k:v for k,v in os.environ.items() if not k.startswith(('AUTHOVA_','COMPOSE_'))}
+ env=driver.ci_environment({k:v for k,v in os.environ.items() if not k.startswith(('AUTHOVA_','COMPOSE_'))})
  hosts={'mysql':'authova-ci-mysql','postgres':'authova-ci-postgres','valkey':'authova-ci-valkey'}
  mysqlroot=os.environ.get('AUTHOVA_CI_MYSQL_ROOT_PASSWORD');pgroot=os.environ.get('AUTHOVA_CI_POSTGRES_PASSWORD')
  driver.need(mysqlroot is not None and (dialect!='both' or pgroot is not None),'FIXTURE_SERVICE_CREDENTIAL_REQUIRED')

@@ -101,9 +101,20 @@ Services are workflow-local, only mysql+Valkey for mysql and mysql+PG+Valkey for
 both. Since engine backend has global768MiB cap, do not invent per-service
 backend_options memory support. Constrain server internals: MySQL bufferpool192MiB,
 performance_schema OFF/max_connections32; PG shared_buffers64MiB/max_connections16/
-work_mem4MiB; Valkey maxmemory64MiB/no persistence. Command Go heap512MiB/Node512MiB,
-GOMAXPROCS2/-p2. These are candidate limits, **not** 3GiB headroom or cold-fit evidence;
+work_mem4MiB; Valkey maxmemory64MiB/no persistence. Command Go heap256MiB/Node512MiB,
+GOMAXPROCS1/-p1 under the fixed `serial768` CI profile. These are candidate limits,
+**not** 3GiB headroom or cold-fit evidence;
 platform must qualify the actual 3GiB VM serially before activation.
+
+CI preparation, gate execution, fresh-fixture migration and both bundle compilers
+share `driver.ci_environment`: `GOMAXPROCS=1`, `GOFLAGS=-p=1`,
+`GOMEMLIMIT=256MiB`, `AUTHOVA_CI_RESOURCE_PROFILE=serial768`. The profile is a fixed
+resource selector, not an arbitrary Go flags interface. `test_profiles.py` retains
+it across environment sanitization, fixes `-parallel=1` and replaces caller
+`GOFLAGS`; unsupported profile values refuse before Go. Ordinary local/Actions
+calls without this profile keep their existing defaults. Package/case selection,
+required events, allowed skips, race/count/timeout and phase bounds are unchanged.
+These process limits do not establish a hard RSS ceiling or successful cold fit.
 
 Same-image test deployment/acceptance and host execution now have source implementations
 in the owner host package. Their actual installation/execution and full CI resource fit

@@ -1,4 +1,4 @@
-import contextlib,importlib.util,io,json,tempfile,unittest,sys,os,subprocess
+import contextlib,hashlib,importlib.util,io,json,tempfile,unittest,sys,os,subprocess
 from pathlib import Path
 from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[2]
@@ -17,12 +17,14 @@ class CIDriverTests(unittest.TestCase):
       prior=json.loads((out/'prepare.json').read_bytes())
       self.assertEqual(len(prior['records']),ordinal);self.assertEqual(prior['result'],'RUNNING')
      calls.append(argv);self.assertEqual(kwargs['timeout'],900)
+     self.assertEqual({k:kwargs['env'][k] for k in ('GOMAXPROCS','GOFLAGS','GOMEMLIMIT','AUTHOVA_CI_RESOURCE_PROFILE')},
+                      {'GOMAXPROCS':'1','GOFLAGS':'-p=1','GOMEMLIMIT':'256MiB','AUTHOVA_CI_RESOURCE_PROFILE':'serial768'})
      kwargs['stdout'].write(b'PRIVATE_PREPARE_CANARY')
      if ordinal==1:
       if outcome=='timeout':raise subprocess.TimeoutExpired(argv,900,output=b'PRIVATE_PREPARE_CANARY')
       if outcome=='exception':raise OSError('PRIVATE_PREPARE_CANARY')
      return type('Return',(),{'returncode':7 if ordinal==1 and outcome=='nonzero' else 0})()
-    with patch.object(m.driver,'ROOT',root):
+    with patch.object(m.driver,'ROOT',root),patch.dict(os.environ,{'GOMAXPROCS':'9','GOFLAGS':'-p=9 -skip=caller','GOMEMLIMIT':'9GiB'}):
      if outcome=='success':m.prepare('a'*40,out,fake)
      else:
       expected={'nonzero':m.driver.Refused,'timeout':subprocess.TimeoutExpired,'exception':OSError}[outcome]
@@ -74,7 +76,11 @@ class CIDriverTests(unittest.TestCase):
    with self.assertRaisesRegex(m.Refused,'COMMIT_MISMATCH'):m.guard('a'*40)
  def test_failed_native_stops_gate_and_cannot_bind_bundle(self):
   m=module('driver');calls=[]
-  def fake(argv,**kwargs):calls.append(argv);return type('Return',(),{'returncode':2})()
+  def fake(argv,**kwargs):
+   calls.append(argv)
+   self.assertEqual({k:kwargs['env'][k] for k in ('GOMAXPROCS','GOFLAGS','GOMEMLIMIT','AUTHOVA_CI_RESOURCE_PROFILE')},
+                    {'GOMAXPROCS':'1','GOFLAGS':'-p=1','GOMEMLIMIT':'256MiB','AUTHOVA_CI_RESOURCE_PROFILE':'serial768'})
+   return type('Return',(),{'returncode':2})()
   with tempfile.TemporaryDirectory() as tmp:
    out=Path(tmp)
    with self.assertRaisesRegex(m.Refused,'GATE_FAILED'):m.run_gate('checks','a'*40,out,fake)
@@ -83,9 +89,33 @@ class CIDriverTests(unittest.TestCase):
  def test_fixture_only_new_schema_aliases_and_no_password_argv(self):
   m=module('fixture');calls=[]
   def fake(argv,**kw):
+   self.assertEqual({k:kw['env'][k] for k in ('GOMAXPROCS','GOFLAGS','GOMEMLIMIT')},{'GOMAXPROCS':'1','GOFLAGS':'-p=1','GOMEMLIMIT':'256MiB'})
    calls.append(argv);self.assertNotIn('CI-ROOT-OWN',repr(argv));return type('Return',(),{'returncode':0})()
   with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'AUTHOVA_CI_MYSQL_ROOT_PASSWORD':'CI-ROOT-OWN','AUTHOVA_CI_POSTGRES_PASSWORD':'CI-PG-OWN'}):
    out=Path(tmp);m.initialize('a'*40,'both',out,fake);v=json.loads((out/'context.json').read_bytes());self.assertEqual(v['source'],'a'*40);self.assertIn('authova-ci-mysql',v['env']['AUTHOVA_TEST_MYSQL_DSN']);self.assertIn('authova-ci-postgres',v['env']['AUTHOVA_TEST_POSTGRES_DSN']);self.assertRegex(v['env']['AUTHOVA_TEST_DISPOSABLE_DATABASE'],'^authova_quality_[0-9a-f]{12}$');self.assertEqual((out/'context.json').stat().st_mode&0o777,0o600);self.assertTrue(all('docker' not in argv for argv in calls))
+ def test_bundle_passes_serial_resources_to_both_compilers_without_rebuilding_ui(self):
+  m=module('driver');calls=[]
+  with tempfile.TemporaryDirectory() as tmp:
+   root=Path(tmp)/'source';web=root/'console/web/dist';web.mkdir(parents=True)
+   receipts=Path(tmp)/'receipts';legal=receipts/'web-release';legal.mkdir(parents=True)
+   out=Path(tmp)/'compile';out.mkdir()
+   artifacts={}
+   for label,folder,name in [('web',web,'index.html'),('legal',legal,'notice.txt')]:
+    data=b'OWN_ARTIFACT';(folder/name).write_bytes(data)
+    artifacts[label]=[{'path':name,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}]
+   def fake(argv,**kw):
+    self.assertEqual({k:kw['env'][k] for k in ('GOMAXPROCS','GOFLAGS','GOMEMLIMIT','AUTHOVA_CI_RESOURCE_PROFILE')},
+                     {'GOMAXPROCS':'1','GOFLAGS':'-p=1','GOMEMLIMIT':'256MiB','AUTHOVA_CI_RESOURCE_PROFILE':'serial768'})
+    self.assertEqual(kw['timeout'],600);self.assertEqual(kw['env']['CGO_ENABLED'],'0')
+    calls.append(argv);Path(argv[argv.index('-o')+1]).write_bytes(b'OWN_FAKE_COMPILE')
+    return type('Return',(),{'returncode':0})()
+   def output(argv,**kw):
+    if argv[:3]==['go','version','-m']:return b'go1.27.4\nGOOS=linux\nGOARCH=arm64\nCGO_ENABLED=0\n'
+    return {('go','version'):b'go version go1.27.4 linux/arm64',('node','--version'):b'v26.13.0',('npm','--version'):b'OWN_NPM',('protoc','--version'):b'libprotoc 36.2'}[tuple(argv)]
+   with patch.object(m,'ROOT',root),patch.object(m,'checked_gates',return_value=[{'artifacts':artifacts}]),patch.object(m,'git',return_value=''),patch.object(m,'schema_digest',return_value='f'*64),patch.object(m.subprocess,'check_output',output),patch.dict(os.environ,{'GOFLAGS':'-p=9 -run=caller'}):
+    m.bundle('a'*40,out,receipts,fake)
+   self.assertEqual([args[-1] for args in calls],['./cmd/authova','./console/cmd/authova-console'])
+   self.assertEqual(json.loads((out/'bundle/manifest.json').read_bytes())['platform'],'linux/arm64')
  def test_same_candidate_test_and_manual_review_no_schema_change(self):
   m=module('host_release');c=dict(schema='authova-image-candidate/v1',repo='carvebloom/authova',source='a'*40,coreID='sha256:'+'b'*64,consoleID='sha256:'+'c'*64,manifest='d'*64,archive='e'*64,schemaDigest='f'*64)
   control=dict(project='authova-local-production-20261114',schemaDigest='f'*64,retained_compose='/host/base',retained_prior_override='/host/previous',active_override='/host/current');test={'schema':'authova-test-deployment/v1','candidate':c,'result':'PASS','project':'authova-ci-test-'+c['source'][:12]+'-42','scope':'a'*32,'started_at':1,'finished_at':3,'checks':{name:'PASS' for name in module('release_contract').REQUIRED_CHECKS},'check_evidence':{name:dict(result='PASS',exit_code=0,known_return=True,timely=True,started_at=1,finished_at=2,evidence_sha256='a'*64) for name in module('release_contract').REQUIRED_CHECKS}};review={'schema':'authova-host-verified-production-review/v1','candidate':c,'reviewed_by':'rwasayc','reviewed_at':'2026-11-19T00:00:00Z','deployment':'production'}
