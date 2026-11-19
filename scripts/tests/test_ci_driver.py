@@ -1,4 +1,4 @@
-import importlib.util,json,tempfile,unittest,sys,os
+import contextlib,importlib.util,io,json,tempfile,unittest,sys,os,subprocess
 from pathlib import Path
 from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[2]
@@ -6,6 +6,65 @@ def module(name):
  sys.path.insert(0,str(ROOT/'scripts/ci'))
  spec=importlib.util.spec_from_file_location(name,ROOT/'scripts/ci'/(name+'.py'));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
 class CIDriverTests(unittest.TestCase):
+ def test_prepare_checkpoints_success_nonzero_timeout_and_exception_before_next_command(self):
+  m=module('prepare_tools')
+  for outcome in ('success','nonzero','timeout','exception'):
+   with self.subTest(outcome=outcome),tempfile.TemporaryDirectory() as tmp:
+    root=Path(tmp)/'source';root.mkdir();out=Path(tmp)/'prepare';out.mkdir();calls=[]
+    def fake(argv,**kwargs):
+     ordinal=len(calls)
+     if ordinal:
+      prior=json.loads((out/'prepare.json').read_bytes())
+      self.assertEqual(len(prior['records']),ordinal);self.assertEqual(prior['result'],'RUNNING')
+     calls.append(argv);self.assertEqual(kwargs['timeout'],900)
+     kwargs['stdout'].write(b'PRIVATE_PREPARE_CANARY')
+     if ordinal==1:
+      if outcome=='timeout':raise subprocess.TimeoutExpired(argv,900,output=b'PRIVATE_PREPARE_CANARY')
+      if outcome=='exception':raise OSError('PRIVATE_PREPARE_CANARY')
+     return type('Return',(),{'returncode':7 if ordinal==1 and outcome=='nonzero' else 0})()
+    with patch.object(m.driver,'ROOT',root):
+     if outcome=='success':m.prepare('a'*40,out,fake)
+     else:
+      expected={'nonzero':m.driver.Refused,'timeout':subprocess.TimeoutExpired,'exception':OSError}[outcome]
+      with self.assertRaises(expected):m.prepare('a'*40,out,fake)
+    raw=(out/'prepare.json').read_bytes();receipt=json.loads(raw)
+    self.assertNotIn(b'CANARY',raw);self.assertEqual((out/'prepare.json').stat().st_mode&0o777,0o600)
+    self.assertEqual(len(calls),7 if outcome=='success' else 2)
+    self.assertEqual(calls[0],['go','mod','download'])
+    self.assertEqual(calls[1],['go','install','google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11'])
+    for number,row in enumerate(receipt['records']):
+     self.assertEqual(set(row),{'ordinal','exit_code','known_return','I','elapsed'});self.assertEqual(row['ordinal'],number)
+     self.assertGreater(row['I'],0);self.assertGreaterEqual(row['elapsed'],0)
+    last=receipt['records'][-1]
+    self.assertEqual(receipt['result'],'PASS' if outcome=='success' else 'FAIL')
+    self.assertEqual(receipt['failure'],{'success':None,'nonzero':'PREPARE_FAILED','timeout':'PREPARE_TIMEOUT','exception':'PREPARE_EXCEPTION'}[outcome])
+    self.assertEqual(last['known_return'],outcome in ('success','nonzero'))
+    self.assertEqual(last['exit_code'],0 if outcome=='success' else 7 if outcome=='nonzero' else None)
+ def test_prepare_keeps_first_on_close_or_receipt_fault_and_prints_only_fixed_fields(self):
+  m=module('prepare_tools');original_open=Path.open
+  class CloseFault:
+   def __init__(self,log):self.log=log;self.name=log.name
+   def close(self):self.log.close();raise OSError('PRIVATE_CLOSE_CANARY')
+  for secondary in ('LOG_CLOSE','RECEIPT_WRITE'):
+   with self.subTest(secondary=secondary),tempfile.TemporaryDirectory() as tmp:
+    root=Path(tmp)/'source';root.mkdir();out=Path(tmp)/'prepare';out.mkdir();first=OSError('PRIVATE_FIRST_CANARY')
+    def fail(*args,**kwargs):raise first
+    def opened(path,*args,**kwargs):
+     log=original_open(path,*args,**kwargs)
+     return CloseFault(log) if secondary=='LOG_CLOSE' and path.suffix=='.log' else log
+    writer=m.write_receipt
+    def write(*args):
+     if secondary=='RECEIPT_WRITE':raise OSError('PRIVATE_REPORT_CANARY')
+     return writer(*args)
+    with patch.object(m.driver,'ROOT',root),patch.object(Path,'open',opened),patch.object(m,'write_receipt',write):
+     try:m.prepare('a'*40,out,fail)
+     except BaseException as caught:self.assertIs(caught,first)
+     else:self.fail('preparation must fail')
+    self.assertEqual(first.prepare_secondary,(secondary,));self.assertEqual(first.prepare_ordinal,0)
+    stdout=io.StringIO()
+    with patch.object(m,'main',side_effect=first),contextlib.redirect_stdout(stdout):self.assertEqual(m.entry(),1)
+    self.assertEqual(json.loads(stdout.getvalue()),{'result':'FAIL','code':'PREPARE_EXCEPTION','ordinal':0})
+    self.assertNotIn('CANARY',stdout.getvalue())
  def test_missing_or_wrong_source_fails_before_any_command(self):
   m=module('driver')
   with patch.object(m,'git',side_effect=AssertionError('NO_GIT_ON_BAD_INPUT')):
