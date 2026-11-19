@@ -306,3 +306,17 @@ the endpoint/status level. Its five services plus extra `oidc-a` proof ACK need
 their own complete fresh ownership CAS before any known recovery; the earlier
 test16 five-service cleanup is not sufficient. This host-only repair does not
 rebuild or adopt images, replay17 or authorize production.
+
+Ordinary-user readback sends the complete new recipient as the exact `q` to
+the App-scoped user endpoint. The source performs an identifier-digest lookup
+and then masks email; the actor requires the exact expected mask, not plaintext
+or a wildcard search. It requires one result and a null cursor, binds its ID to
+the same App, then reads only that ID's official detail to check the actual
+`admin_role` (the list does not populate it). Both responses must have the exact
+App, active status and masked address; non-string/missing identity fields,
+privileged roles, ambiguity, a different detail ID or changed repeat subject
+refuse. Repeat subject mismatch stops before the detail GET. This adds one
+bounded read per readback within the original actor cap, no new command or
+budget. Email identity is bound by the exact server lookup, not by treating a
+non-unique mask as identity. Test18's historical inner assertion remains
+unrecorded; this source repair does not claim registration or real OIDC PASS.

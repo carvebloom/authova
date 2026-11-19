@@ -56,7 +56,9 @@ class OfficialFlow:
             return result(b'',302,{'Location':self.flow})
         if path=='/_ci/mail':return result(canonical({'observed':float(kw['headers']['X-CI-Since'])+0.01,'code':'123456'}))
         if path=='/api/v1/apps/OWN_APP/users':
-            return result(canonical({'items':[{'id':self.subject,'app_id':'OWN_APP','status':'active','email':'ci-'+'1'*32+'@example.invalid'}],'next_cursor':None}))
+            assert parse_qs(urlsplit(url).query)=={'q':['ci-'+'1'*32+'@example.invalid'],'limit':['2']}
+            return result(canonical({'items':[self.user()],'next_cursor':None}))
+        if path=='/api/v1/apps/OWN_APP/users/'+self.subject:return result(canonical(self.user()))
         if url==self.flow and method=='GET':return result(forms(self.flow,('password','challenges')))
         if method=='POST':
             self.posts.append(url)
@@ -76,6 +78,11 @@ class OfficialFlow:
             if verb=='complete':
                 return result(b'',303,{'Location':CORE+'/ci/callback?code=OWN_CODE&state='+self.query['state'][0]})
         raise AssertionError('OWN_UNEXPECTED_REQUEST')
+    def user(self):
+        # Official ListUsers/GetUser both mask email; ordinary AdminRole is
+        # omitted by the public DTO. No plaintext-email fake compatibility.
+        return {'id':self.subject,'app_id':'OWN_APP','display_name':'OWN_USER','status':'active',
+                'email':'c***@example.invalid','session_epoch':0,'created_at':'2026-11-20T00:00:00Z'}
 
 
 class FakeBrowser:
@@ -122,6 +129,35 @@ class OIDCFormTests(unittest.TestCase):
         page=forms(server.flow,('verify',));b=FakeBrowser(server)
         obj.form(b,server.flow+'/challenges',page,'verify',{'challenge_id':'OWN_CHALLENGE','code':'123456'})
         self.assertEqual(server.posts[-1],server.flow+'/verify')
+    def test_exact_identifier_query_masked_detail_and_repeat_subject(self):
+        obj=setup_actor();server=OfficialFlow();obj.state['app']={'id':'OWN_APP'}
+        with patch.object(actor,'Browser',side_effect=lambda *a,**kw:FakeBrowser(server)):
+            obj.read_user();obj.read_user()
+        expected=CORE+'/api/v1/apps/OWN_APP/users?q=ci-'+'1'*32+'%40example.invalid&limit=2'
+        self.assertEqual([u for u,_ in server.calls],[expected,CORE+'/api/v1/apps/OWN_APP/users/OWN_SUBJECT']*2)
+        self.assertEqual(obj.state['user']['id'],server.subject)
+        self.assertEqual(obj.state['user']['email'],'c***@example.invalid')
+        # A plaintext assertion cannot pass the actual masked DTO.
+        self.assertNotEqual(obj.state['user']['email'],obj.c['recipient'])
+    def test_user_readback_rejects_ambiguity_types_role_and_changed_identity(self):
+        obj=setup_actor();obj.state['app']={'id':'OWN_APP'};user=OfficialFlow().user()
+        good={'items':[user],'next_cursor':None}
+        cases=[(None,user),(dict(good,items=None),user),(dict(good,items=[user,user]),user),
+               (dict(good,next_cursor=''),user),({'items':[user]},user)]
+        for change in ({'id':None},{'id':True},{'app_id':'OTHER'},{'status':'disabled'},{'admin_role':'owner'},
+                       {'admin_role':None},{'email':'ci-'+'1'*32+'@example.invalid'},{'email':'c***@other.invalid'},{'email':True}):
+            bad=dict(user,**change);cases.extend([(dict(good,items=[bad]),user),(good,bad)])
+        cases.append((good,dict(user,id='OTHER_SUBJECT')))
+        for page,detail in cases:
+            calls=[]
+            def api(path):calls.append(path);return page if len(calls)==1 else detail
+            obj.api=api
+            with self.subTest(page=page,detail=detail),self.assertRaises(Refused):obj.read_user()
+            self.assertNotIn('user',obj.state)
+            self.assertLessEqual(len(calls),2)
+        obj.state['user']=dict(user,id='PREVIOUS_SUBJECT');obj.api=lambda path:good if '?' in path else user
+        with self.assertRaisesRegex(Refused,'CI_REPEAT_SUBJECT'):obj.read_user()
+        self.assertEqual(obj.state['user']['id'],'PREVIOUS_SUBJECT')
     def test_missing_duplicate_cross_origin_wrong_flow_and_consent_are_rejected_before_post(self):
         obj=setup_actor();base=ISSUER+'/ui/flows/'+'2'*43;obj.state.update(app={'issuer':ISSUER},flow={'url':base})
         b=types.SimpleNamespace(request=lambda *a,**kw:self.fail('NO_POST'))
