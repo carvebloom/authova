@@ -17,15 +17,15 @@ class CIDriverTests(unittest.TestCase):
    p=Path(tmp)/'own-private.log'
    for body,expected in cases:
     with self.subTest(expected=expected,body_length=len(body)):
-     p.write_bytes(body);p.chmod(0o600);value=m.make_diagnostic(p)
-     self.assertEqual(value,expected);self.assertIn(value,m.MAKE_DIAGNOSTICS)
-   p.write_bytes(vet+vcs);p.chmod(0o644);self.assertEqual(m.make_diagnostic(p),'UNKNOWN');p.chmod(0o600)
-   link=Path(tmp)/'link.log';link.symlink_to(p);self.assertEqual(m.make_diagnostic(link),'UNKNOWN')
+     p.write_bytes(body);p.chmod(0o600);value=m.command_diagnostic(p,['make','check'])
+     self.assertEqual(value,expected);self.assertIn(value,m.DIAGNOSTICS)
+   p.write_bytes(vet+vcs);p.chmod(0o644);self.assertEqual(m.command_diagnostic(p,['make','check']),'UNKNOWN');p.chmod(0o600)
+   link=Path(tmp)/'link.log';link.symlink_to(p);self.assertEqual(m.command_diagnostic(link,['make','check']),'UNKNOWN')
    p.write_bytes(b'x'*1048577)
-   with patch.object(m.os,'read',side_effect=AssertionError('NO_READ_OVERSIZED_LOG')):self.assertEqual(m.make_diagnostic(p),'UNKNOWN')
+   with patch.object(m.os,'read',side_effect=AssertionError('NO_READ_OVERSIZED_LOG')):self.assertEqual(m.command_diagnostic(p,['make','check']),'UNKNOWN')
    p.write_bytes(vet+vcs);original_close=m.os.close
    def badclose(fd):original_close(fd);raise OSError('PRIVATE_CLOSE_CANARY')
-   with patch.object(m.os,'close',badclose):self.assertEqual(m.make_diagnostic(p),'UNKNOWN')
+   with patch.object(m.os,'close',badclose):self.assertEqual(m.command_diagnostic(p,['make','check']),'UNKNOWN')
  def test_make_diagnostic_preserves_native_failure_and_skips_successful_logs(self):
   m=module('driver');body=b'test -z "$(gofmt -l cmd internal)"\ngo vet ./...\nerror obtaining VCS status: exit status 128\nPRIVATE_CANARY\n'
   for timeout in (False,True):
@@ -45,9 +45,56 @@ class CIDriverTests(unittest.TestCase):
     self.assertEqual(receipt['failure'],'UNKNOWN_TIMEOUT' if timeout else 'COMMAND_EXIT')
     self.assertEqual(receipt['commands'][-1]['exit_code'],None if timeout else 2)
     self.assertEqual(receipt['commands'][-1]['known_return'],not timeout);self.assertNotIn(b'CANARY',raw)
-  with tempfile.TemporaryDirectory() as tmp,patch.object(m,'make_diagnostic',side_effect=AssertionError('NO_DIAGNOSTIC_READ_ON_SUCCESS')):
+  with tempfile.TemporaryDirectory() as tmp,patch.object(m,'command_diagnostic',side_effect=AssertionError('NO_DIAGNOSTIC_READ_ON_SUCCESS')):
    m.run_gate('checks','a'*40,Path(tmp),lambda *a,**k:type('Return',(),{'returncode':0})())
    self.assertNotIn('diagnostic',json.loads((Path(tmp)/'checks.json').read_bytes()))
+ def test_go_build_diagnostic_accepts_only_fixed_error_signatures(self):
+  m=module('driver');argv=['go','build','-trimpath','./cmd/...']
+  disk=b'compile: writing output: write $WORK/b123/_pkg_.a: no space left on device\n'
+  killed=b'github.com/carvebloom/authova/internal/ent: /usr/local/go/pkg/tool/linux_arm64/compile: signal: killed\n'
+  cases=[(disk,'DISK_SPACE_ERROR'),
+         (b'go: writing work dir: mkdir /tmp/OWN_CANARY: no space left on device\n','DISK_SPACE_ERROR'),
+         (b'go: failed to trim cache: open /tmp/OWN_CANARY/trim.txt: no space left on device\n','DISK_SPACE_ERROR'),
+         (b'github.com/carvebloom/authova: write /tmp/OWN_CANARY/importcfg: no space left on device\n','DISK_SPACE_ERROR'),
+         (killed,'COMPILE_SIGNAL_KILLED'),(b'error obtaining VCS status: exit status 128\n','VCS_STATUS_ERROR'),
+         (b'no space left on device\n','UNKNOWN'),(b'OWN_CANARY says '+disk,'UNKNOWN'),
+         (disk.rstrip()+b' extra\n','UNKNOWN'),(b'go: write https://OWN_CANARY: no space left on device\n','UNKNOWN'),
+         (b'go vet ./...\n','UNKNOWN'),(disk+killed,'UNKNOWN')]
+  with tempfile.TemporaryDirectory() as tmp:
+   p=Path(tmp)/'own-private.log'
+   for body,expected in cases:
+    with self.subTest(expected=expected,body_length=len(body)):
+     p.write_bytes(body);p.chmod(0o600);self.assertEqual(m.command_diagnostic(p,argv),expected)
+   p.write_bytes(b'test -z "$(gofmt -l cmd internal)"\n'+disk)
+   self.assertEqual(m.command_diagnostic(p,['make','check']),'DISK_SPACE_ERROR')
+   with patch.object(m.os,'open',side_effect=AssertionError('NO_READ_UNSELECTED_COMMAND')):
+    self.assertEqual(m.command_diagnostic(p,['go','build','CALLER_TARGET']),'UNKNOWN')
+    self.assertEqual(m.command_diagnostic(p,['npm','run','build']),'UNKNOWN')
+ def test_failed_go_build_observes_only_its_closed_log_and_keeps_native_fields(self):
+  m=module('driver');argv=['go','build','-trimpath','./cmd/...'];disk=b'compile: writing output: write $WORK/b123/OWN_CANARY: no space left on device\n'
+  for timeout in (False,True):
+   with self.subTest(timeout=timeout),tempfile.TemporaryDirectory() as tmp:
+    calls=[];observed=[];last_log=None;original=m.command_diagnostic
+    def fake(command,**kw):
+     nonlocal last_log
+     calls.append(command);last_log=kw['stdout']
+     if command==argv:
+      last_log.write(disk)
+      if timeout:raise subprocess.TimeoutExpired(command,1500,output=b'PRIVATE_CANARY')
+      return type('Return',(),{'returncode':1})()
+     return type('Return',(),{'returncode':0})()
+    def observe(path,command):
+     self.assertTrue(last_log.closed);observed.append((path.name,command));return original(path,command)
+    with patch.object(m,'command_diagnostic',observe),self.assertRaisesRegex(m.Refused,'GATE_FAILED') as caught:
+     m.run_gate('checks','a'*40,Path(tmp),fake)
+    raw=(Path(tmp)/'checks.json').read_bytes();receipt=json.loads(raw)
+    self.assertEqual(calls,m.PHASES['checks']);self.assertEqual(observed,[('private-checks-005.log',argv)])
+    self.assertEqual(receipt['diagnostic'],'DISK_SPACE_ERROR');self.assertEqual(caught.exception.diagnostic,'DISK_SPACE_ERROR')
+    self.assertEqual(receipt['failure'],'UNKNOWN_TIMEOUT' if timeout else 'COMMAND_EXIT')
+    self.assertEqual(len(receipt['commands']),6);last=receipt['commands'][-1]
+    self.assertEqual(set(last),{'ordinal','exit_code','known_return','I','elapsed'})
+    self.assertEqual(last['ordinal'],5);self.assertEqual(last['exit_code'],None if timeout else 1);self.assertEqual(last['known_return'],not timeout)
+    self.assertGreater(last['I'],0);self.assertGreaterEqual(last['elapsed'],0);self.assertNotIn(b'CANARY',raw);self.assertNotIn(b'$WORK',raw)
  def test_prepare_checkpoints_success_nonzero_timeout_and_exception_before_next_command(self):
   m=module('prepare_tools')
   for outcome in ('success','nonzero','timeout','exception'):
