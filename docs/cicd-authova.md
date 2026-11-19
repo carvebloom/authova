@@ -98,8 +98,11 @@ mutations are not retried. Workflow teardown owns only its service containers an
 fresh anonymous volumes; record teardown failures, no prune/production cleanup.
 
 Services are workflow-local, only mysql+Valkey for mysql and mysql+PG+Valkey for
-both. Since engine backend has global768MiB cap, do not invent per-service
-backend_options memory support. Constrain server internals: MySQL bufferpool192MiB,
+both. Memory quotas come from the selected Authova agent configuration, not
+unsupported per-service backend_options. The next Authova-only candidate targets
+1536MiB per step, CPU1.5 and one workflow inside the existing 2CPU/3GiB VM; other
+agents and application-daemon budgets are separate. Constrain server internals:
+MySQL bufferpool192MiB,
 performance_schema OFF/max_connections32; PG shared_buffers64MiB/max_connections16/
 work_mem4MiB; Valkey maxmemory64MiB/no persistence. Command Go heap256MiB/Node512MiB,
 GOMAXPROCS1/-p1 under the fixed `serial768` CI profile. These are candidate limits,
@@ -115,6 +118,17 @@ it across environment sanitization, fixes `-parallel=1` and replaces caller
 calls without this profile keep their existing defaults. Package/case selection,
 required events, allowed skips, race/count/timeout and phase bounds are unchanged.
 These process limits do not establish a hard RSS ceiling or successful cold fit.
+`serial768` is the preset's fixed name; it does not set a Docker memory quota.
+
+Platform-reported qualification on 2026-11-19: the isolated 768MiB serial race run
+failed during Ent compilation with OOM. A separate same-Go-source run using its
+own cache at 1.5CPU/1536MiB completed `go test -race -count=1 ./...` with exit0,
+32 package `ok`/zero package failures and cgroup peak1396891648B; its OOM counters
+and exact-container OOM events were zero. Test-level Skip is UNKNOWN from the
+nonverbose output. This is a limited independent Go diagnostic, not a DB gate,
+full workflow, cold-cache/whole-VM fit or test-deployment qualification. The failed
+768MiB run and successful vet diagnostic remain separate historical facts; source
+resource-control OWN tests provide no native capacity grade.
 
 Same-image test deployment/acceptance and host execution now have source implementations
 in the owner host package. Their actual installation/execution and full CI resource fit

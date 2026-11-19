@@ -276,4 +276,7 @@ fail before Go. CI preparation/gates/fixture migration/bundle use the same fixed
 environment, including nested test-profile calls after AUTHOVA env sanitization.
 The profile replaces caller Go flags and changes no required selection, race,
 count, skip policy or timeout. Calls without it retain ordinary local/Actions
-defaults. Resource-control OWN tests do not prove a 768MiB native race run fits.
+defaults. `serial768` names the process preset, not a Docker memory quota. The
+recorded 768MiB race diagnostic failed with OOM; the separate 1536MiB diagnostic
+is not DB, test-level-skip-free or full-CI qualification. See the scope in the
+[CI contract](docs/cicd-authova.md). Resource-control OWN tests do not prove fit.
