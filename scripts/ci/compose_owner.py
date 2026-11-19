@@ -84,6 +84,122 @@ def post_semantics(before,after,candidate,images,layers,hashes):
              and after[role]['Config']['Hostname'] in (after[role]['Id'][:12],after[role]['Id']),'EXPLICIT_HOSTNAME_UNSUPPORTED')
 
 
+def archive_graph(tar, candidate, guard):
+    """Selected Docker29 OCI save graph; never extract, decompress or follow URLs.
+
+    Candidate IDs are index digests, not config digests. Attestations are hashed
+    graph members only: their presence confers no provenance/trust qualification.
+    """
+    index_type='application/vnd.oci.image.index.v1+json'
+    manifest_type='application/vnd.oci.image.manifest.v1+json'
+    config_type='application/vnd.oci.image.config.v1+json'
+    files={};names=set()
+    for item in tar:
+        guard();need(len(names)<4096 and item.name not in names,'ARCHIVE_MEMBERS')
+        names.add(item.name)
+        if item.isdir():
+            need(item.name in ('blobs','blobs/sha256'),'ARCHIVE_PATH')
+        else:
+            need(item.isreg() and (item.name in ('index.json','manifest.json','oci-layout')
+                 or re.fullmatch('blobs/sha256/[0-9a-f]{64}',item.name)),'ARCHIVE_PATH')
+            need(0<=item.size<=512*1024*1024,'ARCHIVE_MEMBER_SIZE');files[item.name]=item
+    need(sum(m.size for m in files.values())<=512*1024*1024,'ARCHIVE_MEMBER_SIZE')
+    used=set();verified={}
+    def read(name, *, limit=1048576, digest=None, size=None, collect=True):
+        guard()
+        need(name in files,'ARCHIVE_MISSING_BLOB');item=files[name]
+        need(item.size<=limit and (size is None or item.size==size),'ARCHIVE_DESCRIPTOR_SIZE')
+        used.add(name)
+        if digest is not None and name in verified:
+            need(verified[name]==(digest,item.size),'ARCHIVE_DESCRIPTOR_SIZE')
+            if not collect:return None
+        h=hashlib.sha256();chunks=[];count=0
+        stream=None;first=None
+        try:
+            stream=tar.extractfile(item)
+            while True:
+                guard();chunk=stream.read(65536);guard()
+                if not chunk:break
+                count+=len(chunk);need(count<=item.size,'ARCHIVE_MEMBER_SIZE');h.update(chunk)
+                if collect:chunks.append(chunk)
+        except BaseException as exc:first=exc;raise
+        finally:
+            if stream is not None:
+                try:stream.close()
+                except BaseException:
+                    if first is None:raise
+                    first.close_secondary=getattr(first,'close_secondary',())+('ARCHIVE_MEMBER_CLOSE',)
+            try:guard()
+            except BaseException:
+                if first is None:raise
+                first.close_secondary=getattr(first,'close_secondary',())+('ARCHIVE_MEMBER_POSTCLOCK',)
+        need(count==item.size,'ARCHIVE_MEMBER_SIZE')
+        if digest is not None:
+            need(h.hexdigest()==digest[7:],'ARCHIVE_BLOB_SHA');verified[name]=(digest,count)
+        return b''.join(chunks) if collect else None
+    def document(name):return strict_json(read(name))
+    def descriptor(d,media,extra=frozenset(),collect=True):
+        need(type(d) is dict and set(d)=={'mediaType','digest','size'}|set(extra)
+             and d['mediaType']==media and type(d['digest']) is str
+             and re.fullmatch('sha256:[0-9a-f]{64}',d['digest'])
+             and type(d['size']) is int and 0<=d['size']<=512*1024*1024,'ARCHIVE_DESCRIPTOR')
+        return read('blobs/sha256/'+d['digest'][7:],digest=d['digest'],size=d['size'],
+                    limit=1048576 if collect else 512*1024*1024,collect=collect)
+    def image_manifest(d,extra,attestation=False):
+        v=strict_json(descriptor(d,manifest_type,extra))
+        need(type(v) is dict and set(v)=={'schemaVersion','mediaType','config','layers'}
+             and type(v['schemaVersion']) is int and v['schemaVersion']==2
+             and v['mediaType']==manifest_type and type(v['layers']) is list
+             and 0<len(v['layers'])<=256,'ARCHIVE_IMAGE_MANIFEST')
+        config=strict_json(descriptor(v['config'],config_type))
+        need(type(config) is dict and config.get('os')==('unknown' if attestation else 'linux')
+             and config.get('architecture')==('unknown' if attestation else 'arm64'),'ARCHIVE_PLATFORM')
+        if not attestation:
+            rootfs=config.get('rootfs')
+            need(type(rootfs) is dict and set(rootfs)=={'type','diff_ids'} and rootfs['type']=='layers'
+                 and type(rootfs['diff_ids']) is list and len(rootfs['diff_ids'])==len(v['layers'])
+                 and all(type(x) is str and re.fullmatch('sha256:[0-9a-f]{64}',x) for x in rootfs['diff_ids']), 'ARCHIVE_ROOTFS')
+        for layer in v['layers']:
+            if attestation:
+                descriptor(layer,'application/vnd.in-toto+json',{'annotations'},collect=False)
+                need(layer['annotations']=={'in-toto.io/predicate-type':'https://slsa.dev/provenance/v1'},'ARCHIVE_ATTESTATION')
+            else:
+                need(type(layer) is dict and layer.get('mediaType') in
+                     ('application/vnd.oci.image.layer.v1.tar+gzip','application/vnd.oci.image.layer.v1.tar'),'ARCHIVE_LAYER_TYPE')
+                descriptor(layer,layer['mediaType'],collect=False)
+        return {'Config':'blobs/sha256/'+v['config']['digest'][7:],'RepoTags':None,
+                'Layers':['blobs/sha256/'+x['digest'][7:] for x in v['layers']]}
+    need(document('oci-layout')=={'imageLayoutVersion':'1.0.0'},'ARCHIVE_LAYOUT')
+    index=document('index.json')
+    need(type(index) is dict and set(index)=={'schemaVersion','mediaType','manifests'}
+         and type(index['schemaVersion']) is int and index['schemaVersion']==2
+         and index['mediaType']==index_type and type(index['manifests']) is list
+         and len(index['manifests'])==2,'ARCHIVE_INDEX')
+    ids={candidate[r+'ID'] for r in ROLES}
+    need(len(ids)==2 and all(type(v) is str and re.fullmatch('sha256:[0-9a-f]{64}',v) for v in ids),'ARCHIVE_CANDIDATES')
+    need(all(type(d) is dict and type(d.get('digest')) is str for d in index['manifests'])
+         and {d['digest'] for d in index['manifests']}==ids,'ARCHIVE_CANDIDATES')
+    expected=[]
+    for d in index['manifests']:
+        v=strict_json(descriptor(d,index_type))
+        need(type(v) is dict and set(v)=={'schemaVersion','mediaType','manifests'}
+             and type(v['schemaVersion']) is int and v['schemaVersion']==2
+             and v['mediaType']==index_type and type(v['manifests']) is list
+             and len(v['manifests'])==2,'ARCHIVE_IMAGE_INDEX')
+        runtime=[m for m in v['manifests'] if type(m) is dict and m.get('platform')=={'os':'linux','architecture':'arm64'}]
+        attest=[m for m in v['manifests'] if type(m) is dict and m.get('platform')=={'os':'unknown','architecture':'unknown'}]
+        need(len(runtime)==len(attest)==1,'ARCHIVE_PLATFORM')
+        expected.append(image_manifest(runtime[0],{'platform'}))
+        image_manifest(attest[0],{'platform','annotations'},attestation=True)
+        need(attest[0]['annotations']=={'vnd.docker.reference.digest':runtime[0]['digest'],
+             'vnd.docker.reference.type':'attestation-manifest'},'ARCHIVE_ATTESTATION')
+    manifest=document('manifest.json')
+    need(type(manifest) is list and len(manifest)==2
+         and all(type(row) is dict for row in manifest)
+         and sorted(manifest,key=lambda r:str(r.get('Config')))==sorted(expected,key=lambda r:r['Config']), 'DOCKER_ARCHIVE_GRAPH')
+    need(used==set(files),'ARCHIVE_UNREACHABLE_BLOB')
+
+
 class CoreConsoleOwner:
     def __init__(self, profile, state_root, nonce):
         need(re.fullmatch('[0-9a-f]{64}',nonce) is not None,'OPERATION_NONCE')
@@ -221,16 +337,7 @@ class CoreConsoleOwner:
             need(count==s.st_size and h.hexdigest()==candidate['archive'],'ARCHIVE_SHA')
             os.lseek(fd,0,os.SEEK_SET)
             with os.fdopen(os.dup(fd),'rb') as stream,tarfile.open(fileobj=stream,mode='r:') as tar:
-                members=[]
-                for member in tar:
-                    guard();members.append(member);need(len(members)<=4096,'ARCHIVE_MEMBERS')
-                listed=[v for v in members if v.name=='manifest.json']
-                need(len(listed)==1 and listed[0].isreg() and listed[0].size<=65536,'DOCKER_ARCHIVE_MANIFEST')
-                manifest=strict_json(tar.extractfile(listed[0]).read())
-                need(type(manifest) is list and len(manifest)==2,'DOCKER_ARCHIVE_IMAGES')
-                configs={v.get('Config') for v in manifest}
-                choices=[{candidate[r+'ID'][7:]+'.json' for r in ROLES},{'blobs/sha256/'+candidate[r+'ID'][7:] for r in ROLES}]
-                need(configs in choices,'DOCKER_ARCHIVE_CONFIGS')
+                archive_graph(tar,candidate,guard)
             need(_token(s)==_token(os.fstat(fd))==_token(os.stat(path,follow_symlinks=False)),'ARCHIVE_DRIFT')
         except BaseException as exc:first=exc;raise
         finally:_close(fd,first,'ARCHIVE_CLOSE')
