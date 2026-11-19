@@ -39,10 +39,12 @@ def ci_environment(source):
  env.update(GOMAXPROCS='1',GOFLAGS='-p=1',GOMEMLIMIT='256MiB',AUTHOVA_CI_RESOURCE_PROFILE='serial768')
  return env
 
-MAKE_DIAGNOSTICS=frozenset({'CHECK_GOFMT','CHECK_VET','CHECK_RACE','COMPILE_SIGNAL_KILLED','VCS_STATUS_ERROR','UNKNOWN'})
-def make_diagnostic(path):
+DIAGNOSTICS=frozenset({'CHECK_GOFMT','CHECK_VET','CHECK_RACE','COMPILE_SIGNAL_KILLED','VCS_STATUS_ERROR','DISK_SPACE_ERROR','UNKNOWN'})
+def command_diagnostic(path,argv):
  # First-current bounded observation of this command's private log, not a raw
  # export, content hash or proof of its complete historical first cause.
+ make_check=argv==['make','check']
+ if not make_check and argv!=['go','build','-trimpath','./cmd/...']:return 'UNKNOWN'
  fd=None;answer='UNKNOWN'
  try:
   fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK);s=os.fstat(fd)
@@ -60,12 +62,15 @@ def make_diagnostic(path):
   stages=['CHECK_GOFMT','CHECK_VET','CHECK_RACE'];stage=-1;families=set()
   for line in body.splitlines():
    if len(line)>16384 or b'\x00' in line:return 'UNKNOWN'
-   if line in echoes:
+   if make_check and line in echoes:
     next_stage=echoes.index(line)
     if next_stage!=stage+1:return 'UNKNOWN'
     stage=next_stage
    if re.fullmatch(rb'(?:go: )?error obtaining VCS status: exit status [1-9][0-9]{0,2}',line):families.add('VCS_STATUS_ERROR')
    if re.fullmatch(rb'(?:[A-Za-z0-9_./@+-]+: )?(?:/[A-Za-z0-9_.@+-]+)+/pkg/tool/linux_arm64/compile: signal: killed',line):families.add('COMPILE_SIGNAL_KILLED')
+   # Only fixed Go operation forms with the exact terminal ENOSPC text. Other
+   # wording, arbitrary quoted messages and unsupported path forms stay unknown.
+   if re.fullmatch(rb'(?:go: (?:writing work dir: |failed to trim cache: )?|compile: writing output: |[A-Za-z0-9_./@+-]+: )(?:write|mkdir|open) [A-Za-z0-9_./@$+-]+: no space left on device',line):families.add('DISK_SPACE_ERROR')
   if len(families)>1:return 'UNKNOWN'
   answer=next(iter(families)) if families else stages[stage] if stage>=0 else 'UNKNOWN'
  except BaseException:answer='UNKNOWN'
@@ -93,11 +98,11 @@ def run_gate(phase,sha,out,runner=subprocess.run,fixture=None):
    commands.append({'ordinal':number,'exit_code':p.returncode,'known_return':True,'I':I,'elapsed':time.monotonic()-M})
    if p.returncode:
     first='COMMAND_EXIT'
-    if phase=='checks' and argv==['make','check']:diagnostic=make_diagnostic(path)
+    if phase=='checks':diagnostic=command_diagnostic(path,argv)
     break
   except subprocess.TimeoutExpired:
    commands.append({'ordinal':number,'exit_code':None,'known_return':False,'I':I,'elapsed':time.monotonic()-M});first='UNKNOWN_TIMEOUT'
-   if phase=='checks' and argv==['make','check']:diagnostic=make_diagnostic(path)
+   if phase=='checks':diagnostic=command_diagnostic(path,argv)
    break
  result={'schema':'authova-ci-gate/v1','repo':REPO,'source':sha,'gate':phase,'result':'PASS' if first is None else 'FAIL','failure':first,'commands':commands,'I':started,'elapsed':time.monotonic()-mono}
  if first is not None:result['diagnostic']=diagnostic
@@ -179,5 +184,5 @@ if __name__=='__main__':
  try:main()
  except Refused as e:
   value={'result':'REFUSED','code':e.args[0]}
-  if getattr(e,'diagnostic',None) in MAKE_DIAGNOSTICS:value['diagnostic']=e.diagnostic
+  if getattr(e,'diagnostic',None) in DIAGNOSTICS:value['diagnostic']=e.diagnostic
   print(json.dumps(value));sys.exit(1)

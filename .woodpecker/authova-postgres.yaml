@@ -73,7 +73,7 @@ steps:
         timeout --signal=TERM --kill-after=5s 1800s python3 scripts/ci/driver.py postgres-both --fixture-context /woodpecker/authova-ci-out/both-fixture/context.json --out /woodpecker/authova-ci-out/postgres
         AUTHOVA_CI
   - name: store-receipts
-    image: sha256:ed4b14996e3c817cfee3babfc04c414876ffd13e9d3bbff420d5f33c5089bd9c
+    image: sha256:5ecb68b13796a5a0b40fba1665ba5238fe4f91a5aee477bb130fbc20c6815e40
     backend_options:
       docker:
         user: "1000:1000"
