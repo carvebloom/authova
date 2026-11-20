@@ -23,7 +23,7 @@ LAYER='application/vnd.oci.image.layer.v1.tar+gzip'
 def raw(v):return json.dumps(v,sort_keys=True,separators=(',',':')).encode()
 def guard():pass
 
-def fixture(poison=None):
+def fixture(poison=None,provenance=False):
     files={};rows=[];roots=[]
     def blob(body,media,**extra):
         digest='sha256:'+hashlib.sha256(body).hexdigest()
@@ -32,8 +32,11 @@ def fixture(poison=None):
     # Shared blob deliberately exercises descriptor-size checks even after hashing.
     common=blob(b'OWN_COMPRESSED_LAYER',LAYER)
     for role in ('core','console'):
-        cfg=blob(raw(dict(os='linux',architecture='arm64',role=role,
-             rootfs=dict(type='layers',diff_ids=['sha256:'+'1'*64]))),CONFIG)
+        config=dict(os='linux',architecture='arm64',role=role,
+                    rootfs=dict(type='layers',diff_ids=['sha256:'+'1'*64]))
+        if provenance:config['config']={'Labels':{'org.opencontainers.image.revision':'a'*40,
+            'io.carvebloom.artifact-manifest':'b'*64,'io.carvebloom.schema':'c'*64,'io.carvebloom.role':role}}
+        cfg=blob(raw(config),CONFIG)
         if poison=='config-platform' and role=='core':
             cfg=blob(raw(dict(os='linux',architecture='amd64',rootfs=dict(type='layers',diff_ids=['sha256:'+'1'*64]))),CONFIG)
         layer=copy.deepcopy(common)

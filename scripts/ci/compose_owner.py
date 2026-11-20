@@ -145,6 +145,7 @@ def archive_graph(tar, candidate, guard):
              and type(d['size']) is int and 0<=d['size']<=512*1024*1024,'ARCHIVE_DESCRIPTOR')
         return read('blobs/sha256/'+d['digest'][7:],digest=d['digest'],size=d['size'],
                     limit=1048576 if collect else 512*1024*1024,collect=collect)
+    runtime_details={}
     def image_manifest(d,extra,attestation=False):
         v=strict_json(descriptor(d,manifest_type,extra))
         need(type(v) is dict and set(v)=={'schemaVersion','mediaType','config','layers'}
@@ -167,6 +168,12 @@ def archive_graph(tar, candidate, guard):
                 need(type(layer) is dict and layer.get('mediaType') in
                      ('application/vnd.oci.image.layer.v1.tar+gzip','application/vnd.oci.image.layer.v1.tar'),'ARCHIVE_LAYER_TYPE')
                 descriptor(layer,layer['mediaType'],collect=False)
+        if not attestation:
+            labels=config.get('config',{}).get('Labels') or {}
+            need(type(labels) is dict,'ARCHIVE_CONFIG_LABELS')
+            runtime_details[d['digest']]={'config':v['config']['digest'],
+                'layers':copy.deepcopy(v['layers']),'rootfs_diff_ids':list(config['rootfs']['diff_ids']),
+                'provenance_labels':{k:labels.get(k) for k in IMAGE_LABELS}}
         return {'Config':'blobs/sha256/'+v['config']['digest'][7:],'RepoTags':None,
                 'Layers':['blobs/sha256/'+x['digest'][7:] for x in v['layers']]}
     need(document('oci-layout')=={'imageLayoutVersion':'1.0.0'},'ARCHIVE_LAYOUT')
@@ -179,7 +186,7 @@ def archive_graph(tar, candidate, guard):
     need(len(ids)==2 and all(type(v) is str and re.fullmatch('sha256:[0-9a-f]{64}',v) for v in ids),'ARCHIVE_CANDIDATES')
     need(all(type(d) is dict and type(d.get('digest')) is str for d in index['manifests'])
          and {d['digest'] for d in index['manifests']}==ids,'ARCHIVE_CANDIDATES')
-    expected=[]
+    expected=[];graph={}
     for d in index['manifests']:
         v=strict_json(descriptor(d,index_type))
         need(type(v) is dict and set(v)=={'schemaVersion','mediaType','manifests'}
@@ -190,6 +197,8 @@ def archive_graph(tar, candidate, guard):
         attest=[m for m in v['manifests'] if type(m) is dict and m.get('platform')=={'os':'unknown','architecture':'unknown'}]
         need(len(runtime)==len(attest)==1,'ARCHIVE_PLATFORM')
         expected.append(image_manifest(runtime[0],{'platform'}))
+        role=next(r for r in ROLES if candidate[r+'ID']==d['digest'])
+        graph[role]=dict(root=d['digest'],runtime_manifest=runtime[0]['digest'],**runtime_details[runtime[0]['digest']])
         image_manifest(attest[0],{'platform','annotations'},attestation=True)
         need(attest[0]['annotations']=={'vnd.docker.reference.digest':runtime[0]['digest'],
              'vnd.docker.reference.type':'attestation-manifest'},'ARCHIVE_ATTESTATION')
@@ -198,6 +207,8 @@ def archive_graph(tar, candidate, guard):
          and all(type(row) is dict for row in manifest)
          and sorted(manifest,key=lambda r:str(r.get('Config')))==sorted(expected,key=lambda r:r['Config']), 'DOCKER_ARCHIVE_GRAPH')
     need(used==set(files),'ARCHIVE_UNREACHABLE_BLOB')
+    need(len({v['config'] for v in graph.values()})==2 and len({v['runtime_manifest'] for v in graph.values()})==2,'ARCHIVE_ROLE_COLLISION')
+    return graph
 
 
 class CoreConsoleOwner:
@@ -210,6 +221,7 @@ class CoreConsoleOwner:
         self.operation=Path(state_root)/'operations'/nonce[:24]
         self.original=None;self.control=None;self.post=None;self.images={};self.up_started=False
         self.cfg=None;self.override=None;self.hashes={};self.old_images={};self.secret_inputs={}
+        self.production_graph=None;self.graph_candidate=None
 
     def command(self,tag,args,guard,**kw):
         if not self.daemon_checked:
@@ -337,13 +349,34 @@ class CoreConsoleOwner:
             need(count==s.st_size and h.hexdigest()==candidate['archive'],'ARCHIVE_SHA')
             os.lseek(fd,0,os.SEEK_SET)
             with os.fdopen(os.dup(fd),'rb') as stream,tarfile.open(fileobj=stream,mode='r:') as tar:
-                archive_graph(tar,candidate,guard)
+                graph=archive_graph(tar,candidate,guard)
             need(_token(s)==_token(os.fstat(fd))==_token(os.stat(path,follow_symlinks=False)),'ARCHIVE_DRIFT')
         except BaseException as exc:first=exc;raise
         finally:_close(fd,first,'ARCHIVE_CLOSE')
+        return graph
+    def production_ids(self,binding):
+        # Only this production layout resolver can select a config ID. The
+        # signed candidate/test receipt still identify the original index roots.
+        need(self.profile['role']=='application-production' and binding['action']=='production'
+             and self.graph_candidate==binding['candidate'] and type(self.production_graph) is dict
+             and set(self.production_graph)==set(ROLES),'PRODUCTION_GRAPH_BINDING')
+        result={}
+        for role in ROLES:
+            node=self.production_graph[role]
+            need(node['root']==binding['candidate'][role+'ID'] and node['provenance_labels']=={
+                 'org.opencontainers.image.revision':binding['candidate']['source'],
+                 'io.carvebloom.artifact-manifest':binding['candidate']['manifest'],
+                 'io.carvebloom.schema':binding['candidate']['schemaDigest'],'io.carvebloom.role':role},'PRODUCTION_GRAPH_PROVENANCE')
+            result[role+'ID']=node['config']
+        return result
+    def production_image(self,binding,role,guard):
+        image=self.image(self.production_ids(binding)[role+'ID'],guard)
+        need(image.get('RootFS')=={'Type':'layers','Layers':self.production_graph[role]['rootfs_diff_ids']},'PRODUCTION_ROOTFS_IDENTITY')
+        return image
     def preflight(self,binding,guard):
         self.phase='PREFLIGHT'
-        self.setup_directory();self.archive_guard(binding['candidate'],guard);self.selected_private_inputs(binding,guard)
+        self.setup_directory();self.production_graph=self.archive_guard(binding['candidate'],guard);self.graph_candidate=copy.deepcopy(binding['candidate'])
+        selected_ids=self.production_ids(binding);self.selected_private_inputs(binding,guard)
         from deployment_http import readonly_acceptance
         readonly_acceptance(self.profile,guard)  # qualify existing normal CA/route before any service change
         self.original=self.inspect_services(binding,guard)
@@ -358,9 +391,9 @@ class CoreConsoleOwner:
             values.update(desired)
             need(values==env_map(c['Config']['Env']),'CURRENT_ENV_SEMANTICS')
             env_file(values)  # explicitly rejects env-file newline ambiguity before any mutation
-        self.override=self.write('candidate-override.json',{'services':{'core':{'image':binding['candidate']['coreID']},'console':{'image':binding['candidate']['consoleID'],'environment':{'AUTHOVA_CONSOLE_ASSETS':'/opt/authova-console/web'}}}})
+        self.override=self.write('candidate-override.json',{'services':{'core':{'image':selected_ids['coreID']},'console':{'image':selected_ids['consoleID'],'environment':{'AUTHOVA_CONSOLE_ASSETS':'/opt/authova-console/web'}}}})
         layers=binding['current']['layers']+[self.override]
-        compare_config(self.cfg,self.render(binding,guard,layers),binding['candidate'])
+        compare_config(self.cfg,self.render(binding,guard,layers),selected_ids)
         for role in ROLES:
             value=self.command('COMPOSE_HASH',self.compose(binding,layers)+['config','--hash',role],guard).decode().strip().split()
             need(len(value)==2 and value[0]==role and re.fullmatch('[0-9a-f]{64}',value[1]),'COMPOSE_HASH_FORMAT')
@@ -391,10 +424,11 @@ class CoreConsoleOwner:
         self.phase='APPLY'
         # Loading/creating a read-only schema probe are Docker mutations, so both
         # happen here AFTER durable signed nonce consumption, never in preflight.
-        self.archive_guard(binding['candidate'],guard)
+        need(self.archive_guard(binding['candidate'],guard)==self.production_graph,'PRODUCTION_GRAPH_CAS')
+        selected_ids=self.production_ids(binding)
         self.command('IMAGE_LOAD',['image','load','--input',self.profile['archive']['path']],guard,whole=120,suffix=300)
         for role in ROLES:
-            image=self.image(binding['candidate'][role+'ID'],guard);labels=image['Config'].get('Labels') or {}
+            image=self.production_image(binding,role,guard);labels=image['Config'].get('Labels') or {}
             need(image['Config']['User']=='10001:10001' and image['Config']['Entrypoint']==['authova' if role=='core' else 'authova-console']
                  and labels.get('org.opencontainers.image.revision')==binding['candidate']['source']
                  and labels.get('io.carvebloom.artifact-manifest')==binding['candidate']['manifest']
@@ -426,7 +460,7 @@ class CoreConsoleOwner:
             need(m['RW'] is False and m['Type'] in ('bind','volume'),'PROBE_SELECTED_RO_MOUNTS')
             needed.add(m['Destination'])
         selected=[m for m in mounts if m['Destination'] in needed]
-        rc,frame=self.oneshot(binding,guard,binding['candidate']['coreID'],['schema-check'],env_map(core['Config']['Env']),selected,network='container:'+core['Id'])
+        rc,frame=self.oneshot(binding,guard,selected_ids['coreID'],['schema-check'],env_map(core['Config']['Env']),selected,network='container:'+core['Id'])
         if rc!=0:return 'PREFLIGHT_REFUSED'
         need(strict_json(frame)=={'schema':'authova-runtime-schema/v1','result':'PASS'},'SCHEMA_FRAME')
         need(self.current(binding,guard)==binding['current'] and self.render(binding,guard)==self.cfg,'PRE_UP_CURRENT_CAS')
@@ -438,8 +472,8 @@ class CoreConsoleOwner:
         rc,_=self.compose_run('SELECTIVE_UP',self.compose(binding,binding['current']['layers']+[self.override])+['up','--detach','--no-deps','--no-build','--pull','never','--wait','--wait-timeout','90','core','console'],guard,whole=120,suffix=600)
         self.input_guard(guard)
         self.post=self.inspect_services(binding,guard)
-        need(all(self.post[r]['Image'] in (self.original[r]['Image'],binding['candidate'][r+'ID']) for r in ROLES),'POSTSTATE_UNKNOWN')
-        return 'APPLIED' if rc==0 and all(self.post[r]['Image']==binding['candidate'][r+'ID'] for r in ROLES) else 'FAILED_KNOWN'
+        need(all(self.post[r]['Image'] in (self.original[r]['Image'],selected_ids[r+'ID']) for r in ROLES),'POSTSTATE_UNKNOWN')
+        return 'APPLIED' if rc==0 and all(self.post[r]['Image']==selected_ids[r+'ID'] for r in ROLES) else 'FAILED_KNOWN'
     def accept(self,binding,guard):
         self.phase='ACCEPT'
         from deployment_http import readonly_acceptance
@@ -447,7 +481,7 @@ class CoreConsoleOwner:
         need(all(observed[r]['Id']==self.post[r]['Id'] and stable(observed[r])==stable(self.post[r]) for r in ROLES),'ACCEPTANCE_CURRENT_CAS_UNKNOWN')
         self.post=observed
         try:
-            post_semantics(self.original,self.post,binding['candidate'],self.images,binding['current']['layers']+[self.override],self.hashes)
+            post_semantics(self.original,self.post,self.production_ids(binding),self.images,binding['current']['layers']+[self.override],self.hashes)
             if not all(self.post[r]['State']['Running'] is True and self.post[r]['State'].get('Health',{}).get('Status')=='healthy' for r in ROLES):return 'FAIL_KNOWN'
             readonly_acceptance(self.profile,guard)
         except __import__('deployment_http').KnownUnhealthy:
@@ -490,9 +524,11 @@ class CoreConsoleOwner:
         value=copy.deepcopy(existing)
         active_layers=layers or binding['current']['layers']+[self.override]
         value.update(schema='authova-two-service-active-control/v1',compose_layers=active_layers,active_override=active_layers[-1],
-                     images=images or {r:binding['candidate'][r+'ID'] for r in ROLES},services_changed=list(ROLES),
+                     images=images or {r:self.production_ids(binding)[r+'ID'] for r in ROLES},services_changed=list(ROLES),
                      ci_last_attempt={'candidate':binding['candidate'],'outcome':outcome})
-        if outcome=='PASS_PRODUCTION':value['ci_candidate']=binding['candidate']
+        if outcome=='PASS_PRODUCTION':
+            value['ci_candidate']=binding['candidate']
+            value['ci_runtime_image_graph']=copy.deepcopy(self.production_graph)
         if 'public_release_summary' in value:value['previous_public_release_summary']=value.pop('public_release_summary')
         parent=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY)
         first=None
