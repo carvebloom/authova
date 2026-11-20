@@ -320,3 +320,26 @@ bounded read per readback within the original actor cap, no new command or
 budget. Email identity is bound by the exact server lookup, not by treating a
 non-unique mask as identity. Test18's historical inner assertion remains
 unrecorded; this source repair does not claim registration or real OIDC PASS.
+
+### Production Docker image-store representation
+
+The signed candidate and test receipt retain the two OCI index root IDs. The
+guarded archive consumer also returns each root's unique Linux/arm64 manifest,
+config digest, hashed layer descriptors, rootfs diffIDs and four provenance
+labels. This map is returned only after the complete archive/descriptor/member
+checks and original FD/close checks succeed. No extraction or repackaging.
+
+Only the production owner may derive runtime config IDs from that graph. It
+binds the whole original candidate and role/provenance, revalidates the complete
+same graph before the single image load, then uses the unchanged exact-ID
+`image()` guard on the derived config ID plus exact runtime RootFS diffIDs. It
+does not try tags, alternate IDs or root-inspect fallbacks. CI-test root IDs and
+the generic exact-ID guard remain unchanged.
+
+Production Compose overrides/hashes, schema probe, poststate/semantic checks
+and published active `images` all use these derived runtime IDs. Public
+`ci_candidate` keeps the signed roots; `ci_runtime_image_graph` records their
+verified relationship to runtime IDs. Rollback still uses the exact original
+container image IDs and layers. Original21's consumed intent/nonce/failure are
+not reused. This host-only fix neither rebuilds nor substitutes either tested
+image; actual promotion needs a new native record, admission and nonce.
