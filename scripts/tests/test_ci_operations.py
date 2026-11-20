@@ -29,6 +29,70 @@ guard.full=lambda *args:None
 
 
 class CIOperationTests(unittest.TestCase):
+    def test_resolved_compose_bytes_use_same_tool_stdin_without_dollar_rewrite(self):
+        # Controlled CLI actor models the two different inputs; this is not an
+        # execution of Compose or a claim to reproduce its ServiceHash algorithm.
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp).resolve();base=root/'compose.json';env=root/'service.env';tool=root/'own-compose'
+            env.write_bytes(b'OWN_ENV_CANARY=$$literal\n');env.chmod(0o600)
+            base.write_bytes(canonical({'name':'OWN_PROJECT','services':{r:{'env_file':[str(env)]} for r in production.ROLES}}));base.chmod(0o600)
+            tool.write_text('#!'+sys.executable+'\n'+'''import json,sys
+from pathlib import Path
+a=sys.argv[1:]
+if a[-3:]==['config','--format','json']:
+    m=json.loads(Path(a[a.index('-f')+1]).read_bytes())
+    for s in m['services'].values():
+        v=Path(s.pop('env_file')[0]).read_text().rstrip('\\n').split('=',1)[1]
+        s['environment']={'OWN_ENV_CANARY':v}
+    sys.stdout.buffer.write((json.dumps(m,indent=3)+'\\n').encode())
+elif a[-3:-1]==['config','--hash']:
+    if a[a.index('-f')+1]!='-':
+        sys.stdout.write(a[-1]+' '+'0'*64);sys.exit(0)
+    m={'name':'OWN_PROJECT','services':{r:{'environment':{'OWN_ENV_CANARY':'$$literal'}} for r in ('console','core')}}
+    assert sys.stdin.buffer.read()==(json.dumps(m,indent=3)+'\\n').encode()
+    assert a==['--project-name','OWN_PROJECT','--project-directory',str(Path(__file__).parent),'--env-file','/dev/null','-f','-','config','--hash',a[-1]]
+    sys.stdout.write(a[-1]+' '+'9'*64)
+else:sys.exit(2)
+''');tool.chmod(0o700)
+            native=private_native.Native({'path':str(tool),'identity':None,'sha256':hashlib.sha256(tool.read_bytes()).hexdigest()},'unix:///OWN_NO_DAEMON',tmp)
+            o=production.CoreConsoleOwner.__new__(production.CoreConsoleOwner)
+            o.compose_native=native;o.daemon_checked=True;o.secret_inputs={}
+            b={'project':'OWN_PROJECT','current':{'layers':[str(base)]}}
+            for p in (base,env):o.private_input(str(p),guard)
+            # Old direct input returns a different synthetic marker.
+            direct=o.command('OWN_DIRECT',o.compose(b)+['config','--hash','core'],guard)
+            raw=o.render_bytes(b,guard)
+            self.assertNotEqual(direct,('core '+'9'*64).encode())
+            self.assertEqual(o.resolved_hashes(b,guard,raw,'COMPOSE_HASH'),{r:'9'*64 for r in production.ROLES})
+            self.assertIn(b'$$literal',raw)
+            self.assertEqual(len(native.records),4)
+            self.assertTrue(all(r['known_return'] and r['all_selected_IO_closed'] and r['timely'] for r in native.records))
+            self.assertNotIn('OWN_ENV_CANARY',repr(native.records))
+            env.write_bytes(b'OWN_ENV_CANARY=changed\n')
+            with self.assertRaisesRegex(Refused,'PRIVATE_INPUT_CAS'):o.resolved_hashes(b,guard,raw,'COMPOSE_HASH')
+            self.assertEqual(len(native.records),4)
+
+    def test_resolved_model_and_hash_refusals_keep_first_failure(self):
+        b={'project':'OWN_PROJECT','current':{'layers':['/OWN/compose.json']}}
+        for body in (b'{"name":"OTHER","services":{"core":{},"console":{}}}',
+                     b'{"name":"OWN_PROJECT","services":{"core":{"env_file":[]},"console":{}}}',
+                     b'{"name":"OWN_PROJECT","name":"OWN_PROJECT","services":{}}'):
+            with self.subTest(body=body):
+                o=production.CoreConsoleOwner.__new__(production.CoreConsoleOwner);o.secret_inputs={}
+                calls=[]
+                o.command=lambda tag,*a,**kw:(calls.append(tag) or body)
+                with self.assertRaises(Refused):o.render_bytes(b,guard)
+                self.assertEqual(calls,['COMPOSE_PRIVATE_CONFIG'])
+        for row in (b'console '+b'9'*64,b'core not-hex',b'core '+b'9'*64+b' extra'):
+            o=production.CoreConsoleOwner.__new__(production.CoreConsoleOwner);o.secret_inputs={};calls=[]
+            o.command=lambda tag,*a,**kw:(calls.append(tag) or row)
+            with self.assertRaisesRegex(Refused,'COMPOSE_HASH_FORMAT'):o.resolved_hashes(b,guard,b'{}','COMPOSE_HASH')
+            self.assertEqual(calls,['COMPOSE_HASH'])
+        first=Refused('OWN_CLOSE_FIRST')
+        o.command=lambda *a,**kw:(_ for _ in ()).throw(first)
+        with self.assertRaises(Refused) as caught:o.resolved_hashes(b,guard,b'{}','COMPOSE_HASH')
+        self.assertIs(caught.exception,first)
+
     def test_ram_transport_preserves_bytes_and_never_logs_canary(self):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/'own-cli'

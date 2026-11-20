@@ -323,10 +323,33 @@ class CoreConsoleOwner:
         guard();return body
     def input_guard(self,guard):
         for path in tuple(self.secret_inputs):self.private_input(path,guard)
-    def render(self,binding,guard,layers=None):
+    def render_bytes(self,binding,guard,layers=None):
         self.input_guard(guard)
-        result=strict_json(self.command('COMPOSE_PRIVATE_CONFIG',self.compose(binding,layers)+['config','--format','json'],guard))
-        self.input_guard(guard);return result
+        body=self.command('COMPOSE_PRIVATE_CONFIG',self.compose(binding,layers)+['config','--format','json'],guard)
+        model=strict_json(body)
+        need(type(model) is dict and model.get('name')==binding['project'] and type(model.get('services')) is dict
+             and set(ROLES)<=set(model['services']),'COMPOSE_RESOLVED_MODEL')
+        # config --format json resolves env_file and escapes literal dollars.
+        # Keep the tool's exact bytes; never dump the parsed model or rewrite $$.
+        need(all(type(s) is dict and 'env_file' not in s for s in model['services'].values()),'COMPOSE_UNRESOLVED_ENV_FILE')
+        self.input_guard(guard);return body
+    def render(self,binding,guard,layers=None):
+        return strict_json(self.render_bytes(binding,guard,layers))
+    def resolved_hashes(self,binding,guard,body,tag):
+        need(tag in ('COMPOSE_HASH','ROLLBACK_HASH'),'COMPOSE_HASH_TAG')
+        base=Path(binding['current']['layers'][0])
+        need(base.is_absolute(),'COMPOSE_PROJECT_DIRECTORY')
+        argv=['compose','--project-name',binding['project'],'--project-directory',str(base.parent),
+              '--env-file','/dev/null','-f','-','config','--hash']
+        result={}
+        for role in ROLES:
+            self.input_guard(guard)
+            row=self.command(tag,argv+[role],guard,body=body).decode('ascii').split()
+            self.input_guard(guard)
+            need(len(row)==2 and row[0]==role and re.fullmatch('[0-9a-f]{64}',row[1]),
+                 'ROLLBACK_HASH_FORMAT' if tag=='ROLLBACK_HASH' else 'COMPOSE_HASH_FORMAT')
+            result[role]=row[1]
+        return result
     def image(self,image,guard):
         raw=strict_json(self.command('IMAGE_LOCAL_ONLY',['image','inspect',image],guard))
         need(type(raw) is list and len(raw)==1 and raw[0]['Id']==image and raw[0]['Os']=='linux' and raw[0]['Architecture']=='arm64','IMAGE_IDENTITY')
@@ -412,12 +435,10 @@ class CoreConsoleOwner:
         self.override=self.write('candidate-private-override.json',override)
         self.private_input(self.override,guard)  # RAM held bytes/identity, no private value hash
         layers=binding['current']['layers']+[self.override]
-        self.prospective_cfg=self.render(binding,guard,layers)
+        resolved=self.render_bytes(binding,guard,layers)
+        self.prospective_cfg=strict_json(resolved)
         compare_config(expected_cfg,self.prospective_cfg,selected_ids)
-        for role in ROLES:
-            value=self.command('COMPOSE_HASH',self.compose(binding,layers)+['config','--hash',role],guard).decode().strip().split()
-            need(len(value)==2 and value[0]==role and re.fullmatch('[0-9a-f]{64}',value[1]),'COMPOSE_HASH_FORMAT')
-            self.hashes[role]=value[1]
+        self.hashes=self.resolved_hashes(binding,guard,resolved,'COMPOSE_HASH')
     def oneshot(self,binding,guard,image,args,values,mounts,*,network,body=None,tag='SCHEMA_PROBE',entrypoint=None):
         name=binding['project']+'-'+tag.lower().replace('_','-')+'-'+self.nonce[:12]
         argv=['create','--pull=never','--interactive','--name',name,'--network',network,'--read-only','--cap-drop','ALL',
@@ -512,19 +533,26 @@ class CoreConsoleOwner:
         return 'PASS'
     def rollback(self,binding,guard):
         self.phase='ROLLBACK'
+        # 4 current inspect + 2 renders + 2 hashes + up120 + 4 restored
+        # inspect = 480 native whole seconds, plus20 for FS/report. Original
+        # dual-clock1800 ceiling remains authoritative; never borrow/renew.
+        guard.full(480,20)
         need(self.post is not None,'ROLLBACK_STATE_UNKNOWN')
         need(self.control_value()==self.control,'ROLLBACK_CONTROL_CAS')
         current=self.inspect_services(binding,guard)
         need(all(current[r]['Id']==self.post[r]['Id'] and stable(current[r])==stable(self.post[r]) for r in ROLES),'ROLLBACK_CAS_UNKNOWN')
         need(self.render(binding,guard)==self.cfg,'ROLLBACK_CONFIG_CAS')
         override=self.write('rollback-override.json',{'services':{r:{'image':self.original[r]['Image']} for r in ROLES}})
+        self.private_input(override,guard)
         rollback_layers=binding['current']['layers']+[override]
-        rollback_hashes={}
-        for role in ROLES:
-            row=self.command('ROLLBACK_HASH',self.compose(binding,rollback_layers)+['config','--hash',role],guard).decode().split()
-            need(len(row)==2 and row[0]==role and re.fullmatch('[0-9a-f]{64}',row[1]),'ROLLBACK_HASH_FORMAT')
-            rollback_hashes[role]=row[1]
-        rc,_=self.compose_run('KNOWN_ROLLBACK',self.compose(binding,binding['current']['layers']+[override])+['up','--detach','--no-deps','--no-build','--pull','never','--wait','--wait-timeout','90','core','console'],guard,whole=120,suffix=20)
+        resolved=self.render_bytes(binding,guard,rollback_layers)
+        expected=copy.deepcopy(self.cfg)
+        for role in ROLES:expected['services'][role]['image']=self.original[role]['Image']
+        need(strict_json(resolved)==expected,'ROLLBACK_CONFIG_CAS')
+        rollback_hashes=self.resolved_hashes(binding,guard,resolved,'ROLLBACK_HASH')
+        self.input_guard(guard)
+        rc,_=self.compose_run('KNOWN_ROLLBACK',self.compose(binding,rollback_layers)+['up','--detach','--no-deps','--no-build','--pull','never','--wait','--wait-timeout','90','core','console'],guard,whole=120,suffix=140)
+        self.input_guard(guard)
         need(rc==0,'ROLLBACK_COMMAND_UNKNOWN')
         restored=self.inspect_services(binding,guard)
         need(all(restored[r]['Image']==self.original[r]['Image'] and restored[r]['State']['Running'] is True
