@@ -37,6 +37,11 @@ def env_file(values):
     return ''.join(k+'='+v+'\n' for k,v in sorted(values.items())).encode()
 
 
+def semantic_labels(labels):
+    need(type(labels) is dict and all(type(k) is str and type(v) is str for k,v in labels.items()),'LABEL_TYPE')
+    return {k:v for k,v in labels.items() if not k.startswith('com.docker.compose.') and k not in IMAGE_LABELS}
+
+
 def stable(container):
     # Whole Config/HostConfig + stable network/mount semantics. Only ephemeral
     # endpoint/CID allocation is removed, never Env/volumes/resources/hardening.
@@ -391,9 +396,24 @@ class CoreConsoleOwner:
             values.update(desired)
             need(values==env_map(c['Config']['Env']),'CURRENT_ENV_SEMANTICS')
             env_file(values)  # explicitly rejects env-file newline ambiguity before any mutation
-        self.override=self.write('candidate-override.json',{'services':{'core':{'image':selected_ids['coreID']},'console':{'image':selected_ids['consoleID'],'environment':{'AUTHOVA_CONSOLE_ASSETS':'/opt/authova-console/web'}}}})
+        # Preserve the current container's effective non-provenance labels, not
+        # the new image's defaults. They can contain private values: this fixed
+        # override stays0600 inside the private operation root, never safe output.
+        override={'services':{}}
+        expected_cfg=copy.deepcopy(self.cfg)
+        for role in ROLES:
+            kept=semantic_labels(self.original[role]['Config'].get('Labels') or {})
+            configured=semantic_labels(self.cfg['services'][role].get('labels') or {})
+            need(all(k in kept and kept[k]==v for k,v in configured.items()),'CURRENT_LABEL_CONFIG_CAS')
+            labels=dict(kept,**self.production_graph[role]['provenance_labels'])
+            override['services'][role]={'image':selected_ids[role+'ID'],'labels':labels}
+            expected_cfg['services'][role]['labels']=labels
+        override['services']['console']['environment']={'AUTHOVA_CONSOLE_ASSETS':'/opt/authova-console/web'}
+        self.override=self.write('candidate-private-override.json',override)
+        self.private_input(self.override,guard)  # RAM held bytes/identity, no private value hash
         layers=binding['current']['layers']+[self.override]
-        compare_config(self.cfg,self.render(binding,guard,layers),selected_ids)
+        self.prospective_cfg=self.render(binding,guard,layers)
+        compare_config(expected_cfg,self.prospective_cfg,selected_ids)
         for role in ROLES:
             value=self.command('COMPOSE_HASH',self.compose(binding,layers)+['config','--hash',role],guard).decode().strip().split()
             need(len(value)==2 and value[0]==role and re.fullmatch('[0-9a-f]{64}',value[1]),'COMPOSE_HASH_FORMAT')
@@ -440,7 +460,9 @@ class CoreConsoleOwner:
             if role=='console':
                 values['AUTHOVA_CONSOLE_ASSETS']='/opt/authova-console/web';original['AUTHOVA_CONSOLE_ASSETS']='/opt/authova-console/web'
             if values!=original:return 'PREFLIGHT_REFUSED'
-            actual_labels=dict(image['Config'].get('Labels') or {});actual_labels.update(self.cfg['services'][role].get('labels') or {})
+            # Use the actual rendered prospective configuration, including the
+            # protected retained labels. Every extra/new label still refuses.
+            actual_labels=dict(image['Config'].get('Labels') or {});actual_labels.update(self.prospective_cfg['services'][role].get('labels') or {})
             old_labels=dict(self.original[role]['Config'].get('Labels') or {})
             for key in list(old_labels):
                 if key.startswith('com.docker.compose.') or key in IMAGE_LABELS:old_labels.pop(key)

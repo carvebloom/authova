@@ -343,3 +343,20 @@ verified relationship to runtime IDs. Rollback still uses the exact original
 container image IDs and layers. Original21's consumed intent/nonce/failure are
 not reused. This host-only fix neither rebuilds nor substitutes either tested
 image; actual promotion needs a new native record, admission and nonce.
+
+Production retains each current container's non-Compose/non-provenance labels
+in `candidate-private-override.json` (0600 in the0700 private operation root).
+It never belongs to safe artifacts and must not be collected, printed or
+content-hashed. Its whole identity/bytes are held in the existing RAM private
+input CAS, including before/after Compose consumption. Explicit retained Compose
+labels must agree with current labels. Only the four existing image-provenance
+labels take their bound candidate values.
+
+The complete prospective Compose configuration must equal the old configuration
+with just the selected images, assets path and these exact retained labels.
+The candidate's effective labels are still compared with the original labels;
+an introduced image label that cannot be removed still refuses. Post-switch
+whole runtime semantics remain unchanged. Env is not adjusted or relaxed.
+This preserves runtime metadata across differing image defaults rather than
+ignoring label differences. The specific origin/keys/values of22's observed
+LABEL_SEMANTICS_CHANGED remain unrecorded; no historical cause is inferred.

@@ -15,7 +15,7 @@ guard.full=lambda *args:None
 
 
 class ProductionImageTests(unittest.TestCase):
-    def setup_owner(self,root):
+    def setup_owner(self,root,retained_labels=None,candidate_labels=None):
         files,candidate=fixture(provenance=True);body=archive(files)
         candidate.update(source='a'*40,manifest='b'*64,schemaDigest='c'*64,archive=hashlib.sha256(body).hexdigest())
         p=root/'images.tar';p.write_bytes(body)
@@ -33,6 +33,7 @@ class ProductionImageTests(unittest.TestCase):
                     'Config':{'Hostname':cid[:12],'Image':cfg['services'][r]['image'],'Env':[k+'='+v for k,v in cfg['services'][r]['environment'].items()],
                               'Labels':{'com.docker.compose.image':cfg['services'][r]['image'],'com.docker.compose.config-hash':'old','com.docker.compose.project.config_files':'OWN_BASE'}},
                     'HostConfig':{'ReadonlyRootfs':True},'NetworkSettings':{'Networks':{}},'Mounts':[]}
+            old[r]['Config']['Labels'].update(retained_labels or {})
         control={'project':'OWN_PROJECT','keep_all_layers_in_order':True,'compose_layers':['OWN_BASE'],'images':{r:old[r]['Image'] for r in owner.ROLES}}
         (root/'active.json').write_bytes(canonical(control));(root/'active.json').chmod(0o600);o.control=control
         events=[];state={'up':False};post={}
@@ -50,7 +51,7 @@ class ProductionImageTests(unittest.TestCase):
                 if image==n['config']:
                     return {'Id':image,'Os':'linux','Architecture':'arm64','RepoDigests':[],
                             'RootFS':{'Type':'layers','Layers':n['rootfs_diff_ids']},
-                            'Config':{'Env':[],'User':'10001:10001','Entrypoint':['authova' if r=='core' else 'authova-console'],'Labels':n['provenance_labels']}}
+                            'Config':{'Env':[],'User':'10001:10001','Entrypoint':['authova' if r=='core' else 'authova-console'],'Labels':dict(n['provenance_labels'],**(candidate_labels or {}))}}
             raise Refused('OWN_NO_ROOT_ID_ADDRESS')
         def command(tag,args,*a,**kw):
             events.append((tag,args))
@@ -62,7 +63,8 @@ class ProductionImageTests(unittest.TestCase):
             events.append((tag,args));self.assertEqual(args[-11:],['up','--detach','--no-deps','--no-build','--pull','never','--wait','--wait-timeout','90','core','console'])
             for i,r in enumerate(owner.ROLES):
                 c=copy.deepcopy(old[r]);c['Id']=str(i+5)*64;c['Image']=o.production_ids(binding)[r+'ID'];c['Config']['Hostname']=c['Id'][:12];c['Config']['Image']=c['Image']
-                c['Config']['Labels'].update(o.production_graph[r]['provenance_labels'])
+                c['Config']['Labels']=dict(image_metadata(c['Image'])['Config']['Labels'])
+                c['Config']['Labels'].update(o.prospective_cfg['services'][r]['labels'])
                 c['Config']['Labels'].update({'com.docker.compose.image':c['Image'],'com.docker.compose.config-hash':o.hashes[r],
                     'com.docker.compose.project.config_files':','.join(binding['current']['layers']+[o.override])})
                 if r=='console':c['Config']['Env']=['AUTHOVA_CONSOLE_ASSETS=/opt/authova-console/web']
@@ -115,6 +117,32 @@ class ProductionImageTests(unittest.TestCase):
                         with self.assertRaisesRegex(Refused,'PRODUCTION_ROOTFS_IDENTITY'):o.production_image(b,'core',guard)
                         o.command=original
             self.assertFalse(any(tag in ('IMAGE_LOAD','PROBE','SELECTIVE_UP') for tag,_ in events))
+
+    def test_retained_private_labels_preserved_exactly_without_public_export(self):
+        for defaults in ({},{'OWN_retained':'candidate_changed'}):
+            with self.subTest(defaults=defaults),tempfile.TemporaryDirectory() as tmp:
+                kept={'OWN_retained':'OWN_PRIVATE_LABEL_CANARY'}
+                o,b,events=self.setup_owner(Path(tmp).resolve(),kept,defaults)
+                with patch('deployment_http.readonly_acceptance',return_value={}):
+                    o.preflight(b,guard)
+                    self.assertEqual(Path(o.override).stat().st_mode&0o777,0o600)
+                    self.assertIn(o.override,o.secret_inputs)
+                    for r in owner.ROLES:self.assertEqual(o.prospective_cfg['services'][r]['labels']['OWN_retained'],kept['OWN_retained'])
+                    self.assertEqual(o.apply(b,guard),'APPLIED');self.assertEqual(o.accept(b,guard),'PASS')
+                self.assertNotIn(b'OWN_PRIVATE_LABEL_CANARY',Path(o.profile['active_control']).read_bytes())
+                self.assertNotIn('OWN_PRIVATE_LABEL_CANARY',repr(events))
+    def test_new_candidate_labels_still_refuse_before_probe_or_up(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            o,b,events=self.setup_owner(Path(tmp).resolve(),{'OWN_retained':'OLD'},{'OWN_new':'NEW'})
+            with patch('deployment_http.readonly_acceptance',return_value={}):o.preflight(b,guard)
+            self.assertEqual(o.apply(b,guard),'PREFLIGHT_REFUSED')
+            self.assertFalse(any(tag in ('PROBE','SELECTIVE_UP') for tag,_ in events))
+    def test_private_override_drift_stops_original_input_guard(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            o,b,events=self.setup_owner(Path(tmp).resolve(),{'OWN_retained':'OWN_PRIVATE_LABEL_CANARY'})
+            with patch('deployment_http.readonly_acceptance',return_value={}):o.preflight(b,guard)
+            Path(o.override).write_bytes(b'{}')
+            with self.assertRaisesRegex(Refused,'PRIVATE_INPUT_CAS'):owner.CoreConsoleOwner.input_guard(o,guard)
 
 
 if __name__=='__main__':unittest.main()
