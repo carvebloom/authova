@@ -227,11 +227,17 @@ def cas(m):
     c=t['clock'];require(type(c) is dict and set(c)=={'I','M','end_I','end_M'} and all(finite(v) for v in c.values()),'TRANSPORT_CLOCK_REQUIRED')
     if not (0<=c['end_I']-c['I']<480 and 0<=c['end_M']-c['M']<480):bad.append('TRANSPORT_CLOCK')
     native=t['native'];require(type(native) is list and len(native)==10,'EXACT10_NATIVE_REQUIRED')
+    previous_wall=c['I'];previous_mono=c['M']
     for ordinal,(name,row) in enumerate(zip(READS,native)):
         require(type(row) is dict and set(row)=={'role','record'} and row['role']==name,'ORDERED_NATIVE_REQUIRED')
         v=row['record'];require(type(v) is dict and set(v)=={'tag','exit_code','known_return','timely','all_selected_IO_closed','started_at','original_monotonic','elapsed_monotonic','whole_seconds','finished_at'},'ORIGINAL_NATIVE_FIELDS_REQUIRED')
         require(all(finite(v[k]) for k in ('started_at','original_monotonic','elapsed_monotonic','whole_seconds','finished_at')),'ORIGINAL_NATIVE_CLOCK_REQUIRED')
         require(v['tag']==name,'ORIGINAL_NATIVE_TAG_REQUIRED')
+        # Actual dispatch is serial. Never sort, clamp or repair observations.
+        # This contract rejects wall regressions as well as monotonic overlap.
+        if v['started_at']<previous_wall:bad.append('NATIVE_WALL_ORDER')
+        if v['original_monotonic']<previous_mono:bad.append('NATIVE_MONOTONIC_ORDER')
+        previous_wall=v['finished_at'];previous_mono=v['original_monotonic']+v['elapsed_monotonic']
         if type(v['exit_code']) is not int or v['exit_code']!=0 or any(v[k] is not True for k in ('known_return','timely','all_selected_IO_closed')):bad.append('NATIVE_NOT_COMPLETE')
         if v['whole_seconds']!=30 or not (c['I']<=v['started_at']<=v['finished_at']<=c['end_I'] and c['M']<=v['original_monotonic']<=v['original_monotonic']+v['elapsed_monotonic']<=c['end_M'] and 0<=v['elapsed_monotonic']<30 and v['finished_at']-v['started_at']<30):bad.append('NATIVE_CLOCK_BOUNDARY')
         remaining_native=(10-ordinal)*30
@@ -250,7 +256,23 @@ def cas(m):
         a,b=m['pre'][r],m['post'][r]
         # Current-current CAS, not a substitution for historical before23.
         if any(a.get(k)!=b.get(k) for k in ('Id','Image','Config','HostConfig','Mounts','NetworkSettings')):bad.append('CURRENT_WHOLE_CAS')
-        if b['State']['Running'] is not True or b['State'].get('Health',{}).get('Status')!='healthy':bad.append('CURRENT_HEALTH')
+        states=[]
+        for container in (a,b):
+            count=container.get('RestartCount');state=container.get('State')
+            require(type(count) is int and count>=0 and type(state) is dict,'CURRENT_LIFECYCLE_FIELDS_REQUIRED')
+            require(all(type(state.get(k)) is str and state[k] for k in ('Status','StartedAt','FinishedAt'))
+                    and type(state.get('Pid')) is int and state['Pid']>0
+                    and type(state.get('ExitCode')) is int and type(state.get('Error')) is str
+                    and all(type(state.get(k)) is bool for k in ('Running','Paused','Restarting','OOMKilled','Dead')),
+                    'CURRENT_LIFECYCLE_FIELDS_REQUIRED')
+            health=state.get('Health')
+            require(type(health) is dict and type(health.get('Status')) is str and type(health.get('FailingStreak')) is int and health['FailingStreak']>=0,'CURRENT_HEALTH_FIELDS_REQUIRED')
+            if state['Status']!='running' or state['Running'] is not True or any(state[k] for k in ('Paused','Restarting','Dead')) or state['ExitCode']!=0 or state['Error']!='' or health['Status']!='healthy':bad.append('CURRENT_HEALTH')
+            # Health probe history is observational/volatile, not process
+            # lifecycle identity. All other State/Health fields stay whole.
+            states.append((count,{k:v for k,v in state.items() if k!='Health'},
+                           {k:v for k,v in health.items() if k!='Log'}))
+        if states[0]!=states[1]:bad.append('CURRENT_LIFECYCLE_CAS')
     return result(bad)
 
 

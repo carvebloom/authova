@@ -24,7 +24,9 @@ def materials():
             'com.docker.compose.config-hash':hashes[r],'com.docker.compose.image':image})
         pre[r]={'Id':cid,'Image':image,'Config':{'Image':image,'Env':['PRIVATE=OWN_PRIVATE_CANARY'],'Labels':current_labels,
                     'Cmd':['all'],'Entrypoint':service['entrypoint'],'User':'10001:10001','WorkingDir':'/own'},
-                'State':{'Running':True,'Health':{'Status':'healthy'}},'HostConfig':{'ReadonlyRootfs':True,'Privileged':False,'CapAdd':None},
+                'RestartCount':0,'State':{'Status':'running','Running':True,'Paused':False,'Restarting':False,'OOMKilled':False,'Dead':False,
+                    'Pid':123,'ExitCode':0,'Error':'','StartedAt':'2026-11-20T00:00:00Z','FinishedAt':'0001-01-01T00:00:00Z',
+                    'Health':{'Status':'healthy','FailingStreak':0,'Log':[]}},'HostConfig':{'ReadonlyRootfs':True,'Privileged':False,'CapAdd':None},
                 'Mounts':[],'NetworkSettings':{'Networks':{}}}
         images[r]=im;compose['services'][r]=service
     native=[]
@@ -113,6 +115,32 @@ class CurrentMaterialTests(unittest.TestCase):
         r=self.evaluate(m);self.assertEqual(r['result'],'CURRENT_INTENT_MISMATCH')
         self.assertIn('MANDATORY_HARDENING',r['components']['HARDENING_RESOURCES']['mismatch'])
         self.assertIn('EXTERNAL_NETWORK_VOLUME_ID_BINDINGS_NOT_RECORDED',r['components']['NETWORK_MOUNTS']['missing_authority'])
+    def test_same_cid_restart_and_lifecycle_changes_cannot_match_current_cas(self):
+        for change in ('StartedAt','FinishedAt','Pid','RestartCount','Restarting','extra-state','missing','bool-count'):
+            m=materials();c=m['post']['core']
+            if change in ('StartedAt','FinishedAt'):c['State'][change]='2026-11-20T01:00:00Z'
+            if change=='Pid':c['State']['Pid']+=1
+            if change=='RestartCount':c['RestartCount']+=1
+            if change=='Restarting':c['State']['Restarting']=True
+            if change=='extra-state':c['State']['NewLifecycleField']='OWN_CHANGED'
+            if change=='missing':del c['State']['StartedAt']
+            if change=='bool-count':c['RestartCount']=False
+            with self.subTest(change=change):self.assertNotEqual(self.evaluate(m)['components']['INPUT_AND_CURRENT_CAS']['result'],'MATCH_CURRENT_INTENT')
+        m=materials();m['post']['core']['State']['Health']['Log']=[{'Output':'OWN_PRIVATE_CANARY'}]
+        self.assertEqual(self.evaluate(m)['components']['INPUT_AND_CURRENT_CAS']['result'],'MATCH_CURRENT_INTENT')
+    def test_original_intervals_reversed_overlapping_and_wall_regression_reject_without_sort(self):
+        for axis in ('both','mono','wall','overlap','equal-boundary'):
+            m=materials();rows=m['transport']['native']
+            if axis in ('both','mono','wall'):
+                for j,row in enumerate(rows):
+                    if axis in ('both','wall'):row['record'].update(started_at=1009-j,finished_at=1009-j+.1)
+                    if axis in ('both','mono'):row['record']['original_monotonic']=509-j
+            if axis=='overlap':rows[1]['record']['original_monotonic']=500.05
+            if axis=='equal-boundary':rows[1]['record'].update(original_monotonic=500.1,started_at=1000.1)
+            snapshot=copy.deepcopy(m);r=self.evaluate(m)['components']['INPUT_AND_CURRENT_CAS']
+            with self.subTest(axis=axis):
+                self.assertEqual(r['result'],'MATCH_CURRENT_INTENT' if axis=='equal-boundary' else 'MISMATCH_CURRENT_INTENT')
+                self.assertEqual(m,snapshot)
     def test_explicit_resource_integers_do_not_authorize_units_or_defaults(self):
         for value in ('256m',None,True,-2):
             m=materials();m['compose']['services']['core']['mem_limit']=value

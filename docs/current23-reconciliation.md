@@ -46,7 +46,13 @@ caller may replace the original inspected objects with normalized projections.
 
 - `pre/post`: RAM Docker inspect objects for the exact two new23 CIDs, not old
   before23. Compare current/current Config, HostConfig, Mounts and NetworkSettings
-  whole, plus IDs/image and running/healthy state.
+  whole, plus IDs/image and lifecycle. RestartCount must be a nonnegative integer;
+  State requires typed Status/Running/Paused/Restarting/OOMKilled/Dead/Pid/ExitCode/
+  Error/StartedAt/FinishedAt and Health.Status/FailingStreak. Both snapshots must
+  be running/healthy, not paused/restarting/dead, with positive PID and no exit
+  error. RestartCount and every State/Health field compare exactly except Health.Log
+  (volatile probe history only). Extra lifecycle fields are not silently ignored;
+  missing required fields yield CURRENT_LIFECYCLE_FIELDS_REQUIRED, not MATCH.
 - `images`: RAM inspect of the two sealed runtime config IDs, never an arbitrary
   image/tag. Identity/provenance/RootFS check uses fixed public source constants.
 - `compose`: full fixed physical Compose rendered JSON (`name/services` required)
@@ -67,6 +73,12 @@ is10 ordered `{role,record}` rows with roles/tags exactly:
 All returns must be known0/timely/IOclosed, whole30, within original480 and work390
 ceilings. Each command start must fit every remaining whole30 plus workFS60.
 There is no clock reset, minclip, retry or observed elapsed replacing whole.
+In original array order, each monotonic start must be >= the previous monotonic
+finish (original_monotonic+elapsed_monotonic). This contract also rejects a wall
+start < the previous wall finish. Equal boundaries pass; clock regressions,
+reversed or overlapping records never get sorted/clamped/repaired. These are
+NATIVE_MONOTONIC_ORDER/NATIVE_WALL_ORDER mismatches, even if every interval alone
+fits its caps. This conservative wall rule does not assume clocks cannot step.
 
 `private_pre/private_post` have exact roles
 `compose-base,password-override,ui-override,release23-override,core-env,console-env,migrator-env`.
