@@ -76,6 +76,9 @@ else:sys.exit(2)
         b={'project':'OWN_PROJECT','current':{'layers':['/OWN/compose.json']}}
         for body in (b'{"name":"OTHER","services":{"core":{},"console":{}}}',
                      b'{"name":"OWN_PROJECT","services":{"core":{"env_file":[]},"console":{}}}',
+                     b'{"name":"OWN_PROJECT","services":{"core":{"label_file":[]},"console":{}}}',
+                     b'{"name":"OWN_PROJECT","services":{"core":{"extends":{}},"console":{}}}',
+                     b'{"name":"OWN_PROJECT","include":[],"services":{"core":{},"console":{}}}',
                      b'{"name":"OWN_PROJECT","name":"OWN_PROJECT","services":{}}'):
             with self.subTest(body=body):
                 o=production.CoreConsoleOwner.__new__(production.CoreConsoleOwner);o.secret_inputs={}
@@ -92,6 +95,26 @@ else:sys.exit(2)
         o.command=lambda *a,**kw:(_ for _ in ()).throw(first)
         with self.assertRaises(Refused) as caught:o.resolved_hashes(b,guard,b'{}','COMPOSE_HASH')
         self.assertIs(caught.exception,first)
+
+    def test_label_file_rejected_before_render_without_native_or_target_read(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp).resolve();layer=root/'compose.json'
+            for value in ('OWN_UNREGISTERED_LABEL_SOURCE',[],None):
+                with self.subTest(value=value):
+                    layer.write_bytes(canonical({'services':{'core':{'label_file':value}}}));layer.chmod(0o600)
+                    o=production.CoreConsoleOwner.__new__(production.CoreConsoleOwner);o.secret_inputs={}
+                    private=o.private_input
+                    def selected(path,g):
+                        self.assertEqual(path,str(layer))
+                        return private(path,g)
+                    o.private_input=selected
+                    b={'project':'OWN_PROJECT','current':{'layers':[str(layer)]}}
+                    with patch.object(o,'command',side_effect=AssertionError('OWN_ZERO_NATIVE')) as command:
+                        with self.assertRaisesRegex(Refused,'COMPOSE_SERVICE_INDIRECTION'):
+                            o.selected_private_inputs(b,guard)
+                            o.render_bytes(b,guard)
+                        command.assert_not_called()
+                    self.assertEqual(set(o.secret_inputs),{str(layer)})
 
     def test_ram_transport_preserves_bytes_and_never_logs_canary(self):
         with tempfile.TemporaryDirectory() as tmp:

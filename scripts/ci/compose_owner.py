@@ -290,8 +290,9 @@ class CoreConsoleOwner:
                     services={r:{'id':containers[r]['Id'],'image':containers[r]['Image']} for r in ROLES})
     def selected_private_inputs(self,binding,guard):
         # Parse only the retained JSON layers and the three explicitly selected
-        # env sources. Reject Compose includes/extends before the CLI can follow
-        # any additional file. Body comparison is RAM-only; never content hash.
+        # env sources. Reject Compose includes/extends/label_file before the CLI
+        # can follow another file (rendering removes label_file after reading it).
+        # Body comparison is RAM-only; never content hash.
         base=Path(binding['current']['layers'][0]).parent
         allowed={str(base/r/'service.env') for r in ('core','console','migrator')}
         for path in binding['current']['layers']:
@@ -299,7 +300,7 @@ class CoreConsoleOwner:
             layer=strict_json(body)
             need(type(layer) is dict and not {'include','extends'}&set(layer),'COMPOSE_FILE_INDIRECTION')
             for role,service in layer.get('services',{}).items():
-                need(type(service) is dict and 'extends' not in service,'COMPOSE_SERVICE_INDIRECTION')
+                need(type(service) is dict and not {'include','extends','label_file'}&set(service),'COMPOSE_SERVICE_INDIRECTION')
                 rows=service.get('env_file',[])
                 if type(rows) is str:rows=[rows]
                 need(type(rows) is list,'ENV_FILE_LIST')
@@ -327,11 +328,13 @@ class CoreConsoleOwner:
         self.input_guard(guard)
         body=self.command('COMPOSE_PRIVATE_CONFIG',self.compose(binding,layers)+['config','--format','json'],guard)
         model=strict_json(body)
-        need(type(model) is dict and model.get('name')==binding['project'] and type(model.get('services')) is dict
+        need(type(model) is dict and not {'include','extends'}&set(model)
+             and model.get('name')==binding['project'] and type(model.get('services')) is dict
              and set(ROLES)<=set(model['services']),'COMPOSE_RESOLVED_MODEL')
         # config --format json resolves env_file and escapes literal dollars.
         # Keep the tool's exact bytes; never dump the parsed model or rewrite $$.
         need(all(type(s) is dict and 'env_file' not in s for s in model['services'].values()),'COMPOSE_UNRESOLVED_ENV_FILE')
+        need(all(not {'include','extends','label_file'}&set(s) for s in model['services'].values()),'COMPOSE_SERVICE_INDIRECTION')
         self.input_guard(guard);return body
     def render(self,binding,guard,layers=None):
         return strict_json(self.render_bytes(binding,guard,layers))

@@ -158,7 +158,7 @@ Old schema is only its known three-layer input; new publications always use the 
 array. Old images/overrides/failure records remain retained.
 
 Private Compose/config/inspect output is bounded RAM only. Before Compose is invoked,
-retained JSON layers reject includes/extends and env-file references outside exactly
+retained JSON layers reject includes/extends/label_file and env-file references outside exactly
 `core/service.env`, `console/service.env`, `migrator/service.env` below the retained
 root. Those bodies/identities are compared in memory before/after operations, never
 hashed/copied/logged. The original environment is compared as a complete map.
@@ -367,7 +367,10 @@ Both forward and rollback hashes consume the exact bounded RAM bytes returned
 by the same pinned Compose `config --format json` invocation. The parsed whole
 model is still compared; it is never serialized back for hashing. In particular,
 literal `$$`, whitespace and key order in the tool output are not rewritten.
-An unresolved `env_file` or wrong project model refuses. Each role is hashed by
+An unresolved `env_file`, include/extends/label_file or wrong project model refuses.
+`label_file` is rejected in the retained layer before the first Compose call:
+Compose can consume and erase that field while rendering, so an output-only
+check cannot establish its source ownership. Each role is hashed by
 that same physical Compose, with only these fixed arguments and stdin bytes:
 
 ```
