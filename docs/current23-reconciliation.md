@@ -23,14 +23,32 @@ they do not establish vendor defaults or authentic runtime observations by thems
 Public missing-authority audit:
 `cicd/evidence/20261120-authova-production23-current-reconciliation-authority-plan.json`
 SHA256 `30132875fb092599b9afc6c1802d0e7e0eb73259996dd00c76e4fdbc6878afaf`.
-The platform confirmed the following are **NOT_RECORDED**:
+That audit originally lacked physical producer provenance. New independent
+read-only evidence now supplies Compose5.1.0 revision
+`85d6770b7fb6e2b38234cc9219f59049e42d6924`, vcs.modified=false,
+compose-go2.10.1, moby-api1.53.0/client0.2.2 and docker-module28.5.2; application
+Engine29.2.1/API1.53/Git6bc6209. Exact public diagnosis SHA256
+`1df81d0e047d4d8cde45702bb926a08c5d35a2483d224dccf2722a43f37467f4`
+at `cicd/evidence/20261120-authova-current23-compose-hash-diagnosis.json` binds
+these observations. It also records both resolved-model hashes matching current
+labels, while direct layer hashes differ. These are new observations, not a
+reconstructed historical before or the recorded exact23 failure field.
 
-- Exact physical Compose5.1.0 SHA817dde… to source commit/patch and compose-go/
-  Engine-SDK dependency lock. A version string is insufficient.
-- Application daemon e5f1dd… Engine version, API and source commit. Client29.2.1
-  and the CI daemon06b356… cannot substitute for them.
-- Independently retained external network/volume identities before23. Current
-  names/IDs from inspection cannot qualify their own historical continuity.
+The following producer branches were checked against that exact public source:
+
+| Component | Concrete source rule / remaining boundary |
+| --- | --- |
+| Hash label | [config.runHash](https://github.com/docker/compose/blob/85d6770b7fb6e2b38234cc9219f59049e42d6924/cmd/compose/config.go) skips env-file resolution; [WithServices](https://github.com/docker/compose/blob/85d6770b7fb6e2b38234cc9219f59049e42d6924/cmd/compose/compose.go) resolves it before up. [prepareLabels](https://github.com/docker/compose/blob/85d6770b7fb6e2b38234cc9219f59049e42d6924/pkg/compose/create.go) hashes that service. The owner now hashes exact rendered bytes via the same CLI/stdin. |
+| Generated labels | prepareLabels also emits container-number and dependency tuples. This is a specific producer rule, not exhaustive expected labels or permission to ignore the Compose prefix; full LABELS coverage remains NOT_ESTABLISHED. |
+| Process/defaults | getCreateConfigs distinguishes nil command/entrypoint from explicit lists. Full image merge, Engine defaults and all Config fields still need a complete materializer; version/source pins alone do not establish them. |
+| Hardening/resources | getCreateConfigs maps read-only/privileged/caps/security/resources. getDeployResources maps CPUs to NanoCPUs and pids to a pointer only when nonzero. These located rules do not implement complete HostConfig/default/units coverage. |
+| Network/mount continuity | Independently retained external network/volume IDs before23 remain NOT_RECORDED. Neither producer provenance nor current observed IDs can establish historical continuity. |
+
+The independent consumer and its pin are unchanged by the forward-owner fix.
+Its four complete components stay NOT_ESTABLISHED until their full source-bound
+mapping and necessary independent identities are implemented/available. Its
+source constants denote missing complete authority, not an invitation to flip a
+declaration to PASS. This documentation is not a new actual transport or admission.
 
 No input field accepts an authority flag, default table, expected projection or
 replacement scope. Missing producer branches are source-fixed NOT_ESTABLISHED;

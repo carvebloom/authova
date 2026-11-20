@@ -158,7 +158,7 @@ Old schema is only its known three-layer input; new publications always use the 
 array. Old images/overrides/failure records remain retained.
 
 Private Compose/config/inspect output is bounded RAM only. Before Compose is invoked,
-retained JSON layers reject includes/extends and env-file references outside exactly
+retained JSON layers reject includes/extends/label_file and env-file references outside exactly
 `core/service.env`, `console/service.env`, `migrator/service.env` below the retained
 root. Those bodies/identities are compared in memory before/after operations, never
 hashed/copied/logged. The original environment is compared as a complete map.
@@ -360,3 +360,47 @@ whole runtime semantics remain unchanged. Env is not adjusted or relaxed.
 This preserves runtime metadata across differing image defaults rather than
 ignoring label differences. The specific origin/keys/values of22's observed
 LABEL_SEMANTICS_CHANGED remain unrecorded; no historical cause is inferred.
+
+### Resolved Compose service hashes
+
+Both forward and rollback hashes consume the exact bounded RAM bytes returned
+by the same pinned Compose `config --format json` invocation. The parsed whole
+model is still compared; it is never serialized back for hashing. In particular,
+literal `$$`, whitespace and key order in the tool output are not rewritten.
+An unresolved `env_file`, include/extends/label_file or wrong project model refuses.
+`label_file` is rejected in the retained layer before the first Compose call:
+Compose can consume and erase that field while rendering, so an output-only
+check cannot establish its source ownership. Each role is hashed by
+that same physical Compose, with only these fixed arguments and stdin bytes:
+
+```
+--project-name <binding.project> --project-directory <first-layer.parent>
+--env-file /dev/null -f - config --hash <core|console>
+```
+
+The producer output/stdin/hash stay private RAM, with original input identity
+and bytes CAS before/after rendering and each hash. No private frame or service
+hash is included in a safe record. Existing Native limits/close/first error and
+numeric-only records apply. This removes direct layer `config --hash` calls;
+it does not remove any field from prospective or post-runtime comparison.
+
+Forward reuses the existing prospective render (no new CLI). Rollback uses all
+original binding layers plus only its old-image override, never the candidate
+override. That new override is also in private input CAS. Its resolved whole
+model must equal the old model with only the two exact old image IDs substituted.
+The extra rollback render costs one native whole30, not a free FS operation.
+Rollback admits its complete native suffix before any read/write/CLI:
+4 current inspect commands120 + base render30 + rollback render30 + two hashes60
++ selective rollback120 + 4 restored inspect commands120 = **480 seconds**,
+plus20 for FS/report. The rollback up itself reserves140 for restored reads/report.
+The original production1800 dual-clock total, command30/body25/close5 and up120
+remain unchanged. The earlier forward up's600 suffix is unchanged; elapsed
+acceptance can still leave insufficient rollback budget, which refuses rather
+than renewing the operation. Neither cold fit nor recovery of23 is established.
+
+The independently recorded producer/actual hash diagnosis is
+`cicd/evidence/20261120-authova-current23-compose-hash-diagnosis.json`, SHA256
+`1df81d0e047d4d8cde45702bb926a08c5d35a2483d224dccf2722a43f37467f4`.
+Its resolved hashes match both current labels; original23's specific failing
+field and historical before remain unrecorded. This source fix never dispatches
+against those current containers or publishes their control.
