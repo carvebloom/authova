@@ -496,3 +496,51 @@ Guard/write/close/late evidence error only appends fixed SEMANTIC_EVIDENCE secon
 Collection is optional and source/intent/nonce bound, regular0600/singlelink,
 <=2048 bytes, sameFD/endpath/strictJSON/close. Bad/missing evidence never authorizes
 replay or changes the original failure. Test27's unrecorded families remain unknown.
+
+### Production implicit singleton naming and current29 boundary
+
+The same pinned [Compose5.1.0 recreate source](https://github.com/docker/compose/blob/v5.1.0/pkg/compose/convergence.go#L589-L610)
+uses service-name + separator + original container-number when container_name is
+empty. Its [canonical name](https://github.com/docker/compose/blob/v5.1.0/pkg/compose/convergence.go#L381-L391)
+also includes the project. Native constructs its environment without inherited
+COMPOSE_COMPATIBILITY and uses no --compatibility. This rule is restricted to
+project authova-local-production-20261114, core/console, exact string number "1",
+and canonical /<project>-<role>-1. It expects replace=<role>-1, never the full
+canonical name, a CID or an arbitrary observed value. Explicit CI naming keeps
+its existing separate rule. No network aliases are normalized.
+
+`production_implicit_replace_value` derives only an expected label value from
+pinned Compose, a resolved model, guarded image metadata and current container
+identity. It does not compare the actual replace value, read any file, establish
+singleton selection, prove whole configuration or authorize anything. A current
+consumer must compare the actual label to that derived value and independently
+bind current singleton, image graph, intent/approval, execution and wholeCAS.
+Unsupported project/name/sequence, configured/image-default replace or missing
+identity returns no authority. All labels and unrelated fields remain strict.
+Forward/rollback `expected_replace_label` requires BOTH real snapshots to satisfy
+this derivation, changed CIDs, matching original label (absent or exact derived
+value), and all original guards. No caller boolean or new profile field is added.
+
+Production29's original before container-number and replace were not retained.
+This code cannot re-run the historical whole comparison, turn that FAIL into PASS,
+or use a new current snapshot as before. Its independently observed current
+implicit label is only one current-vs-approved-intended component. The platform's
+new read-only scope must retain a new intent and its own bounded wall/monotonic
+clock, original return/IO records, fixed current CIDs and pre/post lifecycle/CAS;
+no deployment, rollback, image load, schema helper or control write is part of it.
+
+Current reconciliation authority is the sealed candidate graph and exact approval,
+original29 intent/ordered layers and fixed override, selected private inputs with
+pre/post RAM CAS, same pinned resolved-render/hash mechanism, guarded image defaults,
+and fresh full current pre/post frames. Compare unique-key Env, supported process
+representations, exact generated+declared labels, modeled hardening/resources,
+mounts and network attachments component by component. Any unchanged dependencies
+or external IDs need their independently retained exact baseline, not values
+copied from current as expectations. Complete Engine defaults, unsupported model
+fields and historical external identity lacking authority stay NOT_ESTABLISHED
+with a specific missing component. HTTP PASS and a supported replace label do not
+cover these gaps. The old current23 consumer has fixed historical targets and
+must not be reused as a current29 consumer. Any later current-baseline registration
+is a separate CAS operation and must preserve29 FAIL, stale-control evidence and
+unavailable historical before. This source change neither dispatches that operation
+nor declares its outcome.

@@ -23,11 +23,39 @@ SEMANTIC_FAMILIES=('CONFIG_ENV','CONFIG_PROCESS','CONFIG_LABELS','CONFIG_IMAGE',
 COMPOSE_510_SHA='817dde1748900478a6db1e509c7cf8e8a0957ea6050c5705d60feb147ad0c5a6'
 
 
+def production_implicit_replace_value(container,image,model,compose_sha,role):
+    """Expected current label value, never a historical transition or overall PASS.
+
+    The fixed production singleton uses Compose's implicit role-index rule.
+    Actual replace is deliberately not an input to this derivation. Transport
+    separately proves pinned execution, singleton selection and current wholeCAS.
+    """
+    key='com.docker.compose.replace'
+    try:
+        project='authova-local-production-20261114'
+        if compose_sha!=COMPOSE_510_SHA or role not in ROLES or model['name']!=project:return None
+        service=model['services'][role]
+        if service.get('container_name','')!='':return None
+        for labels in (service.get('labels',{}),image['Config'].get('Labels') or {}):
+            if type(labels) is not dict or key in labels:return None
+        labels=container['Config']['Labels']
+        if not (type(labels) is dict and labels.get('com.docker.compose.project')==project
+                and labels.get('com.docker.compose.service')==role
+                and labels.get('com.docker.compose.container-number')=='1'):return None
+        if not (type(container['Id']) is str and re.fullmatch('[0-9a-f]{64}',container['Id'])
+                and container['Name']=='/'+project+'-'+role+'-1'
+                and type(image['Id']) is str and re.fullmatch('sha256:[0-9a-f]{64}',image['Id'])
+                and image['Os']=='linux' and image['Architecture']=='arm64'
+                and image['Id']==container['Image']==container['Config']['Image']):return None
+        return role+'-1'
+    except (KeyError,TypeError,AttributeError):return None
+
+
 def expected_replace_label(before,after,images,model,producer,role):
-    """Pinned Compose5.1.0 recreate producer, explicit names only; no label pop.
+    """Pinned Compose5.1.0 recreate producer; no label pop or observed-value rule.
 
     Official convergence.go recreateContainer sets ContainerReplaceLabel to
-    service.ContainerName. All authority is retained RAM from guarded calls.
+    service.ContainerName or role-index. Both full before/after inputs are required.
     """
     key='com.docker.compose.replace'
     try:
@@ -35,8 +63,17 @@ def expected_replace_label(before,after,images,model,producer,role):
         old_model=producer['before_model'];old_image=producer['before_images'][role];new_image=images[role]
         a,b=before[role],after[role];old=old_model['services'][role];new=model['services'][role]
         name=new.get('container_name');project=model['name']
-        if not (type(name) is str and re.fullmatch('[A-Za-z0-9][A-Za-z0-9_.-]*',name) and old.get('container_name')==name
-                and old_model['name']==project and a['Name']==b['Name']=='/'+name
+        if name in (None,''):
+            # Unlike current-only derivation, a transition needs BOTH original
+            # sequence labels. Missing historical before never becomes current.
+            name=production_implicit_replace_value(b,new_image,model,producer['compose_sha'],role)
+            if name is None or production_implicit_replace_value(a,old_image,old_model,producer['compose_sha'],role)!=name:return None
+            canonical_name='/'+project+'-'+name
+        else:
+            if old.get('container_name')!=name:return None
+            canonical_name='/'+name if type(name) is str else None
+        if not (type(name) is str and re.fullmatch('[A-Za-z0-9][A-Za-z0-9_.-]*',name)
+                and old_model['name']==project and a['Name']==b['Name']==canonical_name
                 and all(type(c['Id']) is str and re.fullmatch('[0-9a-f]{64}',c['Id']) for c in (a,b))
                 and a['Id']!=b['Id']):return None
         if any(key in (s.get('labels') or {}) for s in (old,new)):return None
