@@ -10,10 +10,10 @@ import secrets
 import time
 import urllib.parse
 
-from compose_owner import CoreConsoleOwner, ROLES, stable
+from compose_owner import CoreConsoleOwner, ROLES, stable, SEMANTIC_FAMILIES
 from host_admission import canonical, strict_json
 from private_native import Native, Unknown
-from release_contract import REQUIRED_CHECKS, need
+from release_contract import REQUIRED_CHECKS, need, Refused
 
 CODE=('release_contract.py','host_admission.py','private_native.py','deployment_http.py','test_http.py','test_proxy.py')
 
@@ -88,11 +88,13 @@ class TestOwner(CoreConsoleOwner):
         self.archive_guard(binding['candidate'],guard)
         self.web_assets=self.compile_assets(binding['candidate'],guard)
         need(binding['candidate']['schemaDigest']==self.ROLLBACK_SCHEMA,'CI_ROLLBACK_SCHEMA')
+        self.rollback_images={}
         for role,image_id in self.ROLLBACK_PAIR.items():
             old=self.image(image_id,guard);labels=old['Config'].get('Labels') or {}
             need(old['Config']['User']=='10001:10001' and all(labels.get(k)==v for k,v in {
                 'org.opencontainers.image.revision':self.ROLLBACK_SOURCE,'io.carvebloom.artifact-manifest':self.ROLLBACK_MANIFEST,
                 'io.carvebloom.schema':self.ROLLBACK_SCHEMA,'io.carvebloom.role':role}.items()),'CI_ROLLBACK_IMAGE')
+            self.rollback_images[role]=old
         for role in self.profile['fixture_images']:self.fixture_image(role,guard)
         for name in [binding['fixture']['network'],binding['fixture']['mysql_volume'],*binding['fixture']['secret_volumes'].values()]:
             kind='network' if name==binding['fixture']['network'] else 'volume'
@@ -226,6 +228,7 @@ class TestOwner(CoreConsoleOwner):
         self.inventory={r:self.role_id(binding,r,guard) for r in binding['fixture']['service_names']}
         self.write('fixture-inventory.json',{'containers':self.inventory,'network':binding['fixture']['network'],'volumes':[binding['fixture']['mysql_volume'],*binding['fixture']['secret_volumes'].values()],'operation':self.nonce})
         self.ci_instances=self.inspect_services(binding,guard)
+        self.ci_images=self.rollback_images
         self.http_actor('rollback-baseline',guard)
         self.candidate_override=self.write('candidate-pair.json',{'services':{r:{'image':binding['candidate'][r+'ID']} for r in ROLES}})
         self.private_input(self.candidate_override,guard)
@@ -261,12 +264,31 @@ class TestOwner(CoreConsoleOwner):
         # the same production comparator, not a special CI relaxation.
         images={r:self.image(pair[r],guard) for r in ROLES}
         from compose_owner import post_semantics
-        post_semantics(current,after,{r+'ID':pair[r] for r in ROLES},images,layers,hashes,model)
+        try:
+            post_semantics(current,after,{r+'ID':pair[r] for r in ROLES},images,layers,hashes,model,
+                           {'compose_sha':self.profile['compose']['sha256'],'before_model':before,'before_images':self.ci_images})
+        except Refused as first:
+            self.semantic_failure_evidence(first,tag,guard)
+            raise
         need(all(after[r]['Image']==pair[r] and after[r]['State']['Running'] is True
              and after[r]['State'].get('Health',{}).get('Status')=='healthy' for r in ROLES),'CI_SWITCH_HEALTH')
-        self.ci_layers=layers;self.ci_pair=dict(pair);self.ci_instances=after
+        self.ci_layers=layers;self.ci_pair=dict(pair);self.ci_instances=after;self.ci_images=images
         for r in ROLES:self.inventory[r]=after[r]['Id']
         self.write(tag.lower()+'-inventory.json',{'containers':self.inventory,'operation':self.nonce})
+
+    def semantic_failure_evidence(self,first,tag,guard):
+        # Optional observation only, never another decision or fallback frame.
+        # Evidence write/close/late errors cannot replace the original first.
+        if first.args!=('RUNTIME_SEMANTIC_DELTA',):return
+        try:
+            family=getattr(first,'semantic_family',None);role=getattr(first,'semantic_role',None)
+            if family not in SEMANTIC_FAMILIES or role not in ROLES or tag not in ('CI_FIRST_PROMOTION','CI_KNOWN_ROLLBACK','CI_REPROMOTION'):return
+            guard()
+            self.write('runtime-semantic-failure.json',{'schema':'authova-runtime-semantic-failure/v1',
+                       'operation':tag,'role':role,'family':family})
+            guard()
+        except BaseException:
+            first.close_secondary=getattr(first,'close_secondary',())+('SEMANTIC_EVIDENCE',)
 
     def rollback_gate(self,binding,guard):
         # 2*(4inspect+2render+2hash+up120+4inspect+2image)=1080

@@ -467,3 +467,32 @@ volume declarations, both runtime attachment sets and exact source:target:ro or
 strict typed volume encodings. Unsupported flags, NoCopy differences, arbitrary
 binds, source/RO changes or missing model authority refuse; other Config/HostConfig
 fields are still compared in full. No old snapshot is reconstructed.
+
+### Pinned recreate label and optional failure family
+
+For physical Compose5.1.0 SHA817dde1748900478a6db1e509c7cf8e8a0957ea6050c5705d60feb147ad0c5a6,
+[upstream recreateContainer](https://github.com/docker/compose/blob/v5.1.0/pkg/compose/convergence.go#L598-L610)
+sets `com.docker.compose.replace` to explicit `service.ContainerName`, then renames
+the new container to its canonical name. The comparator derives only this exact
+expected value when both resolved models retain the same explicit container_name,
+both canonical actual Names/project/service agree, guarded old/new image IDs and
+Config.Image agree, top-level CIDs changed, and neither configured label map nor
+either image default declares this key. The prior runtime value must be absent or
+that same name. All authority is retained RAM from existing guarded reads; no extra
+queries, caller bool or profile field. Missing authority leaves the whole compare
+strict. Wrong values, oldCID values and all unrelated labels still refuse. No
+temporary network-alias normalization is added. The same rule covers known
+rollback/re-promotion without reconstructing the lost test27 before-state.
+
+The complete `need(new==expected,'RUNTIME_SEMANTIC_DELTA')` remains the refusal gate.
+On refusal only, the same first exception is annotated with fixed role and first
+differing family. CI may EXCL-write optional `runtime-semantic-failure.json` under
+the original nonce operation root: exact4 fields `{schema,operation,role,family}`,
+schema `authova-runtime-semantic-failure/v1`, operation CI_FIRST_PROMOTION,
+CI_KNOWN_ROLLBACK or CI_REPROMOTION, role core/console, and one of13 literals in
+`SEMANTIC_FAMILIES`. No differing keys, values, counts, hashes or free exception
+strings/types leave RAM. Outer6 and the primary object/args remain unchanged.
+Guard/write/close/late evidence error only appends fixed SEMANTIC_EVIDENCE secondary.
+Collection is optional and source/intent/nonce bound, regular0600/singlelink,
+<=2048 bytes, sameFD/endpath/strictJSON/close. Bad/missing evidence never authorizes
+replay or changes the original failure. Test27's unrecorded families remain unknown.
