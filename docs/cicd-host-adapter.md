@@ -73,16 +73,16 @@ Fixed safe outputs under state root:
 - `<nonce>.result.json`: finite safe owner result;
 - `<nonce>.native.json`: original CLI exit/known wait/original clocks/selected IO
   closure and first-current tool metadata; no argv/stdout/stderr/private hashes;
-- `<nonce>.test-receipt.json`: only after all nine actual test gates pass.
+- `<nonce>.test-receipt.json`: only after all ten actual test gates pass.
 
-Nine safe check records are `<state>/test/<scope>/<check-id>.json`.
+Ten safe check records are `<state>/test/<scope>/<check-id>.json`.
 Read only these fixed outputs. Do not follow their artifact/control descriptors or
 publish private request/context/Compose files. All-OS descendants remain UNKNOWN.
 
 ## Installed profile
 
-`authova-installed-host-profile/v1` exact fifteen keys:
-`schema,role,state_root,ledger_root,docker,compose,docker_host,docker_config,daemon_id,active_control,archive,fixture_images,core_origin,console_origin,ca_pem`.
+`authova-installed-host-profile/v2` exact sixteen keys:
+`schema,role,state_root,ledger_root,docker,compose,docker_host,docker_config,daemon_id,active_control,archive,fixture_images,core_origin,console_origin,ca_pem,compile_manifest`.
 
 Each tool is exact `{path,identity,sha256}`. Identity is the ordered nine-field tuple
 `dev,ino,mode,nlink,uid,gid,size,mtime_ns,ctime_ns`; null explicitly selects one new
@@ -184,7 +184,7 @@ Known failed switching may rollback only with exact fresh poststate/config CAS,
 old immutable images and all original layers. Unknown state/IO/close stops, no blind
 rollback or replay. Code rollback never restores data or passwords.
 
-## Fresh CI test and nine required checks
+## Fresh CI test and ten required checks
 
 Owner derives project `authova-ci-test-<source12>-<build_pipeline>`, scope nonce32,
 and `authova-ci-test-binding/v2`. Exactly core/console/mysql/valkey/proxy, a fresh
@@ -231,7 +231,11 @@ The trusted owner source fixes exactly these IDs (never candidate/job-selected):
 8. `operator-password-and-session-revocation`: only a new CI admin target; reject
    admin resetting owner/wrong actor password/stale revoked proof, change password,
    revoke both target sessions, keep owner session/role/status and original MFA.
-9. `owned-test-io-and-session-closure`: actual owned session logout/401 and exact known
+9. `same-storage-rollback-and-repromotion`: fixed schema-compatible old pair sampled
+   before first promotion, then API writes on the candidate and old pair survive
+   rollback and re-promotion on the same guarded volumes; candidate MIME/SHA and
+   missing404 reverified.
+10. `owned-test-io-and-session-closure`: actual owned session logout/401 and exact known
    fixture CID/nonforce stop/rm/volume/network removal. Not global OS absence.
 
 A pass destroys the ephemeral test fixture; same immutable images/archive remain
@@ -244,7 +248,7 @@ actual combined3GiB fit remains a required qualification.
 
 Full receipt exact nine fields:
 `schema,candidate,result,project,scope,checks,check_evidence,started_at,finished_at`.
-Schema `authova-test-deployment/v1`, result PASS. `checks` has exactly nine IDs above,
+Schema `authova-test-deployment/v1`, result PASS. `checks` has exactly ten IDs above,
 each string PASS. Each evidence object has exactly
 `result,exit_code,known_return,timely,started_at,finished_at,evidence_sha256`:
 actual CLI sequences/HTTP actor zero returns, known/timely/selected IO closure,
@@ -404,3 +408,62 @@ The independently recorded producer/actual hash diagnosis is
 Its resolved hashes match both current labels; original23's specific failing
 field and historical before remain unrecorded. This source fix never dispatches
 against those current containers or publishes their control.
+
+## Static assets and fresh rollback baseline (2026-11-22)
+
+The v2 profile adds exactly `compile_manifest={path,identity}`. The trusted host
+materializes the original authenticated bundle `manifest.json` as0600 under0700;
+its ordered nine-field identity is mandatory (no null/boolean identity values).
+The owner bounded sameFD read is at most1MiB, with original metadata/endpath/close
+checks. Its complete bytes SHA must equal the unchanged signed eight-field
+candidate's `manifest`; source/main/schemaDigest/Linuxarm64/configuration=false
+must agree. No caller PASS or separately supplied asset map establishes authority.
+`files` rows are exactly `{path,bytes,sha256}`; bundle paths use `web/`, not
+`console/web/`. Public web paths are closed to index.html/favicon.svg/notices and
+flat canonical assets JS/CSS. Unsupported output fails, never silently skips.
+
+Both real acceptance consumers verify HTML and every selected web file's MIME,
+bytes length and SHA. The HTML's canonical same-origin JS/CSS must belong to that
+manifest. They also issue one deterministic absent asset request and require404;
+HTML200 on an asset is a failure. TLS/CA/SNI/no redirects, framing, body limits,
+first failure/close and original clocks remain unchanged. These extra reads use
+the existing work cap; no per-job or admission deadline is extended.
+
+Production preflight must not compare the currently deployed old assets against
+the new manifest. It checks current MIME/status and retains only current selected
+index/entry bytes fingerprints in operation RAM. Known rollback uses the exact
+old images and all original layers, and checks those newly sampled before-bytes;
+it does not require the new negative behavior from an old image. This is limited
+rollback equality to the fresh before-state, not recovered historical qualification.
+The rollback full-suffix reservation is now480 native +180 HTTP +20 FS/report,
+still inside the original1800s production operation. Missing baseline or unknown
+state stops; no automatic data restoration or fixture/production user mutation.
+
+Historical production23 RUNTIME_SEMANTIC_DELTA, Console recovery failure and the
+unavailable historical before-snapshot remain unchanged. New promotion takes a
+fresh full before-state and uses strict semantic comparison, including unordered
+Env with duplicate-key refusal. Neither the later current-baseline recording nor
+healthy HTTP upgrades the old operation or the four missing-authority categories.
+The new CI test must witness owned writes across known rollback/re-promotion and
+validate the same immutable Core/Console pair. Its actual result is separate from
+source/OWN controls; production remains subject to exact candidate human review.
+
+The tenth gate is mandatory for new receipts. Top-level receipt9/payload12/ledger9
+fields remain unchanged, with ten fixed check IDs. Four new closed HTTP stages
+(rollback-baseline/rollback-write/rollback-read-write/repromotion-read) bring the
+stage tuple to13; the original13 checkpoints and failure frame shape are retained.
+Its original3600s test ceiling is unchanged. A switch reserves540 native +20 FS
+with600 suffix; the new gate reserves1800 work (1080 native switch,540 HTTP,180 FS)
+plus600 known cleanup. This supersedes the initial900 proposal after exact command
+accounting. Any insufficient budget stops before the next mutation; cold fit is
+not established by source controls. The old fixed pair is schema3448275/sourceac1a,
+only for the new CI project; no production identity/data is reused. Two fresh App
+API witnesses remain private and must be read unchanged on both image pairs.
+
+Forward and rollback semantic checks permit Cmd null versus [] only with identical
+nonempty Entrypoint, no arguments and a compatible intended command. HostConfig
+Binds/Mounts equivalence requires the complete resolved model's exact RO named
+volume declarations, both runtime attachment sets and exact source:target:ro or
+strict typed volume encodings. Unsupported flags, NoCopy differences, arbitrary
+binds, source/RO changes or missing model authority refuse; other Config/HostConfig
+fields are still compared in full. No old snapshot is reconstructed.

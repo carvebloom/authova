@@ -10,6 +10,7 @@ REQUIRED_CHECKS=(
  'management-password-mfa-logout',
  'ordinary-app-oidc-pkce-lifecycle',
  'operator-password-and-session-revocation',
+ 'same-storage-rollback-and-repromotion',
  'owned-test-io-and-session-closure',
 )
 class Refused(Exception):pass

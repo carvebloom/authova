@@ -17,7 +17,7 @@ SOURCES=('host_runner.py','host_adapter.py','host_admission.py','release_contrac
          'private_native.py','compose_owner.py','deployment_http.py','test_owner.py',
          'test_materials.py','test_proxy.py','test_http.py')
 PROFILE_KEYS={'schema','role','state_root','ledger_root','docker','compose','docker_host','docker_config','daemon_id',
-              'active_control','archive','fixture_images','core_origin','console_origin','ca_pem'}
+              'active_control','archive','fixture_images','core_origin','console_origin','ca_pem','compile_manifest'}
 BASE=Path('/Users/chenhuanxiang/Workbench/authova/.local-test/authova-cicd-host01')
 CI_DOCKER='unix:///Users/chenhuanxiang/Workbench/cicd/.local/colima/lab-ci/docker.sock'
 FIXTURE_IMAGES={
@@ -122,7 +122,7 @@ def main():
         key=a.read_private(root,'key',os.getuid(),limit=4096)
         receipt=None
         envelope=h.strict_json(a.read_private(root,args.admission,os.getuid()))
-    need(type(profile) is dict and set(profile)==PROFILE_KEYS and profile['schema']=='authova-installed-host-profile/v1','HOST_PROFILE')
+    need(type(profile) is dict and set(profile)==PROFILE_KEYS and profile['schema']=='authova-installed-host-profile/v2','HOST_PROFILE')
     nonce=args.admission[:-15]
     need(envelope['payload']['nonce']==nonce,'ADMISSION_FILENAME_BINDING')
     action='test' if profile['role']=='ci-test' else 'production'
@@ -206,7 +206,7 @@ if __name__=='__main__':
                 phase=getattr(ACTIVE_OWNER,'phase','BOOTSTRAP')
                 if phase not in ('BOOTSTRAP','CURRENT','PREFLIGHT','APPLY','ACCEPT','ROLLBACK','PUBLISH','CLEANUP'):phase='BOOTSTRAP'
                 gate=getattr(ACTIVE_OWNER,'gate',None)
-                if gate not in ('artifact-identity','fresh-fixture-schema-and-privileges','runtime-configuration-and-hardening','normal-tls-health-and-static-assets','guest-and-authorization-boundaries','management-password-mfa-logout','ordinary-app-oidc-pkce-lifecycle','operator-password-and-session-revocation','owned-test-io-and-session-closure'):gate=None
+                if gate not in ('artifact-identity','fresh-fixture-schema-and-privileges','runtime-configuration-and-hardening','normal-tls-health-and-static-assets','guest-and-authorization-boundaries','management-password-mfa-logout','ordinary-app-oidc-pkce-lifecycle','operator-password-and-session-revocation','same-storage-rollback-and-repromotion','owned-test-io-and-session-closure'):gate=None
                 report({'schema':'authova-owner-execution-failure/v1','result':'UNKNOWN_OR_REFUSED','code':code,'checkpoint':phase,'gate':gate,'replay':False})
             except BaseException:pass
         raise SystemExit(2) from None

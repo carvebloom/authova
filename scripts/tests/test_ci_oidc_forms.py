@@ -100,7 +100,7 @@ def setup_actor():
     c={'schema':'authova-ci-http-private/v1','project':'authova-ci-test-'+'a'*12+'-12','scope':'1'*32,'source':'a'*40,
        'core':CORE,'console':'https://host.docker.internal:43102','ca_pem':'OWN_CA',
        'recipient':'ci-'+'1'*32+'@example.invalid','control':'OWN_CONTROL',
-       'bootstrap':{'Email':'owner-'+'1'*32+'@example.invalid'},'state':{'owner-token':'OWN_OWNER'}}
+       'bootstrap':{'Email':'owner-'+'1'*32+'@example.invalid'},'state':{'owner-token':'OWN_OWNER'},'web_assets':{'/index.html':{'bytes':0,'sha256':'0'*64}}}
     with patch.object(actor,'context',return_value=None):obj=actor.Acceptance(c)
     return obj
 

@@ -66,7 +66,51 @@ def compare_config(old,new,candidate):
     need(new==expected,'COMPOSE_SEMANTIC_DELTA')
 
 
-def post_semantics(before,after,candidate,images,layers,hashes):
+def equivalent_representations(old,new,model,role):
+    """Only source-justified empty argv and declared named-volume encodings."""
+    a,b=old['config'],new['config']
+    if a.get('Cmd')!=b.get('Cmd'):
+        need(model is not None and model['services'][role].get('command') in (None,[])
+             and type(a.get('Entrypoint')) is list and bool(a['Entrypoint'])
+             and all(type(v) is str and v for v in a['Entrypoint']) and a['Entrypoint']==b.get('Entrypoint')
+             and a.get('Cmd') in (None,[]) and b.get('Cmd') in (None,[]),'PROCESS_REPRESENTATION_UNSUPPORTED')
+        a['Cmd']=b['Cmd']=None
+    if any(old['host'].get(k)!=new['host'].get(k) for k in ('Binds','Mounts')):
+        need(model is not None,'MOUNT_REPRESENTATION_AUTHORITY_REQUIRED')
+        declared=[];nocopy={}
+        for row in model['services'][role].get('volumes',[]):
+            need(type(row) is dict and row.get('type')=='volume' and row.get('read_only') is True
+                 and set(row)<= {'type','source','target','read_only','volume'}
+                 and type(row.get('volume',{})) is dict and set(row.get('volume',{}))<= {'nocopy'},'MOUNT_DECLARATION_UNSUPPORTED')
+            name=model.get('volumes',{}).get(row['source'],{}).get('name')
+            need(type(name) is str and re.fullmatch('[A-Za-z0-9][A-Za-z0-9_.-]*',name)
+                 and type(row['target']) is str and row['target'].startswith('/') and ':' not in row['target']
+                 and type(row.get('volume',{}).get('nocopy',False)) is bool,'MOUNT_DECLARATION_UNSUPPORTED')
+            declared.append((name,row['target']));nocopy[(name,row['target'])]=row.get('volume',{}).get('nocopy',False)
+        need(bool(declared) and len(declared)==len(set(declared)),'MOUNT_DECLARATION_UNSUPPORTED')
+        binds=sorted(n+':'+t+':ro' for n,t in declared)
+        for value in (old,new):
+            actual=value['mounts'];host=value['host']
+            need(all(m['Type']=='volume' and m['RW'] is False for m in actual)
+                 and sorted((m['Name'],m['Destination']) for m in actual)==sorted(declared),'MOUNT_ATTACHMENT_DELTA')
+            if host.get('Binds'):
+                need(type(host['Binds']) is list and sorted(host['Binds'])==binds and not host.get('Mounts')
+                     and not any(nocopy.values()),'MOUNT_REPRESENTATION_UNSUPPORTED')
+            else:
+                rows=host.get('Mounts');need(type(rows) is list and len(rows)==len(declared),'MOUNT_REPRESENTATION_UNSUPPORTED')
+                seen=[]
+                for m in rows:
+                    need(type(m) is dict and set(m)<= {'Type','Source','Target','ReadOnly','Consistency','VolumeOptions'}
+                         and m.get('Type')=='volume' and m.get('ReadOnly') is True and m.get('Consistency','')==''
+                         and type(m.get('VolumeOptions',{})) is dict and set(m.get('VolumeOptions',{}))<= {'NoCopy'},'MOUNT_REPRESENTATION_UNSUPPORTED')
+                    key=(m.get('Source'),m.get('Target'));seen.append(key)
+                    need(key in nocopy and type(m.get('VolumeOptions',{}).get('NoCopy',False)) is bool
+                         and m.get('VolumeOptions',{}).get('NoCopy',False)==nocopy[key],'MOUNT_REPRESENTATION_UNSUPPORTED')
+                need(sorted(seen)==sorted(declared),'MOUNT_REPRESENTATION_UNSUPPORTED')
+            host['Binds']=binds;host['Mounts']=None
+
+
+def post_semantics(before,after,candidate,images,layers,hashes,model=None):
     for role in ROLES:
         old,new=stable(before[role]),stable(after[role])
         expected=copy.deepcopy(old)
@@ -83,6 +127,7 @@ def post_semantics(before,after,candidate,images,layers,hashes):
         c['Labels']['com.docker.compose.config-hash']=hashes[role]
         c['Labels']['com.docker.compose.image']=candidate[role+'ID']
         c['Labels']['com.docker.compose.project.config_files']=','.join(layers)
+        equivalent_representations(expected,new,model,role)
         need(new==expected,'RUNTIME_SEMANTIC_DELTA')
         # Only a Docker-assigned CID hostname may change implicitly.
         need(before[role]['Config']['Hostname'] in (before[role]['Id'][:12],before[role]['Id'])
@@ -227,6 +272,22 @@ class CoreConsoleOwner:
         self.original=None;self.control=None;self.post=None;self.images={};self.up_started=False
         self.cfg=None;self.override=None;self.hashes={};self.old_images={};self.secret_inputs={}
         self.production_graph=None;self.graph_candidate=None
+        self.web_assets=None;self.old_web_assets={}
+
+    def compile_assets(self,candidate,guard):
+        from host_adapter import read_private
+        from deployment_http import manifest_assets
+        selected=self.profile['compile_manifest']
+        need(type(selected) is dict and set(selected)=={'path','identity'} and type(selected['path']) is str
+             and Path(selected['path']).is_absolute() and type(selected['identity']) is list
+             and len(selected['identity'])==9 and all(type(v) is int for v in selected['identity']),'WEB_MANIFEST_INPUT')
+        p=Path(selected['path']);guard()
+        with directory(str(p.parent),os.getuid()) as root:
+            before=_token(os.stat(p.name,dir_fd=root,follow_symlinks=False))
+            need(list(before)==selected['identity'],'WEB_MANIFEST_IDENTITY')
+            raw=read_private(root,p.name,os.getuid(),limit=1024*1024)
+            need(before==_token(os.stat(p.name,dir_fd=root,follow_symlinks=False)),'WEB_MANIFEST_DRIFT')
+        result=manifest_assets(raw,candidate);guard();return result
 
     def command(self,tag,args,guard,**kw):
         if not self.daemon_checked:
@@ -407,9 +468,10 @@ class CoreConsoleOwner:
     def preflight(self,binding,guard):
         self.phase='PREFLIGHT'
         self.setup_directory();self.production_graph=self.archive_guard(binding['candidate'],guard);self.graph_candidate=copy.deepcopy(binding['candidate'])
+        self.web_assets=self.compile_assets(binding['candidate'],guard)
         selected_ids=self.production_ids(binding);self.selected_private_inputs(binding,guard)
         from deployment_http import readonly_acceptance
-        readonly_acceptance(self.profile,guard)  # qualify existing normal CA/route before any service change
+        readonly_acceptance(self.profile,guard,capture=self.old_web_assets)  # current before-bytes only; not new candidate qualification
         self.original=self.inspect_services(binding,guard)
         self.cfg=self.render(binding,guard)
         need(set(ROLES)<=set(self.cfg['services']),'COMPOSE_SERVICES')
@@ -527,9 +589,10 @@ class CoreConsoleOwner:
         need(all(observed[r]['Id']==self.post[r]['Id'] and stable(observed[r])==stable(self.post[r]) for r in ROLES),'ACCEPTANCE_CURRENT_CAS_UNKNOWN')
         self.post=observed
         try:
-            post_semantics(self.original,self.post,self.production_ids(binding),self.images,binding['current']['layers']+[self.override],self.hashes)
+            post_semantics(self.original,self.post,self.production_ids(binding),self.images,binding['current']['layers']+[self.override],self.hashes,self.prospective_cfg)
             if not all(self.post[r]['State']['Running'] is True and self.post[r]['State'].get('Health',{}).get('Status')=='healthy' for r in ROLES):return 'FAIL_KNOWN'
-            readonly_acceptance(self.profile,guard)
+            need(self.compile_assets(binding['candidate'],guard)==self.web_assets,'WEB_MANIFEST_CAS')
+            readonly_acceptance(self.profile,guard,expected_assets=self.web_assets)
         except __import__('deployment_http').KnownUnhealthy:
             return 'FAIL_KNOWN'
         self.publish_control(binding,guard)
@@ -537,9 +600,9 @@ class CoreConsoleOwner:
     def rollback(self,binding,guard):
         self.phase='ROLLBACK'
         # 4 current inspect + 2 renders + 2 hashes + up120 + 4 restored
-        # inspect = 480 native whole seconds, plus20 for FS/report. Original
+        # inspect = 480 native whole seconds, plus180 HTTP +20 FS/report. Original
         # dual-clock1800 ceiling remains authoritative; never borrow/renew.
-        guard.full(480,20)
+        guard.full(480,200)
         need(self.post is not None,'ROLLBACK_STATE_UNKNOWN')
         need(self.control_value()==self.control,'ROLLBACK_CONTROL_CAS')
         current=self.inspect_services(binding,guard)
@@ -566,7 +629,11 @@ class CoreConsoleOwner:
             old['config']['Labels']['com.docker.compose.config-hash']=rollback_hashes[role]
             old['config']['Labels']['com.docker.compose.image']=self.original[role]['Image']
             old['config']['Labels']['com.docker.compose.project.config_files']=','.join(rollback_layers)
+            equivalent_representations(old,new,self.cfg,role)
             need(old==new,'ROLLBACK_SEMANTICS_UNKNOWN')
+        from deployment_http import readonly_acceptance
+        need(bool(self.old_web_assets),'ROLLBACK_ASSET_BASELINE_REQUIRED')
+        readonly_acceptance(self.profile,guard,expected_assets=self.old_web_assets,negative=False)
         self.publish_control(binding,guard,outcome='ROLLED_BACK',layers=rollback_layers,images={r:self.original[r]['Image'] for r in ROLES})
         return 'ROLLED_BACK'
     def publish_control(self,binding,guard,*,outcome='PASS_PRODUCTION',layers=None,images=None):

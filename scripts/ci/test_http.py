@@ -18,7 +18,7 @@ import time
 import urllib.parse
 
 sys.path.insert(0,str(Path(__file__).parent))
-from deployment_http import Browser, KnownUnhealthy, context, static_assets, HTTP_CHECKPOINTS, HTTP_STAGES, valid_failure_frame
+from deployment_http import Browser, KnownUnhealthy, context, static_assets, verify_static, HTTP_CHECKPOINTS, HTTP_STAGES, valid_failure_frame
 from host_admission import canonical, strict_json
 from private_native import Unknown
 from release_contract import need
@@ -52,9 +52,10 @@ class Fields(HTMLParser):
 
 class Acceptance:
     def __init__(self,c):
-        need(type(c) is dict and set(c)=={'schema','project','scope','source','core','console','ca_pem','recipient','control','bootstrap','state'},'CI_HTTP_KEYS')
+        need(type(c) is dict and set(c)=={'schema','project','scope','source','core','console','ca_pem','recipient','control','bootstrap','state','web_assets'},'CI_HTTP_KEYS')
         need(c['schema']=='authova-ci-http-private/v1' and re.fullmatch('[0-9a-f]{32}',c['scope']) and re.fullmatch('[0-9a-f]{40}',c['source'])
              and re.fullmatch('authova-ci-test-'+c['source'][:12]+'-[1-9][0-9]*',c['project']),'CI_HTTP_SCOPE')
+        need(type(c['web_assets']) is dict and '/index.html' in c['web_assets'],'CI_WEB_ASSETS')
         need(c['recipient']=='ci-'+c['scope']+'@example.invalid' and c['bootstrap']['Email']=='owner-'+c['scope']+'@example.invalid','CI_HTTP_IDENTITY_SCOPE')
         ports={}
         for key,internal in (('core',8443),('console',8444)):
@@ -186,10 +187,30 @@ class Acceptance:
     def run(self,stage):
         if stage=='normal-tls-health-and-static-assets':
             b=self.browser();b.request(self.c['core']+'/readyz');b.request(self.c['console']+'/healthz')
-            page,_,_=b.request(self.c['console']+'/')
-            assets=static_assets(page)
-            need(assets,'CI_STATIC_ENTRY')
-            for path in assets:b.request(self.c['console']+path)
+            verify_static(b,self.c['console'],self.c['web_assets'])
+        elif stage=='rollback-baseline':
+            b=self.browser();b.request(self.c['core']+'/readyz');b.request(self.c['console']+'/healthz')
+            self.state['rollback-web-before']={}
+            verify_static(b,self.c['console'],capture=self.state['rollback-web-before'])
+        elif stage in ('rollback-write','rollback-read-write','repromotion-read'):
+            # Ordinary product API on this fixture only; no SQL, value logs or
+            # production identity. Both writes must survive the two image changes.
+            rows=self.state.setdefault('rollback-witnesses',[])
+            need(len(rows)=={'rollback-write':0,'rollback-read-write':1,'repromotion-read':2}[stage],'CI_WITNESS_ORDER')
+            for row in rows:
+                actual=self.api('/apps/'+row['id'])
+                need(all(actual.get(k)==row[k] for k in ('id','name','slug','app_key','issuer')),'CI_WITNESS_LOST')
+            if stage!='repromotion-read':
+                slug='ci-witness-'+self.c['scope'][:16]+'-'+str(len(rows))
+                created=self.api('/apps',method='POST',body={'name':'CI rollback witness '+str(len(rows)),'slug':slug},expected=(201,))
+                need(created.get('slug')==slug and created.get('issuer')==self.c['core']+'/a/'+created['app_key'],'CI_WITNESS_ACK')
+                rows.append({k:created[k] for k in ('id','name','slug','app_key','issuer')})
+                actual=self.api('/apps/'+created['id']);need(all(actual.get(k)==rows[-1][k] for k in rows[-1]),'CI_WITNESS_READBACK')
+            else:
+                verify_static(self.browser(),self.c['console'],self.c['web_assets'])
+            if stage=='rollback-read-write':
+                need(bool(self.state.get('rollback-web-before')),'CI_ROLLBACK_BASELINE')
+                verify_static(self.browser(),self.c['console'],self.state['rollback-web-before'],negative=False)
         elif stage=='guest-and-authorization-boundaries':
             b=self.browser();b.request(self.c['core']+'/api/v1/apps',expected=(401,))
             b.request(self.c['console']+'/bff/me',expected=(401,))
