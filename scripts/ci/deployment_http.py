@@ -51,8 +51,10 @@ def manifest_assets(raw, candidate):
         path=row['path']
         need(type(path) is str and path not in seen and type(row['bytes']) is int and row['bytes']>=0
              and type(row['sha256']) is str and re.fullmatch('[0-9a-f]{64}',row['sha256']),'WEB_MANIFEST_ROW')
-        need(path in ('core','console') or (path.startswith(('web/','legal/'))
-             and all(re.fullmatch('[A-Za-z0-9_.-]+',p) and p not in ('.','..') for p in path.split('/'))),'WEB_MANIFEST_PATH')
+        need(path in ('core','console') or (path.startswith('web/')
+             and all(re.fullmatch('[A-Za-z0-9_.-]+',p) and p not in ('.','..') for p in path.split('/')))
+             or (path.startswith('legal/') and all(re.fullmatch('[A-Za-z0-9_@.+-]+',p)
+                 and p not in ('.','..') for p in path.split('/'))),'WEB_MANIFEST_PATH')
         seen.add(path)
         if path.startswith('web/'):
             path='/'+path[4:]

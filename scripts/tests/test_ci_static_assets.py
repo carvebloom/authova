@@ -113,6 +113,26 @@ class StaticAssetsTests(unittest.TestCase):
             with self.subTest(poison=poison),self.assertRaises(Refused):consume(v)
         with self.assertRaisesRegex(Refused,'WEB_MANIFEST_SHA'):http.manifest_assets(b'{}',{'manifest':'0'*64})
 
+    def test_legal_npm_names_match_receiver_without_expanding_web_or_path_scope(self):
+        # Same seven public npm license names as the signed pipeline25 manifest.
+        licenses=('cookie@1.1.1/LICENSE','react-dom@19.3.0/LICENSE','react-router-dom@7.18.4/LICENSE.md',
+                  'react-router@7.18.4/LICENSE.md','react@19.3.0/LICENSE','scheduler@0.28.0/LICENSE',
+                  'set-cookie-parser@2.7.2/LICENSE')
+        def consume(paths):
+            value={'schema':'authova-compile-bundle/v1','repo':'carvebloom/authova','source':'a'*40,'main':'a'*40,
+                   'schemaDigest':'b'*64,'platform':'linux/arm64','configuration_included':False,
+                   'files':[dict(path='web'+p,**v) for p,v in EXPECTED.items()]+
+                           [dict(path=p,bytes=1,sha256='c'*64) for p in paths]}
+            raw=json.dumps(value).encode()
+            return http.manifest_assets(raw,{'manifest':hashlib.sha256(raw).hexdigest(),'source':'a'*40,'schemaDigest':'b'*64})
+        self.assertEqual(consume(['legal/notices/web/'+p for p in licenses]),EXPECTED)
+        self.assertEqual(consume(['legal/notices/web/@own/package+build.1/LICENSE']),EXPECTED)
+        for bad in ('legal/../private','legal/./LICENSE','legal//LICENSE','/legal/LICENSE',
+                    'legal/notices/../../private','legal/%2e%2e/private','legal/notices\\private',
+                    'legal/notices/a:1/LICENSE','web/assets/cookie@1.1.1.js'):
+            with self.subTest(path=bad),self.assertRaises(Refused):consume([bad])
+        with self.assertRaises(Refused):consume(['legal/notices/web/'+licenses[0]]*2)
+
     def test_fresh_before_capture_and_exact_rollback_does_not_require_new_missing_gate(self):
         before={};b=BrowserActor();http.verify_static(b,CONSOLE,capture=before)
         self.assertEqual(before,EXPECTED)
