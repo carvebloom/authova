@@ -47,6 +47,55 @@ class SemanticFailureTests(unittest.TestCase):
                 if poison=='other_label':z['core']['Config']['Labels']['OWN_UNAPPROVED']='CANARY'
                 with self.subTest(poison=poison),self.assertRaises(Refused):owner.post_semantics(a,z,o.production_ids(b),images,args[2],args[3],m,p)
 
+    def test_production_implicit_current_authority_does_not_recover_missing_before(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            o,b,_=fixtures.ProductionImageTests().setup_owner(Path(tmp).resolve())
+            with patch('deployment_http.readonly_acceptance',return_value={}):o.preflight(b,fixtures.guard)
+            self.assertEqual(o.apply(b,fixtures.guard),'APPLIED')
+            before,after=copy.deepcopy(o.original),copy.deepcopy(o.post)
+            old_model,model=copy.deepcopy(o.cfg),copy.deepcopy(o.prospective_cfg)
+            project='authova-local-production-20261114';key='com.docker.compose.replace'
+            old_model['name']=model['name']=project
+            for role in owner.ROLES:
+                before[role]['Name']=after[role]['Name']='/'+project+'-'+role+'-1'
+                for c in (before[role],after[role]):
+                    c['Config']['Labels'].update({'com.docker.compose.project':project,
+                        'com.docker.compose.service':role,'com.docker.compose.container-number':'1'})
+                after[role]['Config']['Labels'][key]=role+'-1'
+            producer={'compose_sha':owner.COMPOSE_510_SHA,'before_model':old_model,'before_images':o.old_images}
+            args=(o.production_ids(b),o.images,b['current']['layers']+[o.override],o.hashes)
+            with self.assertRaisesRegex(Refused,'RUNTIME_SEMANTIC_DELTA'):
+                owner.post_semantics(before,after,*args,model)
+            owner.post_semantics(before,after,*args,model,producer)
+            for role in owner.ROLES:
+                self.assertEqual(owner.production_implicit_replace_value(after[role],o.images[role],model,owner.COMPOSE_510_SHA,role),role+'-1')
+                # An already-recreated real before is also supported, strictly.
+                before[role]['Config']['Labels'][key]=role+'-1'
+            owner.post_semantics(before,after,*args,model,producer)
+            for role in owner.ROLES:before[role]['Config']['Labels'].pop(key)
+            for poison in ('missing_before_number','old_replace','number_bool','number_01','number_2',
+                           'name','project','declared','image','pin','value','extra_label','null_name'):
+                a,z,m,p=copy.deepcopy(before),copy.deepcopy(after),copy.deepcopy(model),copy.deepcopy(producer)
+                images=copy.deepcopy(o.images)
+                if poison=='missing_before_number':a['core']['Config']['Labels'].pop('com.docker.compose.container-number')
+                if poison=='old_replace':a['core']['Config']['Labels'][key]='FOREIGN'
+                if poison=='number_bool':z['core']['Config']['Labels']['com.docker.compose.container-number']=True
+                if poison=='number_01':z['core']['Config']['Labels']['com.docker.compose.container-number']='01'
+                if poison=='number_2':z['core']['Config']['Labels']['com.docker.compose.container-number']='2'
+                if poison=='name':z['core']['Name']='/FOREIGN'
+                if poison=='project':m['name']='OWN_CI_PROJECT'
+                if poison=='declared':m['services']['core'].setdefault('labels',{})[key]='core-1'
+                if poison=='image':images['core']['Config']['Labels'][key]='core-1'
+                if poison=='pin':p['compose_sha']='0'*64
+                if poison=='value':z['core']['Config']['Labels'][key]=project+'-core-1'
+                if poison=='extra_label':z['core']['Config']['Labels']['UNAPPROVED']='OWN_SECRET_CANARY'
+                if poison=='null_name':m['services']['core']['container_name']=None
+                with self.subTest(poison=poison),self.assertRaises(Refused):
+                    owner.post_semantics(a,z,args[0],images,args[2],args[3],m,p)
+                if poison=='missing_before_number':
+                    # Current value authority still exists, but forward refuses.
+                    self.assertEqual(owner.production_implicit_replace_value(z['core'],images['core'],m,p['compose_sha'],'core'),'core-1')
+
     def test_fixed_families_do_not_export_values_or_dynamic_keys(self):
         base={'config':{},'host':{},'networks':{},'mounts':[]}
         cases=[('config','Env','CONFIG_ENV'),('config','Cmd','CONFIG_PROCESS'),
