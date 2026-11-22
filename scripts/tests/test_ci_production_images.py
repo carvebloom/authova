@@ -15,6 +15,40 @@ guard.full=lambda *args:None
 
 
 class ProductionImageTests(unittest.TestCase):
+    def test_only_proven_empty_cmd_and_declared_readonly_named_volume_representations_match(self):
+        old={'config':{'Entrypoint':['server'],'Cmd':None},'host':{'Binds':['OWN_SECRET:/run/secret:ro'],'Mounts':None},
+             'mounts':[{'Type':'volume','Name':'OWN_SECRET','Destination':'/run/secret','RW':False}]}
+        new=copy.deepcopy(old);new['config']['Cmd']=[]
+        new['host']={'Binds':None,'Mounts':[{'Type':'volume','Source':'OWN_SECRET','Target':'/run/secret','ReadOnly':True}]}
+        model={'services':{'console':{'volumes':[{'type':'volume','source':'secret','target':'/run/secret','read_only':True}]}},
+               'volumes':{'secret':{'name':'OWN_SECRET'}}}
+        a,b=copy.deepcopy(old),copy.deepcopy(new);owner.equivalent_representations(a,b,model,'console');self.assertEqual(a,b)
+        for poison in ('args','entrypoint','source','rw','extra','missing_authority'):
+            a,b=copy.deepcopy(old),copy.deepcopy(new)
+            if poison=='args':b['config']['Cmd']=['changed']
+            if poison=='entrypoint':b['config']['Entrypoint']=[]
+            if poison=='source':b['host']['Mounts'][0]['Source']='FOREIGN'
+            if poison=='rw':b['host']['Mounts'][0]['ReadOnly']=False
+            if poison=='extra':b['host']['Mounts'][0]['BindOptions']={'Propagation':'shared'}
+            with self.subTest(poison=poison),self.assertRaises(Refused):owner.equivalent_representations(a,b,None if poison=='missing_authority' else model,'console')
+
+    def test_fresh_runtime_env_order_is_equivalent_but_values_duplicates_and_labels_are_not(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            o,b,events=self.setup_owner(Path(tmp).resolve())
+            with patch('deployment_http.readonly_acceptance',return_value={}):o.preflight(b,guard)
+            self.assertEqual(o.apply(b,guard),'APPLIED')
+            before=copy.deepcopy(o.original);after=copy.deepcopy(o.post)
+            before['core']['Config']['Env']+=['OWN_A=one','OWN_B=two']
+            after['core']['Config']['Env']+=['OWN_B=two','OWN_A=one']
+            args=(o.production_ids(b),o.images,b['current']['layers']+[o.override],o.hashes)
+            owner.post_semantics(before,after,*args)
+            for poison in ('value','duplicate','label'):
+                changed=copy.deepcopy(after)
+                if poison=='value':changed['core']['Config']['Env'][-1]='OWN_A=changed'
+                if poison=='duplicate':changed['core']['Config']['Env'].append('OWN_A=one')
+                if poison=='label':changed['core']['Config']['Labels']['OWN_NEW_LABEL']='unapproved'
+                with self.subTest(poison=poison),self.assertRaises(Refused):owner.post_semantics(before,changed,*args)
+
     def setup_owner(self,root,retained_labels=None,candidate_labels=None):
         files,candidate=fixture(provenance=True);body=archive(files)
         candidate.update(source='a'*40,manifest='b'*64,schemaDigest='c'*64,archive=hashlib.sha256(body).hexdigest())
@@ -22,7 +56,8 @@ class ProductionImageTests(unittest.TestCase):
         o=owner.CoreConsoleOwner.__new__(owner.CoreConsoleOwner)
         o.profile={'role':'application-production','archive':{'path':str(p),'identity':list(_token(p.stat()))},'active_control':str(root/'active.json')}
         o.operation=root/'operations'/('f'*24);o.nonce='f'*64;o.secret_inputs={};o.old_images={};o.images={};o.hashes={};o.up_started=False
-        o.production_graph=None;o.graph_candidate=None
+        o.production_graph=None;o.graph_candidate=None;o.old_web_assets={'OWN_BEFORE':{}}
+        o.compile_assets=lambda *a:{'OWN_SIGNED_ASSETS':{}}
         cfg={'name':'OWN_PROJECT','services':{r:{'image':'sha256:'+str(i+1)*64,'environment':{}} for i,r in enumerate(owner.ROLES)}}
         cfg['services']['console']['environment']={'AUTHOVA_CONSOLE_ASSETS':'/old'};cfg['services']['worker']={'image':'OWN_KEEP_WORKER'}
         base=str(root/'retained'/'compose.json')
@@ -181,8 +216,8 @@ class ProductionImageTests(unittest.TestCase):
                     with self.assertRaisesRegex(Refused,'PRIVATE_INPUT_CAS' if drift is True else 'ROLLBACK_CONFIG_CAS'):o.rollback(b,clock)
                     self.assertFalse(any(t=='KNOWN_ROLLBACK' for t,_ in events))
                 else:
-                    self.assertEqual(o.rollback(b,clock),'ROLLED_BACK')
-                    self.assertEqual(full[0],(480,20))
+                    with patch('deployment_http.readonly_acceptance',return_value={}):self.assertEqual(o.rollback(b,clock),'ROLLED_BACK')
+                    self.assertEqual(full[0],(480,200))
                     rollback=str(o.operation/'rollback-override.json')
                     self.assertIn(rollback,o.secret_inputs)
                     control=json.loads(Path(o.profile['active_control']).read_bytes())
@@ -194,7 +229,7 @@ class ProductionImageTests(unittest.TestCase):
             o,b,events=self.setup_owner(Path(tmp).resolve())
             def clock():pass
             def full(whole,suffix):
-                self.assertEqual((whole,suffix),(480,20))
+                self.assertEqual((whole,suffix),(480,200))
                 raise Refused('OWN_FULL_SUFFIX')
             clock.full=full
             with self.assertRaisesRegex(Refused,'OWN_FULL_SUFFIX'):o.rollback(b,clock)

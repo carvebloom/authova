@@ -169,8 +169,22 @@ func (b *bff) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if file == "" {
 			file = "index.html"
 		}
-		if info, e := fs.Stat(b.staticFS, file); e != nil || info.IsDir() {
+		info, e := fs.Stat(b.staticFS, file)
+		if e != nil {
+			// Only a missing extensionless SPA route may use the entry page.
+			// Assets and filesystem failures must never become HTML success.
+			if !errors.Is(e, fs.ErrNotExist) {
+				problem(w, 503, "static_unavailable")
+				return
+			}
+			if strings.HasPrefix(file, "assets/") || file == "assets" || path.Ext(file) != "" {
+				problem(w, 404, "static_not_found")
+				return
+			}
 			file = "index.html"
+		} else if info.IsDir() {
+			problem(w, 404, "static_not_found")
+			return
 		}
 		asset, e := b.staticFS.Open(file)
 		if e != nil {
@@ -178,7 +192,7 @@ func (b *bff) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer asset.Close()
-		info, e := asset.Stat()
+		info, e = asset.Stat()
 		seeker, ok := asset.(io.ReadSeeker)
 		if e != nil || !ok {
 			problem(w, 503, "static_unavailable")

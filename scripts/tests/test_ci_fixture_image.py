@@ -72,12 +72,17 @@ class FixtureImageTests(unittest.TestCase):
             def command(tag,argv,check):
                 calls.append((tag,argv));check()
                 if tag=='IMAGE_LOCAL_ONLY':
+                    if argv[-1] in obj.ROLLBACK_PAIR.values():
+                        role=next(r for r,v in obj.ROLLBACK_PAIR.items() if v==argv[-1])
+                        return json.dumps([{'Id':argv[-1],'Os':'linux','Architecture':'arm64','Config':{'User':'10001:10001','Labels':{
+                            'org.opencontainers.image.revision':obj.ROLLBACK_SOURCE,'io.carvebloom.artifact-manifest':obj.ROLLBACK_MANIFEST,
+                            'io.carvebloom.schema':obj.ROLLBACK_SCHEMA,'io.carvebloom.role':role}}}]).encode()
                     role=next(r for r,v in owner.FIXTURE_PINS.items() if v==argv[-1]);return json.dumps([metadata(role)]).encode()
                 self.assertEqual(tag,'CI_RESOURCE_ABSENCE');return b''
-            obj.command=command;obj.archive_guard=lambda *args:None
-            binding={'candidate':{},'fixture':{'root':str(Path(tmp)/'fixture'),'scope':'f'*32,'network':'OWN_NETWORK','mysql_volume':'OWN_DB','secret_volumes':{'core':'OWN_CORE'}}}
+            obj.command=command;obj.archive_guard=lambda *args:None;obj.compile_assets=lambda *args:{'OWN_SIGNED_ASSETS':{}}
+            binding={'candidate':{'schemaDigest':obj.ROLLBACK_SCHEMA},'fixture':{'root':str(Path(tmp)/'fixture'),'scope':'f'*32,'network':'OWN_NETWORK','mysql_volume':'OWN_DB','secret_volumes':{'core':'OWN_CORE'}}}
             obj.preflight(binding,guard)
-            self.assertEqual([a[0] for a in calls],['IMAGE_LOCAL_ONLY']*3+['CI_RESOURCE_ABSENCE']*3)
+            self.assertEqual([a[0] for a in calls],['IMAGE_LOCAL_ONLY']*5+['CI_RESOURCE_ABSENCE']*3)
             self.assertEqual(obj.dependencies(dict(binding,project='OWN_PROJECT',fixture=dict(binding['fixture'],service_names={'mysql':'m','valkey':'v','proxy':'p'})))['services']['mysql']['image'],owner.FIXTURE_PINS['mysql'])
     def test_pin_contract_equals_installed_launcher_without_executing_entry(self):
         source=Path(owner.__file__).with_name('host_runner.py').read_bytes()

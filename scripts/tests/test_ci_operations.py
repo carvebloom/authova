@@ -218,7 +218,7 @@ else:sys.exit(2)
     def test_http_actor_rejects_production_and_wrong_identity_before_IO(self):
         c={'schema':'authova-ci-http-private/v1','project':'authova-ci-test-'+'a'*12+'-42','scope':'1'*32,'source':'a'*40,
            'core':'https://host.docker.internal:43100','console':'https://host.docker.internal:43101','ca_pem':'OWN_NOT_REAL_CA',
-           'recipient':'ci-'+'1'*32+'@example.invalid','control':'OWN','bootstrap':{'Email':'owner-'+'1'*32+'@example.invalid'},'state':{}}
+           'recipient':'ci-'+'1'*32+'@example.invalid','control':'OWN','bootstrap':{'Email':'owner-'+'1'*32+'@example.invalid'},'state':{},'web_assets':{'/index.html':{'bytes':0,'sha256':'0'*64}}}
         for bad,code in [(dict(c,core='https://auth.carvebloom.localhost'),'CI_HTTP_ORIGIN'),(dict(c,recipient='other@example.invalid'),'CI_HTTP_IDENTITY_SCOPE')]:
             with self.assertRaisesRegex(Refused,code):actor.Acceptance(bad)
     def test_installed_bootstrap_holds_bytes_and_late_report_is_silent(self):

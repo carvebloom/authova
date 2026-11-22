@@ -1,5 +1,6 @@
 """Bounded normal-TLS owner HTTP transport. No proxy inheritance or redirects."""
 import http.client
+import hashlib
 import http.cookiejar
 from http.cookies import SimpleCookie
 from html.parser import HTMLParser
@@ -19,7 +20,8 @@ from release_contract import Refused, need
 
 HTTP_CHECKPOINTS=('NONE','APP_CREATE','CLIENT_CREATE','AUTHORIZE','CHALLENGE','MAIL','VERIFY','REGISTER','PASSWORD','USER_READBACK','CONSENT','REPLAY','LOGOUT')
 HTTP_STAGES=('normal-tls-health-and-static-assets','guest-and-authorization-boundaries','management-password-mfa-logout',
-             'oidc-register','oidc-password','oidc-consent','oidc-replay-logout','operator-password-and-session-revocation','owned-test-io-and-session-closure')
+             'oidc-register','oidc-password','oidc-consent','oidc-replay-logout','operator-password-and-session-revocation',
+             'rollback-baseline','rollback-write','rollback-read-write','repromotion-read','owned-test-io-and-session-closure')
 
 
 def valid_failure_frame(value,rc):
@@ -33,6 +35,60 @@ def valid_failure_frame(value,rc):
 
 
 class KnownUnhealthy(Refused):pass
+
+
+def manifest_assets(raw, candidate):
+    """Public compile manifest, bound by the signed candidate; never caller flags."""
+    need(type(raw) is bytes and len(raw)<=1024*1024 and hashlib.sha256(raw).hexdigest()==candidate['manifest'],'WEB_MANIFEST_SHA')
+    value=strict_json(raw)
+    need(value.get('schema')=='authova-compile-bundle/v1' and value.get('repo')=='carvebloom/authova'
+         and value.get('source')==value.get('main')==candidate['source'] and value.get('schemaDigest')==candidate['schemaDigest']
+         and value.get('platform')=='linux/arm64' and value.get('configuration_included') is False,'WEB_MANIFEST_BINDING')
+    rows=value.get('files');need(type(rows) is list and 0<len(rows)<=4096,'WEB_MANIFEST_FILES')
+    result={};seen=set()
+    for row in rows:
+        need(type(row) is dict and set(row)=={'path','bytes','sha256'},'WEB_MANIFEST_ROW')
+        path=row['path']
+        need(type(path) is str and path not in seen and type(row['bytes']) is int and row['bytes']>=0
+             and type(row['sha256']) is str and re.fullmatch('[0-9a-f]{64}',row['sha256']),'WEB_MANIFEST_ROW')
+        need(path in ('core','console') or (path.startswith(('web/','legal/'))
+             and all(re.fullmatch('[A-Za-z0-9_.-]+',p) and p not in ('.','..') for p in path.split('/'))),'WEB_MANIFEST_PATH')
+        seen.add(path)
+        if path.startswith('web/'):
+            path='/'+path[4:]
+            need(path in ('/index.html','/favicon.svg','/third-party-notices.txt')
+                 or re.fullmatch('/assets/[A-Za-z0-9_-][A-Za-z0-9_.-]*\\.(js|css)',path),'WEB_MANIFEST_PATH')
+            need(row['bytes']<=4*1024*1024,'WEB_MANIFEST_SIZE')
+            result[path]={'bytes':row['bytes'],'sha256':row['sha256']}
+    need('/index.html' in result and 3<=len(result)<=64 and sum(v['bytes'] for v in result.values())<=32*1024*1024,'WEB_MANIFEST_SET')
+    return result
+
+
+def verify_static(browser, origin, expected=None, capture=None, *, negative=True):
+    """MIME plus exact signed bytes for promotion, RAM before-bytes for rollback."""
+    def check(path, body, headers):
+        ext=path.rsplit('.',1)[-1]
+        types={'html':('text/html',),'js':('text/javascript','application/javascript'),
+               'css':('text/css',),'svg':('image/svg+xml',),'txt':('text/plain',)}
+        mime=headers.get('Content-Type','').split(';',1)[0].strip().lower()
+        if ext not in types or mime not in types[ext]:raise KnownUnhealthy('STATIC_ASSET_MIME')
+        actual={'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest()}
+        if expected is not None and actual!=expected.get(path):raise KnownUnhealthy('STATIC_ASSET_SHA')
+        if capture is not None:capture[path]=actual
+    page,headers,_=browser.request(origin+'/')
+    check('/index.html',page,headers)
+    assets=static_assets(page)
+    if not assets:raise KnownUnhealthy('STATIC_ASSET_ENTRY')
+    if expected is not None:
+        need(all(p in expected for p in assets),'STATIC_ASSET_MANIFEST_ENTRY')
+        assets=[p for p in expected if p!='/index.html']
+    for path in assets:
+        body,headers,_=browser.request(origin+path)
+        check(path,body,headers)
+    if expected is not None and negative:
+        missing='/assets/authova-missing-'+expected['/index.html']['sha256']+'.js'
+        need(missing not in expected,'STATIC_NEGATIVE_PATH')
+        browser.request(origin+missing,expected=(404,))
 
 
 def static_assets(page):
@@ -137,14 +193,11 @@ def context(ca_pem=None):
     return ssl.create_default_context(cadata=ca_pem)
 
 
-def readonly_acceptance(profile,guard):
+def readonly_acceptance(profile,guard,expected_assets=None,capture=None, *, negative=True):
     ca=profile.get('ca_pem')
     browser=Browser((profile['core_origin'],profile['console_origin']),context(ca),guard)
     browser.request(profile['core_origin']+'/readyz')
     browser.request(profile['console_origin']+'/healthz')
-    page,_,_=browser.request(profile['console_origin']+'/')
-    assets=static_assets(page)
-    if not assets:raise KnownUnhealthy('STATIC_ASSET_ENTRY')
-    for path in assets:browser.request(profile['console_origin']+path)
+    verify_static(browser,profile['console_origin'],expected_assets,capture,negative=negative)
     browser.request(profile['console_origin']+'/bff/me',expected=(401,))
     return browser.calls

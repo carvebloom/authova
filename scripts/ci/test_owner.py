@@ -28,6 +28,11 @@ FIXTURE_REPOSITORIES={
 
 
 class TestOwner(CoreConsoleOwner):
+    ROLLBACK_SCHEMA='3448275407d4640b1cb28b958052663eab0be73b7f702f7ebd653e44ed1de722'
+    ROLLBACK_SOURCE='ac1a3838f5eea9330fd1384fa22f3e7ba2189248'
+    ROLLBACK_MANIFEST='da4725ed2fab76ff09e649c9ec6126c6eba8e25e7861566593e74ab721387a35'
+    ROLLBACK_PAIR={'core':'sha256:afb9a2d588a10f50b58ebff7c587728d1dc8e38d610d1d1e2da3cf436f174774',
+                   'console':'sha256:beffc397b9f2b09fff35b5adc702d2f7288c29729e06ab3b2c7a88e86d926f42'}
     def __init__(self,profile,state_root,nonce,*,source_bytes):
         super().__init__(profile,state_root,nonce);self.source_bytes=source_bytes
     def command(self,tag,args,guard,**kw):
@@ -81,6 +86,13 @@ class TestOwner(CoreConsoleOwner):
         need(not parent.is_symlink() and (parent.stat().st_mode&0o777)==0o700 and parent.stat().st_uid==os.getuid(),'CI_ROOT_PARENT')
         self.operation.mkdir(mode=0o700)
         self.archive_guard(binding['candidate'],guard)
+        self.web_assets=self.compile_assets(binding['candidate'],guard)
+        need(binding['candidate']['schemaDigest']==self.ROLLBACK_SCHEMA,'CI_ROLLBACK_SCHEMA')
+        for role,image_id in self.ROLLBACK_PAIR.items():
+            old=self.image(image_id,guard);labels=old['Config'].get('Labels') or {}
+            need(old['Config']['User']=='10001:10001' and all(labels.get(k)==v for k,v in {
+                'org.opencontainers.image.revision':self.ROLLBACK_SOURCE,'io.carvebloom.artifact-manifest':self.ROLLBACK_MANIFEST,
+                'io.carvebloom.schema':self.ROLLBACK_SCHEMA,'io.carvebloom.role':role}.items()),'CI_ROLLBACK_IMAGE')
         for role in self.profile['fixture_images']:self.fixture_image(role,guard)
         for name in [binding['fixture']['network'],binding['fixture']['mysql_volume'],*binding['fixture']['secret_volumes'].values()]:
             kind='network' if name==binding['fixture']['network'] else 'volume'
@@ -202,14 +214,74 @@ class TestOwner(CoreConsoleOwner):
         console_env.update({k:v for k,v in env.items() if k.startswith('AUTHOVA_VALKEY_')})
         cfg['services']['console']=dict(shared,image=binding['candidate']['consoleID'],container_name=f['service_names']['console'],mem_limit='256m',memswap_limit='256m',environment=console_env,
                                        healthcheck={'test':['CMD','wget','-q','-O','/dev/null','http://127.0.0.1:8090/healthz'],'interval':'2s','timeout':'3s','retries':40},volumes=[{'type':'volume','source':'console-credentials','target':'/run/ci','read_only':True,'volume':{'nocopy':True}}])
-        self.write('compose.json',cfg)
+        # Begin with the fixed production-equivalent old pair on this NEW own
+        # database/volumes. No current production material is consumed.
+        for role in ROLES:cfg['services'][role]['image']=self.ROLLBACK_PAIR[role]
+        base=self.write('compose.json',cfg);self.private_input(base,guard)
+        self.ci_layers=[base];self.ci_pair=dict(self.ROLLBACK_PAIR)
         self.command('CI_APPLICATIONS_UP',self.compose(binding)+['up','--detach','--no-deps','--no-build','--pull','never','--wait','--wait-timeout','90','core','console'],guard,whole=120,suffix=600)
         self.context={'schema':'authova-ci-http-private/v1','project':binding['project'],'scope':f['scope'],'source':binding['candidate']['source'],
                       'core':self.core_origin,'console':self.console_origin,'ca_pem':self.ca,'recipient':self.secret['recipient'],
-                      'control':self.secret['control'],'bootstrap':self.bootstrap,'state':{}}
+                      'control':self.secret['control'],'bootstrap':self.bootstrap,'state':{},'web_assets':self.web_assets}
         self.inventory={r:self.role_id(binding,r,guard) for r in binding['fixture']['service_names']}
         self.write('fixture-inventory.json',{'containers':self.inventory,'network':binding['fixture']['network'],'volumes':[binding['fixture']['mysql_volume'],*binding['fixture']['secret_volumes'].values()],'operation':self.nonce})
+        self.ci_instances=self.inspect_services(binding,guard)
+        self.http_actor('rollback-baseline',guard)
+        self.candidate_override=self.write('candidate-pair.json',{'services':{r:{'image':binding['candidate'][r+'ID']} for r in ROLES}})
+        self.private_input(self.candidate_override,guard)
+        self.switch_pair(binding,guard,{r:binding['candidate'][r+'ID'] for r in ROLES},self.candidate_override,'CI_FIRST_PROMOTION')
         return 'APPLIED'
+
+    def switch_pair(self,binding,guard,pair,override,tag):
+        from compose_owner import stable
+        guard.full(540,620)
+        need(tag in ('CI_FIRST_PROMOTION','CI_KNOWN_ROLLBACK','CI_REPROMOTION'),'CI_SWITCH_TAG')
+        current=self.inspect_services(binding,guard)
+        need(all(current[r]['Id']==self.ci_instances[r]['Id'] and stable(current[r])==stable(self.ci_instances[r])
+             and current[r]['Image']==self.ci_pair[r] and current[r]['State']['Running'] is True
+             and current[r]['State']['StartedAt']==self.ci_instances[r]['State']['StartedAt']
+             and current[r]['State']['Pid']==self.ci_instances[r]['State']['Pid']
+             and current[r]['RestartCount']==self.ci_instances[r]['RestartCount']
+             and current[r]['State'].get('Health',{}).get('Status')=='healthy' for r in ROLES),'CI_SWITCH_CURRENT_CAS')
+        before=self.render(binding,guard,self.ci_layers)
+        layers=[binding['current']['layers'][0],override]
+        resolved=self.render_bytes(binding,guard,layers)
+        model=strict_json(resolved);expected=copy.deepcopy(before)
+        for r in ROLES:expected['services'][r]['image']=pair[r]
+        need(model==expected,'CI_SWITCH_CONFIG_DELTA')
+        hashes=self.resolved_hashes(binding,guard,resolved,'COMPOSE_HASH')
+        self.input_guard(guard)
+        self.command(tag,self.compose(binding,layers)+['up','--detach','--no-deps','--no-build','--pull','never','--wait','--wait-timeout','90','core','console'],guard,whole=120,suffix=600)
+        self.input_guard(guard);after=self.inspect_services(binding,guard)
+        self.write(tag.lower()+'-ack.json',{'containers':dict(self.inventory,**{r:after[r]['Id'] for r in ROLES}),
+                   'network':binding['fixture']['network'],'volumes':[binding['fixture']['mysql_volume'],*binding['fixture']['secret_volumes'].values()],
+                   'operation':self.nonce})
+        # Preserve full before semantics; only image/provenance/Compose labels
+        # and default CID hostname may change. Environment/order semantics use
+        # the same production comparator, not a special CI relaxation.
+        images={r:self.image(pair[r],guard) for r in ROLES}
+        from compose_owner import post_semantics
+        post_semantics(current,after,{r+'ID':pair[r] for r in ROLES},images,layers,hashes,model)
+        need(all(after[r]['Image']==pair[r] and after[r]['State']['Running'] is True
+             and after[r]['State'].get('Health',{}).get('Status')=='healthy' for r in ROLES),'CI_SWITCH_HEALTH')
+        self.ci_layers=layers;self.ci_pair=dict(pair);self.ci_instances=after
+        for r in ROLES:self.inventory[r]=after[r]['Id']
+        self.write(tag.lower()+'-inventory.json',{'containers':self.inventory,'operation':self.nonce})
+
+    def rollback_gate(self,binding,guard):
+        # 2*(4inspect+2render+2hash+up120+4inspect+2image)=1080
+        # plus3HTTP180=540 and180 FS/report, then known cleanup600.
+        guard.full(1800,600)
+        self.http_actor('rollback-write',guard)
+        rollback=self.write('old-pair.json',{'services':{r:{'image':self.ROLLBACK_PAIR[r]} for r in ROLES}})
+        self.private_input(rollback,guard)
+        self.switch_pair(binding,guard,self.ROLLBACK_PAIR,rollback,'CI_KNOWN_ROLLBACK')
+        self.http_actor('rollback-read-write',guard)
+        self.switch_pair(binding,guard,{r:binding['candidate'][r+'ID'] for r in ROLES},self.candidate_override,'CI_REPROMOTION')
+        self.http_actor('repromotion-read',guard)
+        return {'same_storage':'GUARDED_UNCHANGED','new_candidate_write_survived_rollback':True,
+                'old_pair_write_survived_repromotion':True,'fresh_before_assets_restored':True,
+                'candidate_manifest_and_missing_negative_reverified':True}
     def http_actor(self,stage,guard,whole=180):
         rc,raw=self.native.run('CI_HTTP_ACTOR',['exec','-i',self.proxy,'python3','-I','-B','/run/ci/code/test_http.py',stage],guard,body=canonical(self.context),whole=whole,suffix=240)
         value=strict_json(raw)
@@ -313,6 +385,8 @@ class TestOwner(CoreConsoleOwner):
                 origin=(time.time(),time.monotonic());self.http_actor('oidc-consent',guard,whole=55);self.prove(b,guard,origin,state_origin)
                 self.http_actor('oidc-replay-logout',guard)
                 evidence={'real_library_verifier':'PASS_TWICE','same_server_subject':'RAM_ONLY_EQUAL','ordinary_scope':'NEW_CI_APP_ONLY'}
+            elif name=='same-storage-rollback-and-repromotion':
+                evidence=self.rollback_gate(binding,guard)
             else:
                 evidence=self.http_actor(name,guard,whole=240 if name=='operator-password-and-session-revocation' else 180)
                 if name=='owned-test-io-and-session-closure':
