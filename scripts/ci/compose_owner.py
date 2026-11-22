@@ -10,13 +10,66 @@ import tarfile
 from host_admission import canonical, strict_json
 from host_adapter import durable, directory, _token, _close
 from private_native import Native, Unknown
-from release_contract import need
+from release_contract import need, Refused
 
 ROLES=('core','console')
 COMPOSE_LABELS={'com.docker.compose.config-hash','com.docker.compose.image',
                 'com.docker.compose.project.config_files'}
 IMAGE_LABELS={'org.opencontainers.image.revision','io.carvebloom.artifact-manifest',
               'io.carvebloom.schema','io.carvebloom.role'}
+SEMANTIC_FAMILIES=('CONFIG_ENV','CONFIG_PROCESS','CONFIG_LABELS','CONFIG_IMAGE','CONFIG_OTHER',
+                   'HOST_MOUNT_ENCODING','HOST_SECURITY','HOST_RESOURCES','HOST_NETWORK','HOST_OTHER',
+                   'NETWORK_ATTACHMENTS','MOUNT_ATTACHMENTS','OTHER')
+COMPOSE_510_SHA='817dde1748900478a6db1e509c7cf8e8a0957ea6050c5705d60feb147ad0c5a6'
+
+
+def expected_replace_label(before,after,images,model,producer,role):
+    """Pinned Compose5.1.0 recreate producer, explicit names only; no label pop.
+
+    Official convergence.go recreateContainer sets ContainerReplaceLabel to
+    service.ContainerName. All authority is retained RAM from guarded calls.
+    """
+    key='com.docker.compose.replace'
+    try:
+        if type(producer) is not dict or set(producer)!= {'compose_sha','before_model','before_images'} or producer['compose_sha']!=COMPOSE_510_SHA:return None
+        old_model=producer['before_model'];old_image=producer['before_images'][role];new_image=images[role]
+        a,b=before[role],after[role];old=old_model['services'][role];new=model['services'][role]
+        name=new.get('container_name');project=model['name']
+        if not (type(name) is str and re.fullmatch('[A-Za-z0-9][A-Za-z0-9_.-]*',name) and old.get('container_name')==name
+                and old_model['name']==project and a['Name']==b['Name']=='/'+name
+                and all(type(c['Id']) is str and re.fullmatch('[0-9a-f]{64}',c['Id']) for c in (a,b))
+                and a['Id']!=b['Id']):return None
+        if any(key in (s.get('labels') or {}) for s in (old,new)):return None
+        if any(key in (i['Config'].get('Labels') or {}) for i in (old_image,new_image)):return None
+        if not (old_image['Id']==a['Image']==a['Config']['Image'] and new_image['Id']==b['Image']==b['Config']['Image']):return None
+        if not all(c['Config']['Labels'].get('com.docker.compose.project')==project
+                   and c['Config']['Labels'].get('com.docker.compose.service')==role for c in (a,b)):return None
+        if key in a['Config']['Labels'] and a['Config']['Labels'][key]!=name:return None
+        return name
+    except (KeyError,TypeError,AttributeError):return None
+
+
+def semantic_failure_family(expected,actual):
+    """Only a fixed family enum leaves RAM; no differing key/value/count/hash."""
+    try:
+        groups=(('config',(
+            ('CONFIG_ENV',('Env',)),
+            ('CONFIG_PROCESS',('Entrypoint','Cmd','ArgsEscaped','Shell','WorkingDir','User')),
+            ('CONFIG_LABELS',('Labels',)),('CONFIG_IMAGE',('Image',)))),
+            ('host',(
+            ('HOST_MOUNT_ENCODING',('Binds','Mounts','VolumesFrom','Tmpfs')),
+            ('HOST_SECURITY',('Privileged','ReadonlyRootfs','CapAdd','CapDrop','SecurityOpt','UsernsMode','GroupAdd','Devices','DeviceRequests')),
+            ('HOST_RESOURCES',('Memory','MemorySwap','MemoryReservation','NanoCpus','CpuQuota','CpuPeriod','CpuShares','CpusetCpus','PidsLimit','Ulimits')),
+            ('HOST_NETWORK',('NetworkMode','PortBindings','PublishAllPorts','Links','Dns','DnsOptions','DnsSearch','ExtraHosts')))))
+        for section,parts in groups:
+            a,b=expected[section],actual[section]
+            for family,keys in parts:
+                if {k:a[k] for k in keys if k in a}!={k:b[k] for k in keys if k in b}:return family
+            if a!=b:return 'CONFIG_OTHER' if section=='config' else 'HOST_OTHER'
+        if expected['networks']!=actual['networks']:return 'NETWORK_ATTACHMENTS'
+        if expected['mounts']!=actual['mounts']:return 'MOUNT_ATTACHMENTS'
+    except BaseException:pass
+    return 'OTHER'
 
 
 def env_map(rows):
@@ -110,7 +163,7 @@ def equivalent_representations(old,new,model,role):
             host['Binds']=binds;host['Mounts']=None
 
 
-def post_semantics(before,after,candidate,images,layers,hashes,model=None):
+def post_semantics(before,after,candidate,images,layers,hashes,model=None,producer=None):
     for role in ROLES:
         old,new=stable(before[role]),stable(after[role])
         expected=copy.deepcopy(old)
@@ -127,8 +180,15 @@ def post_semantics(before,after,candidate,images,layers,hashes,model=None):
         c['Labels']['com.docker.compose.config-hash']=hashes[role]
         c['Labels']['com.docker.compose.image']=candidate[role+'ID']
         c['Labels']['com.docker.compose.project.config_files']=','.join(layers)
+        replacement=expected_replace_label(before,after,images,model,producer,role)
+        if replacement is not None:c['Labels']['com.docker.compose.replace']=replacement
         equivalent_representations(expected,new,model,role)
-        need(new==expected,'RUNTIME_SEMANTIC_DELTA')
+        try:
+            need(new==expected,'RUNTIME_SEMANTIC_DELTA')
+        except Refused as first:
+            first.semantic_role=role
+            first.semantic_family=semantic_failure_family(expected,new)
+            raise
         # Only a Docker-assigned CID hostname may change implicitly.
         need(before[role]['Config']['Hostname'] in (before[role]['Id'][:12],before[role]['Id'])
              and after[role]['Config']['Hostname'] in (after[role]['Id'][:12],after[role]['Id']),'EXPLICIT_HOSTNAME_UNSUPPORTED')
@@ -589,7 +649,8 @@ class CoreConsoleOwner:
         need(all(observed[r]['Id']==self.post[r]['Id'] and stable(observed[r])==stable(self.post[r]) for r in ROLES),'ACCEPTANCE_CURRENT_CAS_UNKNOWN')
         self.post=observed
         try:
-            post_semantics(self.original,self.post,self.production_ids(binding),self.images,binding['current']['layers']+[self.override],self.hashes,self.prospective_cfg)
+            post_semantics(self.original,self.post,self.production_ids(binding),self.images,binding['current']['layers']+[self.override],self.hashes,self.prospective_cfg,
+                           {'compose_sha':self.profile['compose']['sha256'],'before_model':self.cfg,'before_images':self.old_images})
             if not all(self.post[r]['State']['Running'] is True and self.post[r]['State'].get('Health',{}).get('Status')=='healthy' for r in ROLES):return 'FAIL_KNOWN'
             need(self.compile_assets(binding['candidate'],guard)==self.web_assets,'WEB_MANIFEST_CAS')
             readonly_acceptance(self.profile,guard,expected_assets=self.web_assets)
@@ -629,6 +690,9 @@ class CoreConsoleOwner:
             old['config']['Labels']['com.docker.compose.config-hash']=rollback_hashes[role]
             old['config']['Labels']['com.docker.compose.image']=self.original[role]['Image']
             old['config']['Labels']['com.docker.compose.project.config_files']=','.join(rollback_layers)
+            replacement=expected_replace_label(current,restored,self.old_images,strict_json(resolved),
+                        {'compose_sha':self.profile['compose']['sha256'],'before_model':self.prospective_cfg,'before_images':self.images},role)
+            if replacement is not None:old['config']['Labels']['com.docker.compose.replace']=replacement
             equivalent_representations(old,new,self.cfg,role)
             need(old==new,'ROLLBACK_SEMANTICS_UNKNOWN')
         from deployment_http import readonly_acceptance

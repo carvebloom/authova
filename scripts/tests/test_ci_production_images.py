@@ -54,7 +54,7 @@ class ProductionImageTests(unittest.TestCase):
         candidate.update(source='a'*40,manifest='b'*64,schemaDigest='c'*64,archive=hashlib.sha256(body).hexdigest())
         p=root/'images.tar';p.write_bytes(body)
         o=owner.CoreConsoleOwner.__new__(owner.CoreConsoleOwner)
-        o.profile={'role':'application-production','archive':{'path':str(p),'identity':list(_token(p.stat()))},'active_control':str(root/'active.json')}
+        o.profile={'compose':{'sha256':owner.COMPOSE_510_SHA},'role':'application-production','archive':{'path':str(p),'identity':list(_token(p.stat()))},'active_control':str(root/'active.json')}
         o.operation=root/'operations'/('f'*24);o.nonce='f'*64;o.secret_inputs={};o.old_images={};o.images={};o.hashes={};o.up_started=False
         o.production_graph=None;o.graph_candidate=None;o.old_web_assets={'OWN_BEFORE':{}}
         o.compile_assets=lambda *a:{'OWN_SIGNED_ASSETS':{}}
